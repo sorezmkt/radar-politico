@@ -1,0 +1,67 @@
+name: Atualizar dados e publicar
+
+on:
+  schedule:
+    - cron: "17 9 * * *"   # todo dia às 06:17 (horário de Brasília)
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: radar-politico
+  cancel-in-progress: false
+
+jobs:
+  dados:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Baixar dados oficiais e calcular notas
+        env:
+          # num push (mudança no site) consulta menos CNPJs para publicar rápido; o robô diário completa o resto
+          LIMITE_CNPJ: ${{ github.event_name == 'push' && '600' || '3000' }}
+        run: python scripts/build_data.py
+
+      - name: Salvar dados no repositório
+        if: always()
+        run: |
+          git config user.name "radar-bot"
+          git config user.email "radar-bot@users.noreply.github.com"
+          git add data cache || true
+          if git diff --cached --quiet; then
+            echo "Sem mudanças nos dados."
+          else
+            git commit -m "Atualiza dados $(date -u +%F)"
+            git pull --rebase -X theirs origin main || true
+            git push
+          fi
+
+      - name: Preparar site
+        run: |
+          mkdir -p _site
+          cp -r index.html assets data .nojekyll _site/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  publicar:
+    needs: dados
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
