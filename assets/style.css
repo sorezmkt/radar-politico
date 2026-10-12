@@ -268,3 +268,44 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding-top:8px}
 .trow .tag{justify-self:end;font-size:11px;font-weight:600;padding:2px 7px;border-radius:99px}
 .lt{font-size:20px;font-weight:800;line-height:1.15}
 .mareas .abar{grid-template-columns:minmax(0,1fr) 36px 24px;gap:6px}
+
+/* Mapa de comparação */
+.hmwrap{overflow-x:auto;margin-inline:-6px}
+table.hm{border-collapse:separate;border-spacing:3px;font-size:12px;width:100%}
+table.hm thead th{font-size:10.5px;font-weight:600;color:var(--muted);padding:0 0 4px;vertical-align:bottom;white-space:nowrap}
+table.hm thead th a{color:var(--accent);text-decoration:none;writing-mode:vertical-rl;transform:rotate(180deg);display:inline-block;padding:2px 0}
+table.hm tbody th{text-align:left;font-weight:500;padding-right:6px;min-width:112px;max-width:140px;line-height:1.2;position:sticky;left:0;background:var(--surface);z-index:1}
+table.hm tr.hmarea th{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding-top:10px;position:static}
+table.hm td{padding:0;min-width:24px}
+table.hm td span{display:block;height:24px;border-radius:5px}
+
+/* Duelo */
+.dsel{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}
+.dsel select{font:inherit;font-size:14px;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);min-width:0;width:100%}
+.dsel .vs{font-family:var(--display);font-weight:800;color:var(--muted)}
+.dplacar{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dp{display:flex;flex-direction:column;align-items:center;padding:12px 8px;border-radius:12px;border:1px solid var(--line)}
+.dp.lead{border-color:var(--good);background:var(--good-soft)}
+.dpn{font-weight:600;font-size:14px;text-align:center}
+.dpn small{display:block;color:var(--muted);font-weight:400;font-size:12px}
+.dpv{font-family:var(--display);font-size:34px;font-weight:800;line-height:1.1}
+.dbar{display:flex;height:10px;border-radius:99px;overflow:hidden;margin-top:10px}
+.dbar i:first-child{background:var(--accent)}
+.dbar i:last-child{background:var(--warn)}
+#dres .note{margin:8px 0 0}
+.dhead,.drow{display:grid;grid-template-columns:minmax(0,1.15fr) 1fr 1fr;gap:8px;align-items:stretch}
+.dhead{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding-top:12px}
+.dhead span:not(:first-child){text-align:center}
+.dlab{padding-top:12px}
+.drow{padding:6px 0;border-bottom:1px solid var(--line)}
+.dn{display:flex;flex-direction:column;font-size:13px;line-height:1.25;justify-content:center;min-width:0}
+.dn small{color:var(--muted);font-size:11px}
+.dc{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:6px 4px;border-radius:8px;font-size:12.5px;text-align:center}
+.dc small{color:var(--muted);font-size:11px}
+.dc.win{background:var(--good-soft);box-shadow:inset 0 0 0 1.5px var(--good)}
+.dc.nd{color:var(--muted);font-size:11.5px}
+.dc .tag{font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:99px}
+table.hm{border-spacing:2px;font-size:11.5px}
+table.hm tbody th{min-width:92px;max-width:110px}
+table.hm td{min-width:22px}
+table.hm td span{height:22px;border-radius:4px}

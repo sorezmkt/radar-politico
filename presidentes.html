@@ -29,6 +29,25 @@
     <p class="intro">Como cada presidente recebeu o país e como entregou, em indicadores que pesam no dia a dia, desde 1995. Não existe nota geral: escolha a área que importa para você.</p>
   </section>
 
+  <section class="card" id="duelo">
+    <div><h3 class="lt">Compare dois governos</h3>
+      <p class="meta">Escolha dois mandatos e veja, indicador por indicador, quem entregou o melhor resultado.</p></div>
+    <div class="dsel">
+      <select id="dA" aria-label="Primeiro governo"></select>
+      <span class="vs">vs</span>
+      <select id="dB" aria-label="Segundo governo"></select>
+    </div>
+    <div id="dres"></div>
+  </section>
+
+  <section class="card" id="mapa">
+    <div><h3 class="lt">Mapa de comparação</h3>
+      <p class="meta">Cada quadrado é um indicador em um mandato. Verde é o melhor resultado entre todos os mandatos, vermelho é o pior. Toque no nome de um governo para ver os detalhes.</p></div>
+    <div class="hmwrap"><table class="hm" id="hm"></table></div>
+    <div class="legend"><span><i style="background:var(--good)"></i>Melhor</span><span><i style="background:var(--warn)"></i>Médio</span><span><i style="background:var(--bad)"></i>Pior</span><span><i style="background:var(--line)"></i>Sem dados</span></div>
+  </section>
+
+  <div class="label" style="margin-top:4px">Todos os mandatos</div>
   <div class="tabs areasel" id="areasel" role="group" aria-label="Escolher área"></div>
 
   <section class="card">

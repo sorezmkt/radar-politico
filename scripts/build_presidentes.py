@@ -49,33 +49,33 @@ def baixar(url, tentativas=4, timeout=90):
 # --------------------------------------------------------------------- mandatos
 # base = último ano antes de assumir; fim = último ano completo no cargo (None = em andamento)
 MANDATOS = [
-    {"id": "fhc1", "nome": "Fernando Henrique Cardoso", "curto": "FHC", "rotulo": "1º mandato", "partido": "PSDB",
+    {"id": "fhc1", "sigla": "FHC 1", "nome": "Fernando Henrique Cardoso", "curto": "FHC", "rotulo": "1º mandato", "partido": "PSDB",
      "inicio": "1995-01-01", "termino": "1998-12-31", "base": 1994, "fim": 1998,
      "contexto": ["Consolidação do Plano Real", "Crises financeiras da Ásia (1997) e da Rússia (1998)"]},
-    {"id": "fhc2", "nome": "Fernando Henrique Cardoso", "curto": "FHC", "rotulo": "2º mandato", "partido": "PSDB",
+    {"id": "fhc2", "sigla": "FHC 2", "nome": "Fernando Henrique Cardoso", "curto": "FHC", "rotulo": "2º mandato", "partido": "PSDB",
      "inicio": "1999-01-01", "termino": "2002-12-31", "base": 1998, "fim": 2002,
      "contexto": ["Desvalorização do real e adoção do câmbio flutuante (1999)", "Crise de energia (2001)"]},
-    {"id": "lula1", "nome": "Luiz Inácio Lula da Silva", "curto": "Lula", "rotulo": "1º mandato", "partido": "PT",
+    {"id": "lula1", "sigla": "Lula 1", "nome": "Luiz Inácio Lula da Silva", "curto": "Lula", "rotulo": "1º mandato", "partido": "PT",
      "inicio": "2003-01-01", "termino": "2006-12-31", "base": 2002, "fim": 2006,
      "contexto": ["Alta internacional dos preços das commodities"]},
-    {"id": "lula2", "nome": "Luiz Inácio Lula da Silva", "curto": "Lula", "rotulo": "2º mandato", "partido": "PT",
+    {"id": "lula2", "sigla": "Lula 2", "nome": "Luiz Inácio Lula da Silva", "curto": "Lula", "rotulo": "2º mandato", "partido": "PT",
      "inicio": "2007-01-01", "termino": "2010-12-31", "base": 2006, "fim": 2010,
      "contexto": ["Crise financeira global (2008–2009)"]},
-    {"id": "dilma1", "nome": "Dilma Rousseff", "curto": "Dilma", "rotulo": "1º mandato", "partido": "PT",
+    {"id": "dilma1", "sigla": "Dilma 1", "nome": "Dilma Rousseff", "curto": "Dilma", "rotulo": "1º mandato", "partido": "PT",
      "inicio": "2011-01-01", "termino": "2014-12-31", "base": 2010, "fim": 2014,
      "contexto": ["Queda dos preços das commodities", "Protestos de junho de 2013"]},
-    {"id": "dilma2", "nome": "Dilma Rousseff", "curto": "Dilma", "rotulo": "2º mandato, interrompido", "partido": "PT",
+    {"id": "dilma2", "sigla": "Dilma 2", "nome": "Dilma Rousseff", "curto": "Dilma", "rotulo": "2º mandato, interrompido", "partido": "PT",
      "inicio": "2015-01-01", "termino": "2016-05-12", "base": 2014, "fim": 2015,
      "contexto": ["Recessão de 2015–2016", "Afastada em maio de 2016 e destituída em agosto pelo impeachment"],
      "nota": "Mandato curto: só 2015 é um ano completo no cargo, então os números refletem um único ano."},
-    {"id": "temer", "nome": "Michel Temer", "curto": "Temer", "rotulo": "Mandato após o impeachment", "partido": "MDB",
+    {"id": "temer", "sigla": "Temer", "nome": "Michel Temer", "curto": "Temer", "rotulo": "Mandato após o impeachment", "partido": "MDB",
      "inicio": "2016-05-12", "termino": "2018-12-31", "base": 2016, "fim": 2018,
      "contexto": ["Saída da recessão de 2015–2016", "Teto de gastos (2016) e reforma trabalhista (2017)"],
      "nota": "Assumiu interinamente em maio de 2016 e em definitivo em agosto. A comparação usa 2016 como ponto de partida."},
-    {"id": "bolsonaro", "nome": "Jair Bolsonaro", "curto": "Bolsonaro", "rotulo": "Mandato", "partido": "PSL, depois PL",
+    {"id": "bolsonaro", "sigla": "Bolsonaro", "nome": "Jair Bolsonaro", "curto": "Bolsonaro", "rotulo": "Mandato", "partido": "PSL, depois PL",
      "inicio": "2019-01-01", "termino": "2022-12-31", "base": 2018, "fim": 2022,
      "contexto": ["Pandemia de Covid-19 (2020–2022)", "Reforma da Previdência (2019)"]},
-    {"id": "lula3", "nome": "Luiz Inácio Lula da Silva", "curto": "Lula", "rotulo": "3º mandato, em andamento", "partido": "PT",
+    {"id": "lula3", "sigla": "Lula 3", "nome": "Luiz Inácio Lula da Silva", "curto": "Lula", "rotulo": "3º mandato, em andamento", "partido": "PT",
      "inicio": "2023-01-01", "termino": None, "base": 2022, "fim": None,
      "contexto": []},
 ]
@@ -83,7 +83,7 @@ MANDATOS = [
 # --------------------------------------------------------------------- indicadores
 # tipo "variacao": compara o ano antes da posse com o último ano no cargo
 # tipo "media": média dos anos no cargo (para inflação e juros, o nível importa mais que a mudança)
-AREAS = ["Economia", "Trabalho", "Juros e dívidas", "Segurança", "Saúde", "Educação", "Social"]
+AREAS = ["Economia", "Trabalho", "Juros e dívidas", "Contas públicas", "Segurança", "Saúde", "Educação", "Social"]
 INDICADORES = [
     {"id": "pib_pc", "nome": "PIB por habitante", "area": "Economia", "fonte": "wb", "codigo": "NY.GDP.PCAP.KD",
      "melhor": "maior", "tipo": "variacao", "pct": True, "unidade": "US$ por pessoa (valores de 2015)", "casas": 0,
@@ -106,6 +106,15 @@ INDICADORES = [
     {"id": "endividamento", "nome": "Endividamento das famílias", "area": "Juros e dívidas", "fonte": "bcb", "codigo": 29037,
      "melhor": "menor", "tipo": "variacao", "unidade": "% da renda de um ano", "casas": 1,
      "explica": "Quanto as famílias devem aos bancos em relação ao que ganham em 12 meses. Série começa em 2005."},
+    {"id": "arrecadacao", "nome": "Impostos e contribuições", "area": "Contas públicas", "fonte": "imf", "codigo": "GGR_NGDP",
+     "melhor": "menor", "tipo": "variacao", "unidade": "% do PIB arrecadado pelo governo", "casas": 1,
+     "explica": "Tudo o que União, estados e municípios arrecadam, em proporção da economia. Quando sobe, cada brasileiro entrega uma fatia maior do que produz, seja por imposto novo, aumento de alíquota ou arrecadação maior."},
+    {"id": "gasto_total", "nome": "Gasto público total", "area": "Contas públicas", "fonte": "imf", "codigo": "GGX_NGDP",
+     "melhor": "neutro", "tipo": "variacao", "unidade": "% do PIB gasto pelo governo", "casas": 1,
+     "explica": "Tudo o que União, estados e municípios gastam, em proporção da economia. Não recebe selo de melhor ou pior: gastar mais ou menos depende do retorno, que você compara com os outros indicadores."},
+    {"id": "divida", "nome": "Dívida pública", "area": "Contas públicas", "fonte": "imf", "codigo": "GGXWDG_NGDP",
+     "melhor": "menor", "tipo": "variacao", "unidade": "% do PIB", "casas": 1,
+     "explica": "Dívida bruta de União, estados e municípios. Dívida maior significa mais juros pagos com dinheiro de impostos."},
     {"id": "homicidios", "nome": "Homicídios", "area": "Segurança", "fonte": "wb", "codigo": "VC.IHR.PSRC.P5",
      "melhor": "menor", "tipo": "variacao", "unidade": "por 100 mil habitantes", "casas": 1,
      "explica": "Assassinatos por 100 mil habitantes. Segurança pública também depende muito dos estados."},
@@ -162,6 +171,13 @@ def serie_bcb(codigo, inicio="01/01/1990"):
     return out
 
 
+def serie_imf(codigo):
+    """FMI (World Economic Outlook). Descarta o ano corrente e projeções."""
+    j = json.loads(baixar(f"https://www.imf.org/external/datamapper/api/v1/{codigo}/BRA"))
+    vals = j.get("values", {}).get(codigo, {}).get("BRA", {})
+    return {int(a): float(v) for a, v in vals.items() if v is not None and int(a) < HOJE.year and int(a) >= ANO_INICIAL}
+
+
 def anual_ultimo_mes(mensal):
     """Valor de dezembro (ou do último mês disponível no ano)."""
     out = {}
@@ -197,6 +213,8 @@ def coletar():
         try:
             if ind["fonte"] == "wb":
                 br, lat = serie_wb(ind["codigo"])
+            elif ind["fonte"] == "imf":
+                br, lat = serie_imf(ind["codigo"]), {}
             elif ind["fonte"] == "bcb":
                 br, lat = anual_ultimo_mes(serie_bcb(ind["codigo"], "01/01/2005")), {}
                 # o último ano só conta se já tiver dezembro
@@ -240,7 +258,9 @@ def medir(ind, serie, regiao, m):
         r["entregou"] = {"ano": af, "valor": vf}
         dif = vf - vb
         tolerancia = max(abs(vb) * 0.01, 10 ** -ind.get("casas", 1) / 2)
-        if abs(dif) < tolerancia:
+        if ind["melhor"] == "neutro":
+            pass
+        elif abs(dif) < tolerancia:
             r["veredito"] = "igual"
         else:
             r["veredito"] = "melhor" if (dif < 0) == (ind["melhor"] == "menor") else "pior"
@@ -268,6 +288,8 @@ def medir(ind, serie, regiao, m):
         base_metrica = r["variacao_pct"] if ind.get("pct") and vb else r["variacao"]
         por_ano = base_metrica / anos
         r["metrica"] = -por_ano if ind["melhor"] == "menor" else por_ano
+        if ind["melhor"] == "neutro":
+            r["metrica"] = None
         if ab in regiao and af in regiao:
             rv = regiao[af] - regiao[ab]
             r["regiao"] = {"inicio": regiao[ab], "fim": regiao[af], "variacao": rv,
@@ -292,6 +314,10 @@ def main():
             if r:
                 m["indicadores"][ind["id"]] = r
                 medidos.append(r)
+        if ind["melhor"] == "neutro":
+            for r in medidos:
+                r.pop("metrica", None)
+            continue
         ordem = sorted(medidos, key=lambda r: -r["metrica"])
         n = len(ordem)
         for pos, r in enumerate(ordem, 1):
@@ -313,7 +339,7 @@ def main():
         "atualizado": dt.datetime.now(dt.timezone(dt.timedelta(hours=-3))).strftime("%Y-%m-%d %H:%M"),
         "areas": AREAS,
         "indicadores": [{k: v for k, v in i.items() if k not in ("fonte", "codigo")} |
-                        {"fonte": "Banco Mundial" if i["fonte"] == "wb" else "Banco Central do Brasil"}
+                        {"fonte": {"wb": "Banco Mundial", "imf": "FMI (World Economic Outlook)"}.get(i["fonte"], "Banco Central do Brasil")}
                         for i in INDICADORES],
         # gráficos a partir de 1994 (inflação a partir de 1995, para a hiperinflação não achatar o resto da série)
         "series": {k: {"brasil": sorted((a, x) for a, x in v[0].items() if a >= (1995 if k == "inflacao" else 1994)),

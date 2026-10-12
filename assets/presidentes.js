@@ -41,7 +41,75 @@
     </a></li>`).join('');
   }
 
+  // cor contínua da nota: vermelho (0) → amarelo (50) → verde (100)
+  const corNota = n => n == null ? 'var(--line)' : n >= 67 ? 'var(--good)' : n >= 34 ? 'var(--warn)' : 'var(--bad)';
+  const opNota = n => n == null ? 1 : n >= 67 ? .45 + (n - 67) / 33 * .55 : n >= 34 ? .75 : .45 + (33 - n) / 33 * .55;
+
+  function mapa() {
+    const ms = D.mandatos, inds = D.indicadores.filter(i => i.melhor !== 'neutro');
+    let h = `<thead><tr><th></th>${ms.map(m => `<th><a href="presidente.html?id=${m.id}">${esc(m.sigla || m.curto)}${m.em_andamento ? '*' : ''}</a></th>`).join('')}</tr></thead><tbody>`;
+    D.areas.forEach(a => {
+      const linhas = inds.filter(i => i.area === a); if (!linhas.length) return;
+      h += `<tr class="hmarea"><th colspan="${ms.length + 1}">${esc(a)}</th></tr>`;
+      linhas.forEach(ind => {
+        h += `<tr><th>${esc(ind.nome)}</th>${ms.map(m => {
+          const r = m.indicadores[ind.id], n = r ? r.nota : null;
+          const tip = r ? `${m.sigla}: ${ind.nome} — ${r.posicao ? (r.posicao === 1 ? 'melhor' : r.posicao === r.total ? 'pior' : r.posicao + 'º melhor') + ' de ' + r.total : 'sem comparação'}` : `${m.sigla}: sem dados`;
+          return `<td title="${esc(tip)}"><span style="background:${corNota(n)};opacity:${opNota(n)}"></span></td>`;
+        }).join('')}</tr>`;
+      });
+    });
+    $('hm').innerHTML = h + '</tbody>';
+  }
+
+  function duelo() {
+    const A = D.mandatos.find(m => m.id === $('dA').value), B = D.mandatos.find(m => m.id === $('dB').value);
+    if (!A || !B) return;
+    let va = 0, vb = 0;
+    const linha = (ind) => {
+      const ra = A.indicadores[ind.id], rb = B.indicadores[ind.id];
+      if (!ra && !rb) return '';
+      const neutro = ind.melhor === 'neutro';
+      let w = '';
+      if (!neutro && ra && rb && ra.nota != null && rb.nota != null && ra.nota !== rb.nota) { w = ra.nota > rb.nota ? 'a' : 'b'; w === 'a' ? va++ : vb++; }
+      const cel = (r, lado) => {
+        if (!r) return `<div class="dc nd">sem dados</div>`;
+        const ini = r.recebeu ? fmt(r.recebeu.valor, ind.casas) : '–', fim = r.entregou ? fmt(r.entregou.valor, ind.casas) : '–';
+        const media = r.media != null ? `<small>média ${fmt(r.media, ind.casas)}</small>` : '';
+        const vc = { melhor: 'good', pior: 'bad', igual: 'nd' }[r.veredito] || 'nd';
+        return `<div class="dc ${w === lado ? 'win' : ''}"><span class="num">${ini} → ${fim}</span>${media}${r.veredito ? `<span class="tag v-${vc}">${r.veredito === 'melhor' ? 'Melhorou' : r.veredito === 'pior' ? 'Piorou' : 'Igual'}</span>` : ''}</div>`;
+      };
+      return `<div class="drow"><div class="dn">${esc(ind.nome)}<small>${esc(ind.unidade)}${neutro ? ' · sem selo' : ''}</small></div>${cel(ra, 'a')}${cel(rb, 'b')}</div>`;
+    };
+    let corpo = '';
+    D.areas.forEach(a => {
+      const rows = D.indicadores.filter(i => i.area === a).map(linha).join('');
+      if (rows) corpo += `<div class="label dlab">${esc(a)}</div>${rows}`;
+    });
+    const nome = m => `${esc(m.sigla)} <small>${periodo(m)}</small>`;
+    const tot = va + vb;
+    $('dres').innerHTML = `<div class="dplacar">
+        <div class="dp ${va > vb ? 'lead' : ''}"><span class="dpn">${nome(A)}</span><span class="dpv num">${va}</span></div>
+        <div class="dp ${vb > va ? 'lead' : ''}"><span class="dpn">${nome(B)}</span><span class="dpv num">${vb}</span></div>
+      </div>
+      <div class="dbar" aria-hidden="true"><i style="width:${tot ? va / tot * 100 : 50}%"></i><i style="width:${tot ? vb / tot * 100 : 50}%"></i></div>
+      <p class="note">Indicadores em que cada governo teve o melhor resultado na comparação entre todos os mandatos. ${A.em_andamento || B.em_andamento ? 'Mandato em andamento ainda tem dados parciais. ' : ''}Cada linha mostra como o governo recebeu → como entregou.</p>
+      <div class="dhead"><span></span><span>${esc(A.sigla)}</span><span>${esc(B.sigla)}</span></div>${corpo}`;
+  }
+
+  function iniciarDuelo() {
+    const curto = m => `${anoDe(m.inicio).slice(2)}–${m.termino ? anoDe(m.termino).slice(2) : 'hoje'}`;
+    const opts = D.mandatos.map(m => `<option value="${m.id}">${esc(m.sigla)} ${curto(m)}</option>`).join('');
+    $('dA').innerHTML = opts; $('dB').innerHTML = opts;
+    const n = D.mandatos.length;
+    $('dA').value = D.mandatos[n - 2].id; $('dB').value = D.mandatos[n - 1].id;
+    $('dA').addEventListener('change', duelo); $('dB').addEventListener('change', duelo);
+    duelo();
+  }
+
   function iniciarLista() {
+    iniciarDuelo();
+    mapa();
     const sel = $('areasel');
     sel.innerHTML = [['', 'Linha do tempo'], ...D.areas.map(a => [a, a])]
       .map(([v, t], i) => `<button type="button" data-a="${esc(v)}" aria-pressed="${i === 0}">${esc(t)}</button>`).join('');
@@ -117,10 +185,10 @@
       <p class="meta">Cada linha compara o último ano antes da posse com o último ano no cargo.</p></div>
       ${placarTxt(m)}
       ${D.areas.map(a => {
-        const linhas = D.indicadores.filter(x => x.area === a && m.indicadores[x.id] && m.indicadores[x.id].veredito);
+        const linhas = D.indicadores.filter(x => x.area === a && m.indicadores[x.id] && m.indicadores[x.id].recebeu);
         if (!linhas.length) return '';
         return `<div class="troca"><div class="label">${esc(a)}</div>${linhas.map(ind => {
-          const r = m.indicadores[ind.id], [vc, vt] = VER[r.veredito];
+          const r = m.indicadores[ind.id], [vc, vt] = VER[r.veredito] || ['nd', 'Sem selo'];
           return `<div class="trow"><span class="tn">${esc(ind.nome.replace(/ médi[oa]s?$/, ''))}<small>${esc(ind.unidade)}</small></span>
             <span class="tv num"><small>${r.recebeu.ano}</small>${fmt(r.recebeu.valor, ind.casas)}</span>
             <span class="ta" aria-hidden="true">→</span>
