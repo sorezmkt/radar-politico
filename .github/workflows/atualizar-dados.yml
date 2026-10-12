@@ -33,6 +33,11 @@ jobs:
           LIMITE_CNPJ: ${{ github.event_name == 'push' && '600' || '3000' }}
         run: python scripts/build_data.py
 
+      - name: Indicadores dos presidentes (Banco Mundial e Banco Central)
+        if: always()
+        continue-on-error: true
+        run: python scripts/build_presidentes.py
+
       - name: Salvar dados no repositório
         if: always()
         run: |
@@ -50,7 +55,7 @@ jobs:
       - name: Preparar site
         run: |
           mkdir -p _site
-          cp -r index.html deputado.html assets data .nojekyll _site/
+          cp -r index.html deputado.html presidentes.html presidente.html assets data .nojekyll _site/
 
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Presidente · Radar Político</title>
+<meta name="description" content="Indicadores oficiais que afetam a vida da população, medidos no início e no fim de cada mandato presidencial desde 1995.">
+<meta property="og:title" content="Radar Político">
+<meta property="og:description" content="Indicadores oficiais que afetam a vida da população, medidos no início e no fim de cada mandato presidencial desde 1995.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'%3E%3Ccircle cx='17' cy='17' r='15' fill='none' stroke='%231F3FA8' stroke-width='3'/%3E%3Cpath d='M17 17 L28 9' stroke='%231F3FA8' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='17' cy='17' r='3' fill='%231F3FA8'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="./">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="15" fill="none" stroke="var(--accent)" stroke-width="2.5"/><circle cx="17" cy="17" r="8" fill="none" stroke="var(--accent)" stroke-width="2" opacity=".55"/><path d="M17 17 L28 9" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/><circle cx="17" cy="17" r="2.6" fill="var(--accent)"/></svg>
+      <h1>Radar Político</h1>
+    </a>
+    <span class="upd" id="upd"></span>
+  </header>
+  <nav class="secoes" aria-label="Seções"><a href="./">Deputados</a><a href="presidentes.html" aria-current="page">Presidentes</a></nav>
+
+  <a class="back" href="presidentes.html">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    Todos os presidentes
+  </a>
+
+  <div class="card empty" id="loading">Carregando dados…</div>
+
+  <div id="perfil" class="stack" hidden>
+    <section class="card">
+      <div>
+        <h2 class="pnome" id="pnome"></h2>
+        <div class="meta" id="pmeta"></div>
+      </div>
+      <div id="pnota"></div>
+      <div>
+        <div class="label">Contexto do período</div>
+        <ul class="contexto" id="pctx"></ul>
+      </div>
+      <div class="areagrid" id="pareas"></div>
+    </section>
+    <div id="pinds" class="stack"></div>
+    <nav class="pnav" id="pnav"></nav>
+  </div>
+
+  <footer>Radar Político · projeto independente, sem vínculo com partidos ou governos.</footer>
+</div>
+<script src="assets/presidentes.js"></script>
+</body>
+</html>
