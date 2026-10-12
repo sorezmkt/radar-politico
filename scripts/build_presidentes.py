@@ -83,59 +83,35 @@ MANDATOS = [
 # --------------------------------------------------------------------- indicadores
 # tipo "variacao": compara o ano antes da posse com o último ano no cargo
 # tipo "media": média dos anos no cargo (para inflação e juros, o nível importa mais que a mudança)
-AREAS = ["Economia", "Trabalho", "Juros e dívidas", "Contas públicas", "Segurança", "Saúde", "Educação", "Social"]
+AREAS = ["No bolso", "Juros e dívidas", "Emprego", "Segurança", "Impostos"]
 INDICADORES = [
-    {"id": "pib_pc", "nome": "PIB por habitante", "area": "Economia", "fonte": "wb", "codigo": "NY.GDP.PCAP.KD",
-     "melhor": "maior", "tipo": "variacao", "pct": True, "unidade": "US$ por pessoa (valores de 2015)", "casas": 0,
-     "explica": "Riqueza produzida no país dividida pela população, descontada a inflação."},
-    {"id": "ocupacao", "nome": "Pessoas trabalhando", "area": "Trabalho", "fonte": "wb", "codigo": "SL.EMP.TOTL.SP.ZS",
-     "melhor": "maior", "tipo": "variacao", "unidade": "% da população com 15 anos ou mais", "casas": 1,
-     "explica": "De todas as pessoas em idade de trabalhar, quantas estão de fato trabalhando. Não depende de quem está ou não procurando emprego, por isso é difícil de distorcer."},
-    {"id": "desemprego", "nome": "Desemprego oficial", "area": "Trabalho", "fonte": "wb", "codigo": "SL.UEM.TOTL.ZS",
-     "melhor": "menor", "tipo": "variacao", "unidade": "% de quem trabalha ou procura trabalho", "casas": 1,
-     "explica": "Conta só quem procurou emprego e não achou. Quem desistiu de procurar fica fora da conta, por isso vale olhar junto com a taxa de pessoas trabalhando."},
-    {"id": "vulneravel", "nome": "Trabalho precário", "area": "Trabalho", "fonte": "wb", "codigo": "SL.EMP.VULN.ZS",
-     "melhor": "menor", "tipo": "variacao", "unidade": "% de quem trabalha", "casas": 1,
-     "explica": "Quem trabalha por conta própria ou ajuda a família sem salário, em geral sem carteira, férias ou aposentadoria garantida."},
-    {"id": "inflacao", "nome": "Inflação média", "area": "Economia", "fonte": "wb", "codigo": "FP.CPI.TOTL.ZG",
+    {"id": "salario_minimo", "nome": "Poder de compra do salário mínimo", "area": "No bolso", "fonte": "bcb_sm",
+     "melhor": "maior", "tipo": "variacao", "pct": True, "unidade": "R$ por mês, em valores de hoje", "casas": 0,
+     "explica": "Quanto o salário mínimo compraria hoje, descontada toda a inflação desde então. Mostra se o mínimo ganhou ou perdeu poder de compra."},
+    {"id": "inflacao", "nome": "Inflação", "area": "No bolso", "fonte": "bcb_ipca", "codigo": 433,
+     "melhor": "menor", "tipo": "media", "unidade": "% ao ano (IPCA)", "casas": 1,
+     "explica": "Quanto os preços subiram por ano, em média, durante o mandato."},
+    {"id": "comida", "nome": "Preço da comida", "area": "No bolso", "fonte": "bcb_ipca", "codigo": 1635,
+     "melhor": "menor", "tipo": "media", "unidade": "% ao ano (alimentos e bebidas)", "casas": 1,
+     "explica": "Quanto a comida subiu por ano, em média. Pesa mais para quem ganha menos, porque boa parte da renda vai para o mercado."},
+    {"id": "tarifas", "nome": "Contas e tarifas", "area": "No bolso", "fonte": "bcb_ipca", "codigo": 4449,
+     "melhor": "menor", "tipo": "media", "unidade": "% ao ano (preços monitorados)", "casas": 1,
+     "explica": "Alta média de preços que dependem de decisão ou regra do governo: gasolina, conta de luz, água, gás de cozinha, ônibus, remédios e planos de saúde."},
+    {"id": "selic", "nome": "Juros básicos (Selic)", "area": "Juros e dívidas", "fonte": "bcb_selic",
      "melhor": "menor", "tipo": "media", "unidade": "% ao ano", "casas": 1,
-     "explica": "Alta média dos preços ao consumidor por ano durante o mandato."},
-    {"id": "juros_reais", "nome": "Juros reais médios", "area": "Juros e dívidas", "fonte": "bcb_juros",
-     "melhor": "menor", "tipo": "media", "unidade": "% ao ano acima da inflação", "casas": 1,
-     "explica": "Taxa Selic descontada a inflação (IPCA). Juro real alto encarece crédito e dívidas."},
-    {"id": "endividamento", "nome": "Endividamento das famílias", "area": "Juros e dívidas", "fonte": "bcb", "codigo": 29037,
-     "melhor": "menor", "tipo": "variacao", "unidade": "% da renda de um ano", "casas": 1,
+     "explica": "Média da taxa Selic em todo o mandato. Ela puxa os juros do cartão, do crediário, do empréstimo e do financiamento."},
+    {"id": "endividamento", "nome": "Famílias endividadas", "area": "Juros e dívidas", "fonte": "bcb", "codigo": 29037,
+     "melhor": "menor", "tipo": "variacao", "unidade": "% da renda de um ano devida aos bancos", "casas": 1,
      "explica": "Quanto as famílias devem aos bancos em relação ao que ganham em 12 meses. Série começa em 2005."},
-    {"id": "arrecadacao", "nome": "Impostos e contribuições", "area": "Contas públicas", "fonte": "imf", "codigo": "rev",
-     "melhor": "menor", "tipo": "variacao", "unidade": "% do PIB arrecadado pelo governo", "casas": 1,
-     "explica": "Tudo o que União, estados e municípios arrecadam, em proporção da economia. Quando sobe, cada brasileiro entrega uma fatia maior do que produz, seja por imposto novo, aumento de alíquota ou arrecadação maior."},
-    {"id": "gasto_total", "nome": "Gasto público total", "area": "Contas públicas", "fonte": "imf", "codigo": "exp",
-     "melhor": "neutro", "tipo": "variacao", "unidade": "% do PIB gasto pelo governo", "casas": 1,
-     "explica": "Tudo o que União, estados e municípios gastam, em proporção da economia. Não recebe selo de melhor ou pior: gastar mais ou menos depende do retorno, que você compara com os outros indicadores."},
-    {"id": "divida", "nome": "Dívida pública", "area": "Contas públicas", "fonte": "imf", "codigo": "GGXWDG_NGDP",
-     "melhor": "menor", "tipo": "variacao", "unidade": "% do PIB", "casas": 1,
-     "explica": "Dívida bruta de União, estados e municípios. Dívida maior significa mais juros pagos com dinheiro de impostos."},
+    {"id": "carteira", "nome": "Trabalhadores com carteira assinada", "area": "Emprego", "fonte": "sidra_carteira",
+     "melhor": "maior", "tipo": "variacao", "unidade": "% de quem trabalha", "casas": 1,
+     "explica": "Dos brasileiros que trabalham, quantos são empregados de empresas privadas com carteira assinada. Não conta trabalho informal nem por conta própria. Pesquisa do IBGE que começou em 2012, então os mandatos anteriores ficam sem esse dado."},
     {"id": "homicidios", "nome": "Homicídios", "area": "Segurança", "fonte": "wb", "codigo": "VC.IHR.PSRC.P5",
      "melhor": "menor", "tipo": "variacao", "unidade": "por 100 mil habitantes", "casas": 1,
-     "explica": "Assassinatos por 100 mil habitantes. Segurança pública também depende muito dos estados."},
-    {"id": "mort_infantil", "nome": "Mortalidade infantil", "area": "Saúde", "fonte": "wb", "codigo": "SP.DYN.IMRT.IN",
-     "melhor": "menor", "tipo": "variacao", "unidade": "mortes por mil nascidos vivos", "casas": 1,
-     "explica": "Bebês que morrem antes de completar 1 ano."},
-    {"id": "gasto_saude", "nome": "Gasto público em saúde por habitante", "area": "Saúde", "fonte": "wb", "codigo": "SH.XPD.GHED.PP.CD",
-     "melhor": "maior", "tipo": "variacao", "pct": True, "unidade": "US$ por pessoa (paridade de poder de compra)", "casas": 0,
-     "explica": "Quanto governo federal, estados e municípios gastam com saúde por pessoa. Série começa em 2000."},
-    {"id": "gasto_educ", "nome": "Gasto público em educação", "area": "Educação", "fonte": "wb", "codigo": "SE.XPD.TOTL.GD.ZS",
-     "melhor": "maior", "tipo": "variacao", "unidade": "% do PIB", "casas": 1,
-     "explica": "Gasto de todos os níveis de governo com educação, em proporção da economia."},
-    {"id": "ensino_medio", "nome": "Jovens no ensino médio", "area": "Educação", "fonte": "wb", "codigo": "SE.SEC.NENR",
-     "melhor": "maior", "tipo": "variacao", "unidade": "% matriculados na idade certa", "casas": 1,
-     "explica": "Taxa líquida de matrícula no ensino secundário (fundamental II e médio)."},
-    {"id": "pobreza", "nome": "Pobreza extrema", "area": "Social", "fonte": "wb", "codigo": "SI.POV.DDAY",
-     "melhor": "menor", "tipo": "variacao", "unidade": "% da população", "casas": 1,
-     "explica": "Pessoas vivendo com menos de US$ 2,15 por dia (linha internacional do Banco Mundial)."},
-    {"id": "gini", "nome": "Desigualdade de renda", "area": "Social", "fonte": "wb", "codigo": "SI.POV.GINI",
-     "melhor": "menor", "tipo": "variacao", "unidade": "índice de Gini, de 0 a 100", "casas": 1,
-     "explica": "Quanto maior, mais concentrada é a renda."},
+     "explica": "Assassinatos por 100 mil habitantes, a partir dos atestados de óbito. Segurança pública também depende muito dos governos estaduais."},
+    {"id": "impostos", "nome": "Peso dos impostos", "area": "Impostos", "fonte": "imf", "codigo": "rev",
+     "melhor": "menor", "tipo": "variacao", "unidade": "% de tudo o que o país produz", "casas": 1,
+     "explica": "Quanto União, estados e municípios arrecadam em impostos e contribuições, em proporção da economia. Sobe quando se cria imposto, aumenta alíquota ou a arrecadação cresce."},
 ]
 
 # --------------------------------------------------------------------- coleta
@@ -207,6 +183,69 @@ def juros_reais():
     return out
 
 
+def _por_ano(mensal, desde=(1994, 7)):
+    anos = {}
+    for a, m, v in mensal:
+        if (a, m) >= desde:
+            anos.setdefault(a, []).append((m, v))
+    return anos
+
+
+def ipca_anual(codigo):
+    """Variação acumulada no ano (só anos completos), a partir de uma série mensal do IPCA ou de um grupo dele."""
+    out = {}
+    for a, meses in _por_ano(serie_bcb(codigo, "01/01/1994"), (1995, 1)).items():
+        if len(meses) < 12:
+            continue
+        f = 1.0
+        for _, v in meses:
+            f *= 1 + v / 100
+        out[a] = round((f - 1) * 100, 2)
+    return out
+
+
+def selic_anual():
+    """Média da Selic (anualizada) nos meses de cada ano completo."""
+    out = {}
+    for a, meses in _por_ano(serie_bcb(4189, "01/01/1994"), (1994, 7)).items():
+        if len(meses) == 12 or (a == 1994 and len(meses) == 6):
+            out[a] = round(sum(v for _, v in meses) / len(meses), 2)
+    return out
+
+
+def salario_minimo_real():
+    """Salário mínimo de cada ano em reais de hoje (corrigido pelo IPCA até o último mês disponível)."""
+    sm = {(a, m): v for a, m, v in serie_bcb(1619, "01/07/1994")}
+    ipca = sorted((a, m, v) for a, m, v in serie_bcb(433, "01/07/1994"))
+    indice, acc = {}, 1.0
+    for a, m, v in ipca:
+        acc *= 1 + v / 100
+        indice[(a, m)] = acc
+    ultimo = indice[max(indice)]
+    out = {}
+    for a, meses in _por_ano([(a, m, v) for (a, m), v in sm.items()], (1994, 7)).items():
+        reais = [v * ultimo / indice[(a, m)] for m, v in meses if (a, m) in indice]
+        if len(reais) == 12 or (a == 1994 and len(reais) == 6):
+            out[a] = round(sum(reais) / len(reais), 2)
+    return out
+
+
+def carteira_assinada():
+    """IBGE, PNAD Contínua (tabela 4097): % dos ocupados que são empregados do setor privado com carteira. Média dos 4 trimestres."""
+    url = "https://apisidra.ibge.gov.br/values/t/4097/n1/all/v/4108/p/all/c11913/31722?formato=json"
+    linhas = json.loads(baixar(url))
+    por_ano = {}
+    for row in linhas[1:]:
+        per = next((str(v) for k, v in row.items() if k.endswith("C") and str(v).isdigit() and len(str(v)) == 6), None)
+        try:
+            val = float(row.get("V"))
+        except (TypeError, ValueError):
+            continue
+        if per:
+            por_ano.setdefault(int(per[:4]), []).append(val)
+    return {a: round(sum(v) / len(v), 2) for a, v in por_ano.items() if len(v) == 4}
+
+
 def coletar():
     series = {}
     for ind in INDICADORES:
@@ -220,6 +259,14 @@ def coletar():
                 # o último ano só conta se já tiver dezembro
                 if br and max(br) == HOJE.year:
                     br.pop(max(br))
+            elif ind["fonte"] == "bcb_ipca":
+                br, lat = ipca_anual(ind["codigo"]), {}
+            elif ind["fonte"] == "bcb_selic":
+                br, lat = selic_anual(), {}
+            elif ind["fonte"] == "bcb_sm":
+                br, lat = salario_minimo_real(), {}
+            elif ind["fonte"] == "sidra_carteira":
+                br, lat = carteira_assinada(), {}
             else:
                 br, lat = juros_reais(), {}
             if not br:
