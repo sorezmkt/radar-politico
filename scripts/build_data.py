@@ -479,6 +479,20 @@ def meses_entre(a, b):
     return (b.year - a.year) * 12 + (b.month - a.month) + (b.day - a.day) / 30.0
 
 
+def metricas_padrao(c):
+    """Concentração e notas redondas repetidas de um deputado (antes de comparar com a Câmara)."""
+    conc_base, conc_por_forn, redondos = 0.0, {}, 0
+    for chave, f in c["forn"].items():
+        v_conc = sum(v for k, v in f["cats"].items() if k not in SEM_CONCENTRACAO)
+        conc_base += v_conc
+        conc_por_forn[chave] = v_conc
+        redondos += sum(n for n in f["redondos"].values() if n >= 3)
+    share = None
+    if conc_base >= 20000:
+        share = 100 * max(conc_por_forn.values()) / conc_base
+    return conc_base, conc_por_forn, share, redondos
+
+
 def main():
     os.makedirs(DEP_DIR, exist_ok=True)
     deps = carregar_deputados()
@@ -526,6 +540,16 @@ def main():
         "efet_p75": percentil(efet_vals, 0.75) if efet_vals else None,
     }
 
+    # limites dos sinais de risco calibrados pela própria Câmara: amarelo acima de 75% dos deputados, vermelho acima de 90%
+    metr = {did: metricas_padrao(c) for did, c in cota.items()}
+    shares = [m[2] for m in metr.values() if m[2] is not None]
+    reds = [m[3] for m in metr.values()]
+    lim = {
+        "conc_warn": max(25.0, percentil(shares, 0.75) or 25.0), "conc_bad": max(40.0, percentil(shares, 0.9) or 40.0),
+        "red_warn": max(3, percentil(reds, 0.75) or 3), "red_bad": max(6, percentil(reds, 0.9) or 6),
+    }
+    ref["limites_risco"] = {k: round(v, 1) for k, v in lim.items()}
+
     pesos = {"pres": 0.3, "econ": 0.3, "prod": 0.2, "efet": 0.2}
     if not presenca:
         pesos.pop("pres")
@@ -545,12 +569,8 @@ def main():
         medio = total / meses_ativos if meses_ativos else 0
 
         # fornecedores
-        fornecedores, conc_base, conc_por_forn, redondos = [], 0.0, {}, 0
-        for chave, f in c["forn"].items():
-            v_conc = sum(v for k, v in f["cats"].items() if k not in SEM_CONCENTRACAO)
-            conc_base += v_conc
-            conc_por_forn[chave] = v_conc
-            redondos += sum(n for n in f["redondos"].values() if n >= 3)
+        fornecedores = []
+        conc_base, conc_por_forn, share, redondos = metr[did]
         for chave, f in sorted(c["forn"].items(), key=lambda kv: -kv[1]["valor"])[:10]:
             if f["valor"] <= 0:
                 continue
@@ -578,22 +598,22 @@ def main():
                             item["flags"].append(f"aberta {round(meses)} meses antes do 1º pagamento")
                 if item["situacao"] and item["situacao"] not in ("ATIVA", "NAO ENCONTRADO"):
                     item["flags"].append(f"CNPJ com situação {item['situacao'].lower()}")
-            if conc_base >= 20000 and conc_por_forn[chave] / conc_base >= 0.4:
+            if conc_base >= 20000 and 100 * conc_por_forn[chave] / conc_base >= lim["conc_bad"]:
                 item["flags"].append("concentração")
-            if sum(n for n in f["redondos"].values() if n >= 3) >= 3:
+            if sum(n for n in f["redondos"].values() if n >= 3) >= lim["red_warn"]:
                 item["flags"].append("valores repetidos")
             fornecedores.append(item)
 
         # sinais de risco
         checks = []
-        if conc_base >= 20000:
+        if share is not None:
             chave_top = max(conc_por_forn, key=conc_por_forn.get)
-            share = 100 * conc_por_forn[chave_top] / conc_base
             ftop = c["forn"][chave_top]
             nome_top = "uma pessoa física" if len(ftop["doc"]) == 11 else ftop["nome"]
-            st = "bad" if share >= 40 else "warn" if share >= 25 else "good"
+            st = "bad" if share >= lim["conc_bad"] else "warn" if share >= lim["conc_warn"] else "good"
+            comp = {"bad": "Acima de 90% dos deputados.", "warn": "Acima de 75% dos deputados.", "good": "Dentro do padrão da Câmara."}[st]
             checks.append({"id": "concentracao", "titulo": "Concentração em um fornecedor", "status": st,
-                           "texto": f"{share:.0f}% dos gastos com divulgação, consultorias, combustível e veículos foram para {nome_top}."})
+                           "texto": f"{share:.0f}% dos gastos com divulgação, consultorias, combustível, veículos e outros serviços foram para {nome_top}. {comp}"})
         else:
             checks.append({"id": "concentracao", "titulo": "Concentração em um fornecedor", "status": "nd",
                            "texto": "Gastos insuficientes nas categorias analisadas para avaliar."})
@@ -615,9 +635,10 @@ def main():
             for cid, tit in (("recem_aberta", "Empresa recém-aberta"), ("cnpj_irregular", "CNPJ irregular na Receita")):
                 checks.append({"id": cid, "titulo": tit, "status": "nd", "texto": "Fornecedores ainda não verificados na Receita."})
 
-        st = "bad" if redondos >= 6 else "warn" if redondos >= 3 else "good"
+        st = "bad" if redondos >= lim["red_bad"] else "warn" if redondos >= lim["red_warn"] else "good"
+        comp = {"bad": "Acima de 90% dos deputados.", "warn": "Acima de 75% dos deputados.", "good": "Dentro do padrão da Câmara."}[st]
         checks.append({"id": "valores_redondos", "titulo": "Notas de valor redondo repetido", "status": st,
-                       "texto": f"{redondos} notas com o mesmo valor exato e redondo (acima de R$ 1.000) para o mesmo fornecedor, em divulgação, consultoria ou combustível."
+                       "texto": f"{redondos} notas com o mesmo valor exato e redondo (acima de R$ 1.000) repetido 3 vezes ou mais no mesmo fornecedor, em divulgação, consultoria, combustível ou outros serviços. {comp}"
                        if redondos else "Nenhum padrão de valores redondos repetidos."})
         checks.append({"id": "doador", "titulo": "Fornecedor ligado a doador de campanha", "status": "breve",
                        "texto": "Cruzamento com as doações declaradas ao TSE em desenvolvimento."})
@@ -644,6 +665,8 @@ def main():
         validos = {k: v for k, v in s.items() if v is not None}
         peso_total = sum(pesos[k] for k in validos)
         nota = round(sum(validos[k] * pesos[k] for k in validos) / peso_total) if peso_total else None
+        if s.get("pres") is None and s.get("econ") is None:
+            nota = None  # recém-empossado ou sem atividade registrada: dados insuficientes para avaliar
 
         ficha = {
             **d, "teto": teto, "mensal": [round(v, 2) for v in c["mensal"]], "total": round(total, 2),
