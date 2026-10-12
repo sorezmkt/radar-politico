@@ -8,6 +8,8 @@
   const ordinal = n => `${n}º`;
 
   let D = null;
+  const ehResultado = a => !D.blocos || (D.blocos.find(b => b.nome === a) || {}).tipo === 'resultado';
+  const quando = x => x ? (x.rotulo || x.ano) : '';
 
   function areaBar(nome, nota) {
     return `<div class="abar"><span class="an">${esc(nome)}</span><span class="bar"><i style="width:${nota ?? 0}%;background:var(--${faixa(nota)})"></i></span><span class="av num">${nota ?? '–'}</span></div>`;
@@ -18,7 +20,7 @@
     const w = v => `${v / p.total * 100}%`;
     return `<div class="placar">
       <div class="pbar" aria-hidden="true"><i style="width:${w(p.melhor)};background:var(--good)"></i><i style="width:${w(p.igual)};background:var(--nd)"></i><i style="width:${w(p.pior)};background:var(--bad)"></i></div>
-      <p>Entregou o país <b style="color:var(--good)">melhor em ${p.melhor}</b>${p.igual ? `, igual em ${p.igual}` : ''} e <b style="color:var(--bad)">pior em ${p.pior}</b> de ${p.total} indicadores</p>
+      <p>Na vida da população, entregou o país <b style="color:var(--good)">melhor em ${p.melhor}</b>${p.igual ? `, igual em ${p.igual}` : ''} e <b style="color:var(--bad)">pior em ${p.pior}</b> de ${p.total} indicadores</p>
     </div>`;
   }
 
@@ -37,7 +39,7 @@
       ${placarTxt(m)}
       ${area
         ? `<div class="mbig">${areaBar(area, m.areas[area])}</div>`
-        : `<div class="mareas">${D.areas.map(a => areaBar(a, m.areas[a])).join('')}</div>`}
+        : `<div class="mareas">${D.areas.filter(ehResultado).map(a => areaBar(a, m.areas[a])).join('')}</div>`}
     </a></li>`).join('');
   }
 
@@ -48,8 +50,11 @@
   function mapa() {
     const ms = D.mandatos, inds = D.indicadores.filter(i => i.melhor !== 'neutro');
     let h = `<thead><tr><th></th>${ms.map(m => `<th><a href="presidente.html?id=${m.id}">${esc(m.sigla || m.curto)}${m.em_andamento ? '*' : ''}</a></th>`).join('')}</tr></thead><tbody>`;
+    let grupo = null;
     D.areas.forEach(a => {
       const linhas = inds.filter(i => i.area === a); if (!linhas.length) return;
+      const g = ehResultado(a) ? 'Resultados na vida da população' : 'Fatores que explicam os resultados';
+      if (g !== grupo) { grupo = g; h += `<tr class="hmgrupo"><th colspan="${ms.length + 1}">${g}</th></tr>`; }
       h += `<tr class="hmarea"><th colspan="${ms.length + 1}">${esc(a)}</th></tr>`;
       linhas.forEach(ind => {
         h += `<tr><th>${esc(ind.nome)}</th>${ms.map(m => {
@@ -71,7 +76,7 @@
       if (!ra && !rb) return '';
       const neutro = ind.melhor === 'neutro';
       let w = '';
-      if (!neutro && ra && rb && ra.nota != null && rb.nota != null && ra.nota !== rb.nota) { w = ra.nota > rb.nota ? 'a' : 'b'; w === 'a' ? va++ : vb++; }
+      if (!neutro && ra && rb && ra.nota != null && rb.nota != null && ra.nota !== rb.nota) { w = ra.nota > rb.nota ? 'a' : 'b'; if (ehResultado(ind.area)) w === 'a' ? va++ : vb++; }
       const cel = (r, lado) => {
         if (!r) return `<div class="dc nd">sem dados</div>`;
         const ini = r.recebeu ? fmt(r.recebeu.valor, ind.casas) : '–', fim = r.entregou ? fmt(r.entregou.valor, ind.casas) : '–';
@@ -81,10 +86,12 @@
       };
       return `<div class="drow"><div class="dn">${esc(ind.nome)}<small>${esc(ind.unidade)}${neutro ? ' · sem selo' : ''}</small></div>${cel(ra, 'a')}${cel(rb, 'b')}</div>`;
     };
-    let corpo = '';
+    let corpo = '', fatores = false;
     D.areas.forEach(a => {
       const rows = D.indicadores.filter(i => i.area === a).map(linha).join('');
-      if (rows) corpo += `<div class="label dlab">${esc(a)}</div>${rows}`;
+      if (!rows) return;
+      if (!ehResultado(a) && !fatores) { fatores = true; corpo += `<div class="dgrupo">Fatores que explicam os resultados <small>não contam no placar</small></div>`; }
+      corpo += `<div class="label dlab">${esc(a)}</div>${rows}`;
     });
     const nome = m => `${esc(m.sigla)} <small>${periodo(m)}</small>`;
     const tot = va + vb;
@@ -93,7 +100,7 @@
         <div class="dp ${vb > va ? 'lead' : ''}"><span class="dpn">${nome(B)}</span><span class="dpv num">${vb}</span></div>
       </div>
       <div class="dbar" aria-hidden="true"><i style="width:${tot ? va / tot * 100 : 50}%"></i><i style="width:${tot ? vb / tot * 100 : 50}%"></i></div>
-      <p class="note">Indicadores em que cada governo teve o melhor resultado na comparação entre todos os mandatos. ${A.em_andamento || B.em_andamento ? 'Mandato em andamento ainda tem dados parciais. ' : ''}Cada linha mostra como o governo recebeu → como entregou.</p>
+      <p class="note">Indicadores de poder de compra, emprego e renda, e pobreza em que cada governo teve o melhor resultado na comparação entre todos os mandatos. ${A.em_andamento || B.em_andamento ? 'Mandato em andamento ainda tem dados parciais. ' : ''}Cada linha mostra como o governo recebeu → como entregou.</p>
       <div class="dhead"><span></span><span>${esc(A.sigla)}</span><span>${esc(B.sigla)}</span></div>${corpo}`;
   }
 
@@ -151,13 +158,14 @@
     const bom = r.nota != null ? faixa(r.nota) : 'nd';
     let corpo;
     if (r.media != null) {
-      corpo = `<div class="ival"><span class="num big2">${fmt(r.media, ind.casas)}</span><span class="meta">${esc(ind.unidade)}, média de ${r.anos[0]}${r.anos[1] !== r.anos[0] ? ' a ' + r.anos[1] : ''}</span></div>`;
+      corpo = `<div class="ival"><span class="num big2">${fmt(r.media, ind.casas)}</span><span class="meta">${esc(ind.unidade)}, ${r.media_rotulo ? esc(r.media_rotulo) : 'média de ' + r.anos[0] + (r.anos[1] !== r.anos[0] ? ' a ' + r.anos[1] : '')}</span></div>`;
+      if (r.entregou && r.entregou.rotulo) corpo += `<p class="cmp">Dado mais recente: <b class="num">${fmt(r.entregou.valor, ind.casas)}</b> (${esc(r.entregou.rotulo)})</p>`;
       if (r.regiao_media != null) corpo += `<p class="cmp">América Latina e Caribe no mesmo período: <b class="num">${fmt(r.regiao_media, ind.casas)}</b></p>`;
     } else {
       const sub = r.variacao < 0;
       const melhorou = ind.melhor === 'menor' ? sub : !sub;
       const pct = r.variacao_pct != null ? ` (${r.variacao_pct > 0 ? '+' : ''}${fmt(r.variacao_pct, 0)}%)` : '';
-      corpo = `<div class="ival"><span class="num big2">${fmt(r.inicio.valor, ind.casas)} → ${fmt(r.fim.valor, ind.casas)}</span><span class="meta">${esc(ind.unidade)}, de ${r.inicio.ano} a ${r.fim.ano}</span></div>
+      corpo = `<div class="ival"><span class="num big2">${fmt(r.inicio.valor, ind.casas)} → ${fmt(r.fim.valor, ind.casas)}</span><span class="meta">${esc(ind.unidade)}, de ${r.inicio.ano} a ${r.entregou && r.entregou.rotulo ? esc(r.entregou.rotulo) : r.fim.ano}</span></div>
         <p class="delta ${r.variacao === 0 ? '' : melhorou ? 'up' : 'down'}">${r.variacao === 0 ? 'Ficou estável' : (sub ? 'Caiu ' : 'Subiu ') + (ind.pct && r.variacao_pct != null ? fmt(Math.abs(r.variacao_pct), 1) + '%' : fmt(Math.abs(r.variacao), ind.casas) + pct)}</p>`;
       if (r.regiao) {
         const rs = r.regiao.variacao < 0;
@@ -176,7 +184,7 @@
     document.title = `${m.nome} (${periodo(m)}) · Radar Político`;
     $('pnome').textContent = m.nome;
     $('pmeta').textContent = `${m.rotulo} · ${periodo(m)} · ${m.partido}`;
-    $('pnota').innerHTML = [m.em_andamento ? 'Mandato em andamento: os números vão até o último ano com dados publicados e ainda vão mudar.' : '', m.nota || '']
+    $('pnota').innerHTML = [m.em_andamento ? 'Mandato em andamento: usamos o dado mais recente de cada indicador (do último mês ou trimestre publicado, quando existe). Os números ainda vão mudar.' : '', m.nota || '']
       .filter(Boolean).map(t => `<p class="disclaimer">${esc(t)}</p>`).join('');
     $('pctx').innerHTML = (m.contexto || []).map(c => `<li>${esc(c)}</li>`).join('');
     $('pctx').parentElement.hidden = !(m.contexto || []).length;
@@ -192,18 +200,50 @@
           return `<div class="trow"><span class="tn">${esc(ind.nome.replace(/ médi[oa]s?$/, ''))}<small>${esc(ind.unidade)}</small></span>
             <span class="tv num"><small>${r.recebeu.ano}</small>${fmt(r.recebeu.valor, ind.casas)}</span>
             <span class="ta" aria-hidden="true">→</span>
-            <span class="tv num"><small>${r.entregou.ano}</small>${fmt(r.entregou.valor, ind.casas)}</span>
+            <span class="tv num"><small>${esc(r.entregou.rotulo ? r.entregou.rotulo.replace(/^12 meses até /, '') : r.entregou.ano)}</small>${fmt(r.entregou.valor, ind.casas)}</span>
             <span class="tag v-${vc}">${vt}</span></div>`;
         }).join('')}</div>`;
       }).join('')}`;
     $('pareas').innerHTML =`<div class="label">Resultado por área, comparado aos outros mandatos</div>` + D.areas.map(a => areaBar(a, m.areas[a])).join('');
-    $('pinds').innerHTML = D.areas.map(a => {
+    const bloco = a => {
       const inds = D.indicadores.filter(x => x.area === a);
-      return `<section class="card"><div class="ah"><h3>${esc(a)}</h3><span class="score s-${faixa(m.areas[a])} num">${m.areas[a] ?? '–'}</span></div>${inds.map(ind => cartaoIndicador(ind, m.indicadores[ind.id], m)).join('')}</section>`;
-    }).join('');
+      const desc = ((D.blocos || []).find(b => b.nome === a) || {}).descricao;
+      return `<section class="card"><div class="ah"><h3>${esc(a)}</h3><span class="score s-${faixa(m.areas[a])} num">${m.areas[a] ?? '–'}</span></div>${desc ? `<p class="meta" style="margin:0">${esc(desc)}</p>` : ''}${inds.map(ind => cartaoIndicador(ind, m.indicadores[ind.id], m)).join('')}</section>`;
+    };
+    $('pinds').innerHTML = `<h3 class="grupo">Resultados na vida da população</h3>` + D.areas.filter(ehResultado).map(bloco).join('')
+      + `<h3 class="grupo">Fatores que explicam os resultados</h3><p class="meta" style="margin:0">Ajudam a entender o que aconteceu e o que pode vir depois. Não entram no placar.</p>` + D.areas.filter(a => !ehResultado(a)).map(bloco).join('');
+    heranca(m);
+    projecao(m);
     const ant = D.mandatos[i - 1], prox = D.mandatos[i + 1];
     $('pnav').innerHTML = `${ant ? `<a class="chip" href="presidente.html?id=${ant.id}">← ${esc(ant.curto)} · ${periodo(ant)}</a>` : '<span></span>'}${prox ? `<a class="chip" href="presidente.html?id=${prox.id}">${esc(prox.curto)} · ${periodo(prox)} →</a>` : ''}`;
     $('loading').hidden = true; $('perfil').hidden = false;
+  }
+
+  function heranca(m) {
+    const h = m.heranca || {}, ids = D.indicadores.filter(x => h[x.id]);
+    if (!ids.length) { $('pheranca').hidden = true; return; }
+    const piores = ids.filter(x => h[x.id].situacao === 'pior').length;
+    $('pheranca').innerHTML = `<div><h3 class="lt">Herança recebida</h3>
+      <p class="meta">Como o país estava quando ${esc(m.curto)} assumiu, comparado à média de 1995 até hoje, e se vinha melhorando ou piorando nos dois anos anteriores. Ajuda a separar problemas herdados dos resultados do próprio governo.</p></div>
+      <p class="hsum">Recebeu <b style="color:var(--bad)">${piores}</b> de ${ids.length} indicadores piores que a média histórica.</p>
+      ${ids.map(ind => {
+        const x = h[ind.id];
+        return `<div class="hrow"><span class="tn">${esc(ind.nome)}<small>${esc(ind.unidade)}</small></span>
+          <span class="tv num"><small>${x.ano}</small>${fmt(x.valor, ind.casas)}</span>
+          <span class="hsit"><span class="tag v-${x.situacao === 'pior' ? 'bad' : 'good'}">${x.situacao === 'pior' ? 'Pior que a média' : 'Melhor que a média'}</span>${x.tendencia ? `<small class="${x.tendencia === 'piorando' ? 'down' : 'up'}">${x.tendencia === 'piorando' ? '↘ vinha piorando' : '↗ vinha melhorando'}</small>` : ''}</span></div>`;
+      }).join('')}`;
+  }
+
+  function projecao(m) {
+    const P = D.projecao, el = $('pproj');
+    if (!m.em_andamento || !P || (!P.fmi.length && !P.focus.length)) { el.hidden = true; return; }
+    const linha = (nome, un, pts) => `<div class="prow"><span class="tn">${esc(nome)}<small>${esc(un)}</small></span><span class="pvals">${pts.map(([a, v]) => `<span class="num"><small>${a}</small>${fmt(v, 1)}</span>`).join('')}</span></div>`;
+    el.innerHTML = `<div><span class="tag v-warn">Projeção · não é fato</span><h3 class="lt" style="margin-top:8px">Para onde o país está indo</h3>
+      <p class="meta">Estimativas de instituições independentes, separadas dos resultados já medidos. Podem mudar e não são atribuídas a nenhum governo como resultado.</p></div>
+      ${P.focus.length ? `<div class="label">Mercado financeiro (boletim Focus do Banco Central, ${esc(P.focus[0].data.split('-').reverse().join('/'))})</div>${P.focus.map(f => linha(f.nome, f.unidade, f.pontos)).join('')}` : ''}
+      ${P.fmi.length ? `<div class="label">Fundo Monetário Internacional (World Economic Outlook)</div>${P.fmi.map(f => linha(f.nome, f.unidade, f.pontos)).join('')}` : ''}
+      <p class="note">Pobreza e emprego com carteira não têm projeção oficial confiável, por isso não aparecem aqui.</p>`;
+    el.hidden = false;
   }
 
   async function iniciar() {
