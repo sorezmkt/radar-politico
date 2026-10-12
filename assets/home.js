@@ -38,8 +38,10 @@
     if (IDX.referencias && IDX.referencias.prod_p90) $('mProd').textContent = `${IDX.referencias.prod_p90} ou mais no período (nível dos 10% mais produtivos)`;
 
     const comNota = IDX.deputados.filter(d => d.nota != null);
-    const piores = [...comNota].sort((x, y) => x.nota - y.nota || y.pontos - x.pontos).slice(0, 50);
-    $('l50sub').textContent = `Entre ${comNota.length} deputados avaliados, do menor para o maior índice. Toque num nome para ver a ficha completa.`;
+    // atenção = quanto falta para 100 no índice + 10 por ponto de risco (eficiência baixa e risco alto sobem na lista)
+    const atencao = d => (100 - d.nota) + 10 * (d.pontos || 0);
+    const piores = [...comNota].sort((x, y) => atencao(y) - atencao(x) || x.nota - y.nota).slice(0, 50);
+    $('l50sub').textContent = `Entre ${comNota.length} deputados avaliados, os que somam menor eficiência e mais sinais de risco nos gastos. Toque num nome para ver a ficha completa.`;
     $('l50').innerHTML = piores.map((d, i) => {
       const [rc, rl] = RISCO[d.risco] || RISCO.baixo;
       return `<li><a href="${link(d.id)}">
