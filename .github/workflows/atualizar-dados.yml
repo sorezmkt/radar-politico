@@ -33,10 +33,12 @@ jobs:
           LIMITE_CNPJ: ${{ github.event_name == 'push' && '600' || '3000' }}
         run: python scripts/build_data.py
 
-      - name: Indicadores dos presidentes (Banco Mundial e Banco Central)
+      - name: Indicadores dos presidentes (IBGE, Banco Central, ANP, DIEESE, FMI e Banco Mundial)
         if: always()
         continue-on-error: true
-        run: python scripts/build_presidentes.py
+        run: |
+          pip install --quiet openpyxl
+          python scripts/build_presidentes.py
 
       - name: Salvar dados no repositório
         if: always()

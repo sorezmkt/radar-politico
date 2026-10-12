@@ -335,3 +335,20 @@ table.hm tr.hmgrupo th{font-family:var(--display);font-size:13px;font-weight:800
 .pvals{display:flex;gap:10px}
 .pvals span{display:flex;flex-direction:column;align-items:flex-end;font-size:13.5px;line-height:1.2}
 .pvals small{color:var(--muted);font-size:10.5px}
+
+/* Impacto, confiança e custo de vida */
+.impacto{margin:2px 0 0;font-size:14px;padding:10px 12px;border-radius:10px;background:var(--accent-soft)}
+.fonteconf{margin:0;display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
+.conf{align-self:flex-start;font-weight:600;padding:1px 8px;border-radius:99px}
+.conf.c-good{color:var(--good);background:var(--good-soft)}
+.conf.c-warn{color:var(--warn);background:var(--warn-soft)}
+.conf.c-bad{color:var(--bad);background:var(--bad-soft)}
+.div{display:flex;flex-direction:column;gap:2px}
+.drow2{display:grid;grid-template-columns:minmax(0,118px) minmax(0,1fr) 48px;gap:8px;align-items:center;padding:6px 0;font-size:13.5px}
+.dn2{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dbarw{position:relative;height:14px;background:var(--bg);border-radius:4px}
+.dbarw i{position:absolute;top:0;bottom:0;border-radius:3px}
+.dmid{position:absolute;left:50%;top:-3px;bottom:-3px;width:1.5px;background:var(--muted);opacity:.5}
+.dv{text-align:right;font-weight:600;font-size:13px}
+.drow2{grid-template-columns:minmax(0,124px) minmax(0,1fr) 48px}
+.dn2{white-space:normal;line-height:1.2}

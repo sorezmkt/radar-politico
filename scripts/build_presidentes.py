@@ -16,6 +16,7 @@ Não existe nota geral nem ranking geral de presidentes. Cada indicador compara 
 mandatos entre si, e o visitante escolhe qual área quer ver.
 """
 import datetime as dt
+import io
 import json
 import os
 import time
@@ -87,79 +88,151 @@ MANDATOS = [
 # Blocos: os 3 primeiros medem resultados na vida da população e entram no placar.
 # Os 3 seguintes ajudam a explicar esses resultados e não entram no placar.
 BLOCOS = [
-    {"nome": "Poder de compra", "tipo": "resultado",
-     "descricao": "Se a renda cresce acima dos preços, permitindo comprar mais e pagar as despesas básicas."},
-    {"nome": "Emprego e renda", "tipo": "resultado",
-     "descricao": "Geração de empregos, evolução dos salários reais e qualidade das oportunidades de trabalho."},
-    {"nome": "Pobreza e desigualdade", "tipo": "resultado",
-     "descricao": "Se a pobreza diminui e se os ganhos chegam à população de baixa renda."},
-    {"nome": "Sustentabilidade fiscal", "tipo": "fator",
-     "descricao": "Se gastos, impostos e dívida pública seguem uma trajetória sustentável ou podem limitar os próximos governos."},
-    {"nome": "Inflação e juros", "tipo": "fator",
-     "descricao": "Tendência dos preços e dos juros, e o risco de perda futura do poder de compra."},
-    {"nome": "Investimentos e produtividade", "tipo": "fator",
-     "descricao": "Se o país investe e produz mais por trabalhador, criando condições para mais renda e emprego no futuro."},
+    # resultados observados na vida da população (contam no placar)
+    {"nome": "Poder de compra", "tipo": "resultado", "secao": "principal",
+     "descricao": "Se a renda de quem ganha pouco cresceu acima do custo de vida."},
+    {"nome": "Emprego e renda", "tipo": "resultado", "secao": "principal",
+     "descricao": "Desemprego, carteira assinada, trabalho precário e renda real do trabalho."},
+    {"nome": "Pobreza e desigualdade", "tipo": "resultado", "secao": "principal",
+     "descricao": "Se a pobreza caiu e se os ganhos chegaram à população de baixa renda."},
+    # custo de vida e acesso ao consumo (contam no placar): o preço comparado ao salário mínimo
+    {"nome": "Alimentação", "tipo": "resultado", "secao": "custo",
+     "descricao": "Quanto trabalho custa a cesta básica e se a comida ficou mais ou menos acessível."},
+    {"nome": "Moradia e energia", "tipo": "resultado", "secao": "custo",
+     "descricao": "Aluguel e conta de luz comparados ao salário mínimo."},
+    {"nome": "Transporte e combustível", "tipo": "resultado", "secao": "custo",
+     "descricao": "Passagem de ônibus e gasolina comparadas ao salário mínimo."},
+    {"nome": "Bens de consumo", "tipo": "resultado", "secao": "custo",
+     "descricao": "Celular, computador, eletrodomésticos, roupas, moto e carro comparados ao salário mínimo."},
+    # fatores que explicam os resultados (não contam no placar)
+    {"nome": "Sustentabilidade fiscal", "tipo": "fator", "secao": "fator",
+     "descricao": "Receitas, gastos, resultado primário e dívida: desequilíbrios que podem limitar os próximos governos."},
+    {"nome": "Inflação e juros", "tipo": "fator", "secao": "fator",
+     "descricao": "Inflação geral, inflação das famílias de baixa renda e juros básicos."},
+    {"nome": "Investimentos e produtividade", "tipo": "fator", "secao": "fator",
+     "descricao": "Se investimentos e produtividade criam condições para mais renda e emprego no futuro."},
 ]
 AREAS = [b["nome"] for b in BLOCOS]
 RESULTADOS = {b["nome"] for b in BLOCOS if b["tipo"] == "resultado"}
+
+# subitens do IPCA (IBGE, SIDRA, classificação 315) usados nos índices de acessibilidade
+SUBITENS = {"alimentacao": 7171, "aluguel": 7448, "energia": 7485, "onibus": 7628, "celular": 7794,
+            "computador": 7547, "eletro": 7522, "roupas": 7559, "moto": 7654, "carro": 7641}
+ACESS_UNID = "índice de acessibilidade: compra com um salário mínimo (dez/1999 = 100)"
+ACESS_EXPL = ("Quanto do item um salário mínimo compra, comparando a alta do salário com a alta do preço (IPCA). "
+              "Se sobe, ficou mais acessível; se cai, ficou mais caro para quem ganha o mínimo.")
+
+def _acess(iid, nome, area, sub, conf="média"):
+    return {"id": iid, "nome": nome, "area": area, "fonte": "acess", "codigo": sub, "melhor": "maior", "tipo": "variacao",
+            "pct": True, "unidade": ACESS_UNID, "casas": 0, "explica": ACESS_EXPL, "confianca": conf,
+            "limite": "Mostra a variação de preço do item, não o preço em reais. Série do IBGE desde ago/1999.",
+            "fonte_txt": "IBGE (IPCA por subitem) e Banco Central (salário mínimo)"}
+
 INDICADORES = [
     # 1. Poder de compra
     {"id": "salario_minimo", "nome": "Poder de compra do salário mínimo", "area": "Poder de compra", "fonte": "bcb_sm",
-     "melhor": "maior", "tipo": "variacao", "pct": True, "unidade": "R$ por mês, em valores de hoje", "casas": 0,
-     "explica": "Quanto o salário mínimo compraria hoje, descontada toda a inflação desde então."},
-    {"id": "comida", "nome": "Preço da comida", "area": "Poder de compra", "fonte": "bcb_ipca", "codigo": 1635,
-     "melhor": "menor", "tipo": "media", "unidade": "% ao ano (alimentos e bebidas)", "casas": 1,
-     "explica": "Quanto a comida subiu por ano. Pesa mais para quem ganha menos, porque boa parte da renda vai para o mercado."},
-    {"id": "tarifas", "nome": "Contas e tarifas", "area": "Poder de compra", "fonte": "bcb_ipca", "codigo": 4449,
-     "melhor": "menor", "tipo": "media", "unidade": "% ao ano (preços monitorados)", "casas": 1,
-     "explica": "Alta de preços que dependem de decisão ou regra do governo: gasolina, luz, água, gás de cozinha, ônibus, remédios e planos de saúde."},
+     "melhor": "maior", "tipo": "variacao", "pct": True, "unidade": "R$ por mês, em valores de hoje (INPC)", "casas": 0,
+     "explica": "O salário mínimo corrigido pela inflação das famílias que ganham até 5 salários mínimos (INPC). Mostra se o mínimo comprou mais ou menos.",
+     "confianca": "alta", "limite": "Mede quem recebe o mínimo e aposentados que ganham o piso.", "fonte_txt": "Banco Central (salário mínimo) e IBGE (INPC)"},
     {"id": "endividamento", "nome": "Famílias endividadas", "area": "Poder de compra", "fonte": "bcb", "codigo": 29037,
      "melhor": "menor", "tipo": "variacao", "unidade": "% da renda de um ano devida aos bancos", "casas": 1,
-     "explica": "Quanto as famílias devem aos bancos em relação ao que ganham em 12 meses. Dívida alta tira dinheiro do consumo. Série desde 2005."},
+     "explica": "Quanto as famílias devem aos bancos em relação ao que ganham em 12 meses. Dívida alta tira dinheiro das despesas básicas.",
+     "confianca": "alta", "limite": "Série desde 2005. Não conta dívidas fora do sistema bancário (agiota, carnê de loja).", "fonte_txt": "Banco Central"},
     # 2. Emprego e renda
+    {"id": "desemprego", "nome": "Desemprego", "area": "Emprego e renda", "fonte": "wb", "codigo": "SL.UEM.TOTL.ZS",
+     "melhor": "menor", "tipo": "variacao", "unidade": "% de quem trabalha ou procura trabalho", "casas": 1,
+     "explica": "Quem procurou emprego e não achou. Não conta quem desistiu de procurar, por isso vale olhar junto com a carteira assinada.",
+     "confianca": "média", "limite": "Estimativa padronizada da OIT a partir das pesquisas do IBGE. A pesquisa mudou em 2012.", "fonte_txt": "Banco Mundial / OIT"},
     {"id": "carteira", "nome": "Trabalhadores com carteira assinada", "area": "Emprego e renda", "fonte": "sidra_carteira",
      "melhor": "maior", "tipo": "variacao", "unidade": "% de quem trabalha", "casas": 1,
-     "explica": "Dos brasileiros que trabalham, quantos são empregados de empresas privadas com carteira. Mede a qualidade do emprego. Pesquisa do IBGE desde 2012."},
+     "explica": "Dos que trabalham, quantos são empregados de empresas privadas com carteira. Mede a qualidade do emprego.",
+     "confianca": "alta", "limite": "Pesquisa do IBGE só existe desde 2012.", "fonte_txt": "IBGE (PNAD Contínua)"},
+    {"id": "precario", "nome": "Trabalho precário", "area": "Emprego e renda", "fonte": "wb", "codigo": "SL.EMP.VULN.ZS",
+     "melhor": "menor", "tipo": "variacao", "unidade": "% de quem trabalha", "casas": 1,
+     "explica": "Quem trabalha por conta própria ou ajuda a família sem salário, em geral sem carteira, férias ou aposentadoria.",
+     "confianca": "média", "limite": "Estimativa da OIT; aproxima a informalidade, mas não é a taxa oficial de informalidade do IBGE.", "fonte_txt": "Banco Mundial / OIT"},
     {"id": "renda_trabalho", "nome": "Renda média do trabalho", "area": "Emprego e renda", "fonte": "sidra_renda",
      "melhor": "maior", "tipo": "variacao", "pct": True, "unidade": "R$ por mês, descontada a inflação", "casas": 0,
-     "explica": "Quanto ganha, em média, quem trabalha, já descontada a inflação. Pesquisa do IBGE desde 2012."},
-    {"id": "ocupacao", "nome": "Adultos trabalhando", "area": "Emprego e renda", "fonte": "wb", "codigo": "SL.EMP.TOTL.SP.ZS",
-     "melhor": "maior", "tipo": "variacao", "unidade": "% da população com 15 anos ou mais", "casas": 1,
-     "explica": "De todos os adultos, quantos de fato trabalham. Não depende de quem procura emprego, então é difícil de distorcer. Série longa, cobre todos os mandatos."},
+     "explica": "Quanto ganha, em média, quem trabalha, já descontada a inflação.",
+     "confianca": "alta", "limite": "Pesquisa do IBGE desde 2012. Média de todos os trabalhadores, não só os de baixa renda.", "fonte_txt": "IBGE (PNAD Contínua)"},
     # 3. Pobreza e desigualdade
     {"id": "pobreza", "nome": "Pobreza", "area": "Pobreza e desigualdade", "fonte": "wb", "codigo": "SI.POV.UMIC",
      "melhor": "menor", "tipo": "variacao", "unidade": "% da população", "casas": 1,
-     "explica": "Pessoas vivendo com menos de US$ 6,85 por dia, linha de pobreza do Banco Mundial para países de renda média como o Brasil."},
+     "explica": "Pessoas vivendo com menos de US$ 6,85 por dia, linha do Banco Mundial para países como o Brasil.",
+     "confianca": "alta", "limite": "Publicado com um ou dois anos de atraso.", "fonte_txt": "Banco Mundial (com dados do IBGE)"},
     {"id": "extrema_pobreza", "nome": "Extrema pobreza", "area": "Pobreza e desigualdade", "fonte": "wb", "codigo": "SI.POV.DDAY",
      "melhor": "menor", "tipo": "variacao", "unidade": "% da população", "casas": 1,
-     "explica": "Pessoas vivendo com menos de US$ 2,15 por dia."},
+     "explica": "Pessoas vivendo com menos de US$ 2,15 por dia.",
+     "confianca": "alta", "limite": "Publicado com um ou dois anos de atraso.", "fonte_txt": "Banco Mundial (com dados do IBGE)"},
+    {"id": "renda_pobres", "nome": "Fatia da renda dos 20% mais pobres", "area": "Pobreza e desigualdade", "fonte": "wb", "codigo": "SI.DST.FRST.20",
+     "melhor": "maior", "tipo": "variacao", "unidade": "% de toda a renda do país", "casas": 1,
+     "explica": "Quanto da renda total fica com os 20% mais pobres. Se sobe, os ganhos chegaram a quem ganha menos.",
+     "confianca": "alta", "limite": "Publicado com um ou dois anos de atraso.", "fonte_txt": "Banco Mundial (com dados do IBGE)"},
     {"id": "gini", "nome": "Desigualdade de renda", "area": "Pobreza e desigualdade", "fonte": "wb", "codigo": "SI.POV.GINI",
      "melhor": "menor", "tipo": "variacao", "unidade": "índice de Gini, de 0 a 100", "casas": 1,
-     "explica": "Quanto maior, mais concentrada é a renda. Mostra se os ganhos chegaram a quem ganha menos."},
-    # 4. Sustentabilidade fiscal
+     "explica": "Quanto maior, mais concentrada é a renda.",
+     "confianca": "alta", "limite": "Publicado com um ou dois anos de atraso.", "fonte_txt": "Banco Mundial (com dados do IBGE)"},
+    # 4. Alimentação
+    {"id": "cesta_horas", "nome": "Horas de trabalho para comprar a cesta básica", "area": "Alimentação", "fonte": "cesta",
+     "melhor": "menor", "tipo": "variacao", "unidade": "horas de trabalho com salário mínimo", "casas": 0,
+     "explica": "Quantas horas quem ganha o salário mínimo precisa trabalhar para comprar a cesta básica do DIEESE (jornada de 220 horas por mês).",
+     "confianca": "alta", "limite": "Cesta da cidade de São Paulo, a série mais longa do DIEESE. Em outras capitais o valor muda.", "fonte_txt": "DIEESE (via Ipeadata) e Banco Central"},
+    _acess("acess_alimentacao", "Comida em casa", "Alimentação", "alimentacao", "alta"),
+    # 5. Moradia e energia
+    _acess("acess_aluguel", "Aluguel", "Moradia e energia", "aluguel"),
+    _acess("acess_energia", "Conta de luz", "Moradia e energia", "energia", "alta"),
+    # 6. Transporte e combustível
+    _acess("acess_onibus", "Passagem de ônibus", "Transporte e combustível", "onibus", "alta"),
+    {"id": "litros_gasolina", "nome": "Litros de gasolina com um salário mínimo", "area": "Transporte e combustível", "fonte": "anp",
+     "melhor": "maior", "tipo": "variacao", "pct": True, "unidade": "litros por salário mínimo", "casas": 0,
+     "explica": "Quantos litros de gasolina comum um salário mínimo compra, pelo preço médio nos postos do país.",
+     "confianca": "alta", "limite": "Levantamento de preços da ANP desde jul/2001.", "fonte_txt": "ANP e Banco Central"},
+    # 7. Bens de consumo
+    _acess("acess_celular", "Celular", "Bens de consumo", "celular"),
+    _acess("acess_computador", "Computador", "Bens de consumo", "computador"),
+    _acess("acess_eletro", "Eletrodomésticos", "Bens de consumo", "eletro"),
+    _acess("acess_roupas", "Roupas", "Bens de consumo", "roupas", "alta"),
+    _acess("acess_moto", "Moto", "Bens de consumo", "moto"),
+    _acess("acess_carro", "Carro novo", "Bens de consumo", "carro"),
+    # 9. Sustentabilidade fiscal
     {"id": "impostos", "nome": "Peso dos impostos", "area": "Sustentabilidade fiscal", "fonte": "imf", "codigo": "rev",
      "melhor": "menor", "tipo": "variacao", "unidade": "% de tudo o que o país produz", "casas": 1,
-     "explica": "Impostos e contribuições arrecadados por União, estados e municípios, em proporção da economia."},
+     "explica": "Impostos e contribuições de União, estados e municípios em proporção da economia.",
+     "confianca": "alta", "limite": "Último ano pode ser estimativa do FMI.", "fonte_txt": "FMI"},
     {"id": "gasto_total", "nome": "Gasto público", "area": "Sustentabilidade fiscal", "fonte": "imf", "codigo": "exp",
      "melhor": "neutro", "tipo": "variacao", "unidade": "% de tudo o que o país produz", "casas": 1,
-     "explica": "Tudo o que União, estados e municípios gastam. Sem selo de melhor ou pior: depende do retorno que traz."},
+     "explica": "Tudo o que União, estados e municípios gastam. Sem selo de melhor ou pior: depende do retorno.",
+     "confianca": "alta", "limite": "Último ano pode ser estimativa do FMI.", "fonte_txt": "FMI"},
+    {"id": "primario", "nome": "Resultado primário", "area": "Sustentabilidade fiscal", "fonte": "imf", "codigo": "GGXONLB_NGDP",
+     "melhor": "maior", "tipo": "variacao", "unidade": "% do PIB (negativo = gastou mais do que arrecadou, sem contar juros)", "casas": 1,
+     "explica": "Se o governo arrecada mais do que gasta antes de pagar juros. Déficit seguido faz a dívida crescer.",
+     "confianca": "alta", "limite": "Último ano pode ser estimativa do FMI.", "fonte_txt": "FMI"},
     {"id": "divida", "nome": "Dívida pública", "area": "Sustentabilidade fiscal", "fonte": "imf", "codigo": "GGXWDG_NGDP",
      "melhor": "menor", "tipo": "variacao", "unidade": "% de tudo o que o país produz", "casas": 1,
-     "explica": "Dívida bruta do governo. Quanto maior, mais impostos vão para pagar juros e menos sobra para os próximos governos."},
-    # 5. Inflação e juros
-    {"id": "inflacao", "nome": "Inflação", "area": "Inflação e juros", "fonte": "bcb_ipca", "codigo": 433,
-     "melhor": "menor", "tipo": "media", "unidade": "% ao ano (IPCA)", "casas": 1,
-     "explica": "Quanto os preços subiram por ano, em média, durante o mandato."},
+     "explica": "Dívida bruta do governo. Quanto maior, mais imposto vai para juros e menos sobra para os próximos governos.",
+     "confianca": "alta", "limite": "Último ano pode ser estimativa do FMI.", "fonte_txt": "FMI"},
+    # 10. Inflação e juros
+    {"id": "inpc", "nome": "Inflação de quem ganha menos (INPC)", "area": "Inflação e juros", "fonte": "bcb_ipca", "codigo": 188,
+     "melhor": "menor", "tipo": "media", "unidade": "% ao ano", "casas": 1,
+     "explica": "Inflação das famílias que ganham até 5 salários mínimos, média do mandato.",
+     "confianca": "alta", "limite": "Já está embutida no poder de compra do salário mínimo; aparece aqui como contexto, não entra no placar.", "fonte_txt": "IBGE (via Banco Central)"},
+    {"id": "inflacao", "nome": "Inflação geral (IPCA)", "area": "Inflação e juros", "fonte": "bcb_ipca", "codigo": 433,
+     "melhor": "menor", "tipo": "media", "unidade": "% ao ano", "casas": 1,
+     "explica": "Inflação oficial do país, média do mandato.",
+     "confianca": "alta", "limite": "Já está embutida nos indicadores de custo de vida; aparece aqui como contexto.", "fonte_txt": "IBGE (via Banco Central)"},
     {"id": "selic", "nome": "Juros básicos (Selic)", "area": "Inflação e juros", "fonte": "bcb_selic",
      "melhor": "menor", "tipo": "media", "unidade": "% ao ano", "casas": 1,
-     "explica": "Média da Selic no mandato. Ela puxa os juros do cartão, do crediário e do financiamento."},
-    # 6. Investimentos e produtividade
+     "explica": "Média da Selic no mandato. Puxa os juros do cartão, do crediário e do financiamento.",
+     "confianca": "alta", "limite": "Juros ao consumidor são bem maiores que a Selic.", "fonte_txt": "Banco Central"},
+    # 11. Investimentos e produtividade
     {"id": "investimento", "nome": "Investimento", "area": "Investimentos e produtividade", "fonte": "wb", "codigo": "NE.GDI.FTOT.ZS",
      "melhor": "maior", "tipo": "variacao", "unidade": "% de tudo o que o país produz", "casas": 1,
-     "explica": "Quanto o país investe em fábricas, máquinas, obras e moradias. Investimento de hoje é emprego e renda de amanhã."},
+     "explica": "Quanto o país investe em fábricas, máquinas, obras e moradias.",
+     "confianca": "alta", "limite": "", "fonte_txt": "Banco Mundial (com dados do IBGE)"},
     {"id": "produtividade", "nome": "Produtividade do trabalho", "area": "Investimentos e produtividade", "fonte": "wb", "codigo": "SL.GDP.PCAP.EM.KD",
      "melhor": "maior", "tipo": "variacao", "pct": True, "unidade": "US$ produzidos por trabalhador por ano", "casas": 0,
-     "explica": "Quanto cada trabalhador produz, em média. Sem ganho de produtividade, salários não sobem de forma sustentável."},
+     "explica": "Quanto cada trabalhador produz em média. Sem ganho de produtividade, salários não sobem de forma sustentável.",
+     "confianca": "média", "limite": "Estimativa da OIT.", "fonte_txt": "Banco Mundial / OIT"},
 ]
 
 # --------------------------------------------------------------------- coleta
@@ -264,7 +337,7 @@ def selic_anual():
 def salario_minimo_real():
     """Salário mínimo de cada ano em reais de hoje (corrigido pelo IPCA até o último mês disponível)."""
     sm = {(a, m): v for a, m, v in serie_bcb(1619, "01/07/1994")}
-    ipca = sorted((a, m, v) for a, m, v in serie_bcb(433, "01/07/1994"))
+    ipca = sorted((a, m, v) for a, m, v in serie_bcb(188, "01/07/1994"))  # INPC: inflação de quem ganha até 5 mínimos
     indice, acc = {}, 1.0
     for a, m, v in ipca:
         acc *= 1 + v / 100
@@ -312,6 +385,154 @@ def renda_trabalho():
     return _sidra_trimestral("https://apisidra.ibge.gov.br/values/t/5436/n1/all/v/5933/p/all?formato=json", "renda_trabalho")
 
 
+# ------------------------------------------------ custo de vida: preços comparados ao salário mínimo
+
+_CACHE = {}
+
+
+def sm_mensal():
+    if "sm" not in _CACHE:
+        _CACHE["sm"] = {(a, m): v for a, m, v in serie_bcb(1619, "01/07/1994")}
+    return _CACHE["sm"]
+
+
+def subitens_ipca():
+    """Índice de preço (dez/1999 = 100) de cada subitem do IPCA, juntando as tabelas do IBGE de 1999 até hoje."""
+    if "sub" in _CACHE:
+        return _CACHE["sub"]
+    cods = ",".join(str(c) for c in SUBITENS.values())
+    var = {}
+    for t in (655, 2938, 1419, 7060):
+        url = f"https://apisidra.ibge.gov.br/values/t/{t}/n1/all/v/63/p/all/c315/{cods}?formato=json"
+        try:
+            linhas = json.loads(baixar(url, timeout=180))
+        except Exception as e:  # noqa: BLE001
+            avisos.append(f"IPCA subitens tabela {t}: {e}")
+            continue
+        for row in linhas[1:]:
+            vals = [str(v) for k, v in row.items() if k.endswith("C")]
+            per = next((v for v in vals if v.isdigit() and len(v) == 6 and v[:2] in ("19", "20")), None)
+            cat = next((int(v) for v in vals if v.isdigit() and int(v) in SUBITENS.values()), None)
+            try:
+                val = float(row.get("V"))
+            except (TypeError, ValueError):
+                continue
+            if per and cat:
+                var.setdefault(cat, {})[(int(per[:4]), int(per[4:]))] = val
+    idx = {}
+    for cat, mv in var.items():
+        nivel, serie = 100.0, {}
+        for (a, m) in sorted(mv):
+            if (a, m) <= (1999, 12):
+                if (a, m) == (1999, 12):
+                    serie[(a, m)] = 100.0
+                continue
+            nivel *= 1 + mv[(a, m)] / 100
+            serie[(a, m)] = nivel
+        idx[cat] = serie
+    _CACHE["sub"] = idx
+    return idx
+
+
+def _anual_media(mensal_dict):
+    por_ano = {}
+    for (a, m), v in mensal_dict.items():
+        por_ano.setdefault(a, []).append(v)
+    return {a: round(sum(v) / len(v), 2) for a, v in por_ano.items() if len(v) == 12}
+
+
+def acessibilidade_mensal(sub):
+    """Quanto do item um salário mínimo compra, com dez/1999 = 100."""
+    cat = SUBITENS[sub]
+    precos = subitens_ipca().get(cat, {})
+    sm = sm_mensal()
+    if (1999, 12) not in precos or (1999, 12) not in sm:
+        return {}
+    base = sm[(1999, 12)] / precos[(1999, 12)]
+    return {k: round(100 * (sm[k] / p) / base, 2) for k, p in precos.items() if k in sm}
+
+
+def gasolina_mensal():
+    """Preço médio mensal da gasolina comum no Brasil (ANP), desde jul/2001."""
+    if "gas" in _CACHE:
+        return _CACHE["gas"]
+    import openpyxl
+    urls = ["https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/precos-revenda-e-de-distribuicao-combustiveis/shlp/2001-2012/mensal-brasil-2001-a-2012.xlsx",
+            "https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/precos-revenda-e-de-distribuicao-combustiveis/shlp/mensal/mensal-brasil-desde-jan2013.xlsx"]
+    out = {}
+    for url in urls:
+        try:
+            wb = openpyxl.load_workbook(io.BytesIO(baixar(url, timeout=180)), read_only=True, data_only=True)
+        except Exception as e:  # noqa: BLE001
+            avisos.append(f"ANP {url.rsplit('/', 1)[-1]}: {e}")
+            continue
+        for ws in wb.worksheets:
+            cab = None
+            for row in ws.iter_rows(values_only=True):
+                cels = [str(c).strip().upper() if c is not None else "" for c in row]
+                if cab is None:
+                    if any("PRODUTO" in c for c in cels) and any("PREÇO MÉDIO REVENDA" in c or "PRECO MEDIO REVENDA" in c for c in cels):
+                        cab = cels
+                        i_mes = next(i for i, c in enumerate(cab) if c.startswith("M") and ("MÊS" in c or "MES" in c or "DATA" in c))
+                        i_prod = next(i for i, c in enumerate(cab) if "PRODUTO" in c)
+                        i_preco = next(i for i, c in enumerate(cab) if "PREÇO MÉDIO REVENDA" in c or "PRECO MEDIO REVENDA" in c)
+                    continue
+                if "GASOLINA COMUM" not in cels[i_prod]:
+                    continue
+                d, preco = row[i_mes], row[i_preco]
+                try:
+                    preco = float(preco)
+                except (TypeError, ValueError):
+                    continue
+                if isinstance(d, (dt.date, dt.datetime)):
+                    out[(d.year, d.month)] = preco
+    if not out:
+        raise ValueError("planilhas da ANP sem gasolina comum")
+    _CACHE["gas"] = out
+    return out
+
+
+def litros_mensal():
+    sm, gas = sm_mensal(), gasolina_mensal()
+    return {k: round(sm[k] / p, 1) for k, p in gas.items() if k in sm and p > 0}
+
+
+def cesta_mensal():
+    """Custo da cesta básica do DIEESE em São Paulo (Ipeadata), em horas de trabalho de quem ganha o mínimo."""
+    if "cesta" in _CACHE:
+        return _CACHE["cesta"]
+    base = "http://www.ipeadata.gov.br/api/odata4"
+    filtro = urllib.parse.quote("contains(SERNOME,'esta básica') and contains(SERNOME,'São Paulo')")
+    meta = json.loads(baixar(f"{base}/Metadados?$filter={filtro}&$select=SERCODIGO,SERNOME,SERPERIODICIDADE,UNINOME")).get("value", [])
+    cands = [x for x in meta if (x.get("SERPERIODICIDADE") or "").lower().startswith("mensal")
+             and "r$" in (x.get("UNINOME") or "").lower() and "gasto" in (x.get("SERNOME") or "").lower()]
+    if not cands:
+        cands = [x for x in meta if "r$" in (x.get("UNINOME") or "").lower()]
+    if not cands:
+        raise ValueError(f"série da cesta não encontrada ({[x.get('SERNOME') for x in meta][:5]})")
+    serie = cands[0]
+    status_cesta = f"{serie['SERCODIGO']}: {serie['SERNOME']}"
+    vals = json.loads(baixar(f"{base}/ValoresSerie(SERCODIGO='{serie['SERCODIGO']}')")).get("value", [])
+    sm = sm_mensal()
+    out = {}
+    for v in vals:
+        try:
+            d = dt.date.fromisoformat(str(v["VALDATA"])[:10])
+            preco = float(v["VALVALOR"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        k = (d.year, d.month)
+        if k in sm and k >= (1994, 7) and sm[k] > 0:
+            out[k] = round(preco / (sm[k] / 220), 1)
+    if not out:
+        raise ValueError("cesta sem valores")
+    avisos_info.append(f"cesta básica: {status_cesta}")
+    _CACHE["cesta"] = out
+    return out
+
+
+avisos_info = []
+
 MES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
 
 
@@ -320,7 +541,7 @@ def mais_recente(inicio_mandato):
     a0 = int(inicio_mandato[:4])
     out = {}
     # inflação, comida e tarifas: acumulado dos últimos 12 meses e média anualizada desde a posse
-    for iid, cod in (("inflacao", 433), ("comida", 1635), ("tarifas", 4449)):
+    for iid, cod in (("inflacao", 433), ("inpc", 188)):
         try:
             mensal = sorted(serie_bcb(cod, f"01/01/{a0 - 1}"))
             ult = mensal[-12:]
@@ -355,6 +576,22 @@ def mais_recente(inicio_mandato):
         out["salario_minimo"] = {"rotulo": f"{MES[m - 1]}/{a}", "valor": v, "quando": a + m / 12}  # já está em reais de hoje
     except Exception as e:  # noqa: BLE001
         avisos.append(f"recente salario_minimo: {e}")
+    for ind in INDICADORES:
+        try:
+            if ind["fonte"] == "acess":
+                mensal = acessibilidade_mensal(ind["codigo"])
+            elif ind["fonte"] == "anp":
+                mensal = litros_mensal()
+            elif ind["fonte"] == "cesta":
+                mensal = cesta_mensal()
+            else:
+                continue
+        except Exception as e:  # noqa: BLE001
+            avisos.append(f"recente {ind['id']}: {e}")
+            continue
+        if mensal:
+            a, m = max(mensal)
+            out[ind["id"]] = {"rotulo": f"{MES[m - 1]}/{a}", "valor": mensal[(a, m)], "quando": a + m / 12}
     for iid in ("carteira", "renda_trabalho"):
         pts = TRIMESTRAL.get(iid)
         if pts:
@@ -422,6 +659,12 @@ def coletar():
                 br, lat = carteira_assinada(), {}
             elif ind["fonte"] == "sidra_renda":
                 br, lat = renda_trabalho(), {}
+            elif ind["fonte"] == "acess":
+                br, lat = _anual_media(acessibilidade_mensal(ind["codigo"])), {}
+            elif ind["fonte"] == "anp":
+                br, lat = _anual_media(litros_mensal()), {}
+            elif ind["fonte"] == "cesta":
+                br, lat = _anual_media(cesta_mensal()), {}
             else:
                 br, lat = juros_reais(), {}
             if not br:
@@ -575,9 +818,7 @@ def main():
         "areas": AREAS,
         "blocos": BLOCOS,
         "projecao": projecoes(),
-        "indicadores": [{k: v for k, v in i.items() if k not in ("fonte", "codigo")} |
-                        {"fonte": {"wb": "Banco Mundial", "imf": "FMI (World Economic Outlook)", "sidra_carteira": "IBGE (PNAD Contínua)",
-                                   "sidra_renda": "IBGE (PNAD Contínua)"}.get(i["fonte"], "Banco Central do Brasil")}
+        "indicadores": [{k: v for k, v in i.items() if k not in ("fonte", "codigo", "fonte_txt")} | {"fonte": i.get("fonte_txt", "")}
                         for i in INDICADORES],
         # gráficos a partir de 1994 (inflação a partir de 1995, para a hiperinflação não achatar o resto da série)
         "series": {k: {"brasil": sorted((a, x) for a, x in v[0].items() if a >= (1995 if k == "inflacao" else 1994)),
@@ -585,6 +826,7 @@ def main():
                    for k, v in series.items()},
         "mandatos": mandatos,
         "avisos": avisos,
+        "info": avisos_info,
     }
     os.makedirs(os.path.dirname(SAIDA), exist_ok=True)
     with open(SAIDA, "w", encoding="utf-8") as f:

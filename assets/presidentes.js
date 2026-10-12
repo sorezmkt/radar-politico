@@ -9,6 +9,8 @@
 
   let D = null;
   const ehResultado = a => !D.blocos || (D.blocos.find(b => b.nome === a) || {}).tipo === 'resultado';
+  const secao = a => ((D.blocos || []).find(b => b.nome === a) || {}).secao || 'principal';
+  const SECOES = { principal: 'Indicadores principais', custo: 'Custo de vida e acesso ao consumo', fator: 'Fatores que explicam os resultados' };
   const quando = x => x ? (x.rotulo || x.ano) : '';
 
   function areaBar(nome, nota) {
@@ -20,7 +22,7 @@
     const w = v => `${v / p.total * 100}%`;
     return `<div class="placar">
       <div class="pbar" aria-hidden="true"><i style="width:${w(p.melhor)};background:var(--good)"></i><i style="width:${w(p.igual)};background:var(--nd)"></i><i style="width:${w(p.pior)};background:var(--bad)"></i></div>
-      <p>Na vida da população, entregou o país <b style="color:var(--good)">melhor em ${p.melhor}</b>${p.igual ? `, igual em ${p.igual}` : ''} e <b style="color:var(--bad)">pior em ${p.pior}</b> de ${p.total} indicadores</p>
+      <p>Na vida da população e no custo de vida, entregou o país <b style="color:var(--good)">melhor em ${p.melhor}</b>${p.igual ? `, igual em ${p.igual}` : ''} e <b style="color:var(--bad)">pior em ${p.pior}</b> de ${p.total} indicadores</p>
     </div>`;
   }
 
@@ -53,7 +55,7 @@
     let grupo = null;
     D.areas.forEach(a => {
       const linhas = inds.filter(i => i.area === a); if (!linhas.length) return;
-      const g = ehResultado(a) ? 'Resultados na vida da população' : 'Fatores que explicam os resultados';
+      const g = SECOES[secao(a)];
       if (g !== grupo) { grupo = g; h += `<tr class="hmgrupo"><th colspan="${ms.length + 1}">${g}</th></tr>`; }
       h += `<tr class="hmarea"><th colspan="${ms.length + 1}">${esc(a)}</th></tr>`;
       linhas.forEach(ind => {
@@ -91,6 +93,7 @@
       const rows = D.indicadores.filter(i => i.area === a).map(linha).join('');
       if (!rows) return;
       if (!ehResultado(a) && !fatores) { fatores = true; corpo += `<div class="dgrupo">Fatores que explicam os resultados <small>não contam no placar</small></div>`; }
+      else if (secao(a) === 'custo' && !corpo.includes('dgrupo-custo')) corpo += `<div class="dgrupo dgrupo-custo">Custo de vida e acesso ao consumo</div>`;
       corpo += `<div class="label dlab">${esc(a)}</div>${rows}`;
     });
     const nome = m => `${esc(m.sigla)} <small>${periodo(m)}</small>`;
@@ -100,7 +103,7 @@
         <div class="dp ${vb > va ? 'lead' : ''}"><span class="dpn">${nome(B)}</span><span class="dpv num">${vb}</span></div>
       </div>
       <div class="dbar" aria-hidden="true"><i style="width:${tot ? va / tot * 100 : 50}%"></i><i style="width:${tot ? vb / tot * 100 : 50}%"></i></div>
-      <p class="note">Indicadores de poder de compra, emprego e renda, e pobreza em que cada governo teve o melhor resultado na comparação entre todos os mandatos. ${A.em_andamento || B.em_andamento ? 'Mandato em andamento ainda tem dados parciais. ' : ''}Cada linha mostra como o governo recebeu → como entregou.</p>
+      <p class="note">Indicadores de vida da população e de custo de vida em que cada governo teve o melhor resultado na comparação entre todos os mandatos. ${A.em_andamento || B.em_andamento ? 'Mandato em andamento ainda tem dados parciais. ' : ''}Cada linha mostra como o governo recebeu → como entregou.</p>
       <div class="dhead"><span></span><span>${esc(A.sigla)}</span><span>${esc(B.sigla)}</span></div>${corpo}`;
   }
 
@@ -172,8 +175,46 @@
         corpo += `<p class="cmp">América Latina e Caribe no mesmo período: ${rs ? 'caiu' : 'subiu'} ${fmt(Math.abs(r.regiao.variacao), ind.casas)}${r.regiao.variacao_pct != null ? ` (${r.regiao.variacao_pct > 0 ? '+' : ''}${fmt(r.regiao.variacao_pct, 0)}%)` : ''}</p>`;
       }
     }
+    const imp = impacto(ind, r);
+    if (imp) corpo += `<p class="impacto">${imp}</p>`;
     const pos = r.posicao ? `<span class="tag v-${bom}">${r.posicao === 1 ? 'Melhor' : r.posicao === r.total ? 'Pior' : ordinal(r.posicao) + ' melhor'} de ${r.total}</span>` : '';
-    return `<div class="ind"><div class="ih"><b>${esc(ind.nome)}</b>${pos}</div>${corpo}${grafico(ind, m)}<p class="note">${esc(ind.explica)} Fonte: ${esc(ind.fonte)}.</p></div>`;
+    return `<div class="ind"><div class="ih"><b>${esc(ind.nome)}</b>${pos}</div>${corpo}${grafico(ind, m)}<p class="note">${esc(ind.explica)}</p><p class="fonteconf"><span>Fonte: ${esc(ind.fonte)}</span>${ind.confianca ? `<span class="conf c-${ind.confianca === 'alta' ? 'good' : ind.confianca === 'média' ? 'warn' : 'bad'}">Confiança ${esc(ind.confianca)}</span>` : ''}${ind.limite ? `<span>Limite: ${esc(ind.limite)}</span>` : ''}</p></div>`;
+  }
+
+  // frase de impacto na vida da população, calculada só a partir dos dados
+  function impacto(ind, r) {
+    if (!r.recebeu || !r.entregou) return '';
+    const ini = r.recebeu.valor, fim = r.entregou.valor, desde = r.recebeu.ano, ate = r.entregou.rotulo || r.entregou.ano;
+    const pct = ini ? (fim / ini - 1) * 100 : null;
+    if (ind.id.startsWith('acess_') && pct != null) {
+      if (Math.abs(pct) < 1) return `Para quem ganha o salário mínimo, ${esc(ind.nome.toLowerCase())} ficou praticamente igual de acessível entre ${desde} e ${esc(ate)}.`;
+      return `Com um salário mínimo, dava para comprar <b>${fmt(Math.abs(pct), 0)}% ${pct > 0 ? 'mais' : 'menos'}</b> em ${esc(ind.nome.toLowerCase())} em ${esc(ate)} do que em ${desde}. Ficou ${pct > 0 ? 'mais acessível' : 'mais caro'} para quem ganha o mínimo.`;
+    }
+    if (ind.id === 'cesta_horas') return `Quem ganha o mínimo precisava trabalhar <b>${fmt(ini, 0)} horas</b> para comprar a cesta básica em ${desde} e <b>${fmt(fim, 0)} horas</b> em ${esc(ate)}: ${fim < ini ? fmt(ini - fim, 0) + ' horas a menos' : fmt(fim - ini, 0) + ' horas a mais'} de trabalho.`;
+    if (ind.id === 'litros_gasolina') return `Um salário mínimo comprava <b>${fmt(ini, 0)} litros</b> de gasolina em ${desde} e <b>${fmt(fim, 0)} litros</b> em ${esc(ate)}.`;
+    if (ind.id === 'salario_minimo') return `O salário mínimo ${fim >= ini ? 'ganhou' : 'perdeu'} <b>R$ ${fmt(Math.abs(fim - ini), 0)}</b> de poder de compra por mês, em valores de hoje.`;
+    return '';
+  }
+
+  // custo de vida: o que ficou mais fácil ou mais difícil de pagar com um salário mínimo
+  function custoVisual(m) {
+    const el = $('pcusto'); if (!el) return;
+    const itens = D.indicadores.filter(i => secao(i.area) === 'custo').map(i => {
+      const r = m.indicadores[i.id];
+      if (!r || !r.recebeu || !r.entregou || !r.recebeu.valor) return null;
+      let pct = (r.entregou.valor / r.recebeu.valor - 1) * 100;
+      if (i.melhor === 'menor') pct = -pct; // horas de trabalho: cair é bom
+      return { nome: i.nome.replace(/^Horas de trabalho para comprar a cesta básica$/, 'Cesta básica').replace(/^Litros de gasolina com um salário mínimo$/, 'Gasolina'), pct };
+    }).filter(Boolean).sort((a, b) => b.pct - a.pct);
+    if (!itens.length) { el.hidden = true; return; }
+    const max = Math.max(10, ...itens.map(x => Math.abs(x.pct)));
+    el.innerHTML = `<div><h3 class="lt">Ficou mais fácil ou mais difícil de pagar?</h3>
+      <p class="meta">Quanto cada despesa ficou mais acessível (verde) ou mais cara (vermelho) para quem ganha o salário mínimo, do início ao fim do mandato. Já considera a alta do salário e a alta do preço.</p></div>
+      <div class="div">${itens.map(x => `<div class="drow2"><span class="dn2">${esc(x.nome)}</span>
+        <span class="dbarw"><span class="dmid"></span><i style="${x.pct >= 0 ? `left:50%;width:${x.pct / max * 50}%;background:var(--good)` : `right:50%;width:${-x.pct / max * 50}%;background:var(--bad)`}"></i></span>
+        <span class="dv num" style="color:var(--${x.pct >= 0 ? 'good' : 'bad'})">${x.pct >= 0 ? '+' : '−'}${fmt(Math.abs(x.pct), 0)}%</span></div>`).join('')}</div>
+      <div class="legend"><span><i style="background:var(--bad)"></i>Mais caro</span><span><i style="background:var(--good)"></i>Mais acessível</span></div>`;
+    el.hidden = false;
   }
 
   function detalhe() {
@@ -210,8 +251,12 @@
       const desc = ((D.blocos || []).find(b => b.nome === a) || {}).descricao;
       return `<section class="card"><div class="ah"><h3>${esc(a)}</h3><span class="score s-${faixa(m.areas[a])} num">${m.areas[a] ?? '–'}</span></div>${desc ? `<p class="meta" style="margin:0">${esc(desc)}</p>` : ''}${inds.map(ind => cartaoIndicador(ind, m.indicadores[ind.id], m)).join('')}</section>`;
     };
-    $('pinds').innerHTML = `<h3 class="grupo">Resultados na vida da população</h3>` + D.areas.filter(ehResultado).map(bloco).join('')
-      + `<h3 class="grupo">Fatores que explicam os resultados</h3><p class="meta" style="margin:0">Ajudam a entender o que aconteceu e o que pode vir depois. Não entram no placar.</p>` + D.areas.filter(a => !ehResultado(a)).map(bloco).join('');
+    $('pinds').innerHTML = ['principal', 'custo', 'fator'].map(sec => {
+      const as = D.areas.filter(a => secao(a) === sec); if (!as.length) return '';
+      const sub = sec === 'fator' ? '<p class="meta" style="margin:0">Ajudam a entender o que aconteceu e o que pode vir depois. Não entram no placar.</p>' : '';
+      return `<h3 class="grupo">${SECOES[sec]}</h3>${sub}` + as.map(bloco).join('');
+    }).join('');
+    custoVisual(m);
     heranca(m);
     projecao(m);
     const ant = D.mandatos[i - 1], prox = D.mandatos[i + 1];
