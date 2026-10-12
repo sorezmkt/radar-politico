@@ -203,10 +203,10 @@ INDICADORES = [
      "melhor": "neutro", "tipo": "variacao", "unidade": "% de tudo o que o país produz", "casas": 1,
      "explica": "Tudo o que União, estados e municípios gastam. Sem selo de melhor ou pior: depende do retorno.",
      "confianca": "alta", "limite": "Último ano pode ser estimativa do FMI.", "fonte_txt": "FMI"},
-    {"id": "primario", "nome": "Resultado primário", "area": "Sustentabilidade fiscal", "fonte": "imf", "codigo": "auto_primario",
+    {"id": "primario", "nome": "Resultado primário", "area": "Sustentabilidade fiscal", "fonte": "bcb_primario", "codigo": 5793,
      "melhor": "maior", "tipo": "variacao", "unidade": "% do PIB (negativo = gastou mais do que arrecadou, sem contar juros)", "casas": 1,
      "explica": "Se o governo arrecada mais do que gasta antes de pagar juros. Déficit seguido faz a dívida crescer.",
-     "confianca": "alta", "limite": "Último ano pode ser estimativa do FMI.", "fonte_txt": "FMI"},
+     "confianca": "alta", "limite": "Setor público consolidado, acumulado em 12 meses. Série do Banco Central desde 2002.", "fonte_txt": "Banco Central"},
     {"id": "divida", "nome": "Dívida pública", "area": "Sustentabilidade fiscal", "fonte": "imf", "codigo": "GGXWDG_NGDP",
      "melhor": "menor", "tipo": "variacao", "unidade": "% de tudo o que o país produz", "casas": 1,
      "explica": "Dívida bruta do governo. Quanto maior, mais imposto vai para juros e menos sobra para os próximos governos.",
@@ -538,9 +538,9 @@ def cesta_mensal():
     if "cesta" in _CACHE:
         return _CACHE["cesta"]
     base = "http://www.ipeadata.gov.br/api/odata4"
-    todas = json.loads(baixar(f"{base}/Metadados?$select=SERCODIGO,SERNOME,SERPERIODICIDADE,UNINOME,FNTSIGLA", timeout=300)).get("value", [])
+    todas = json.loads(baixar(f"{base}/Metadados", timeout=300)).get("value", [])
     meta = [x for x in todas if "cesta" in norm_txt(x.get("SERNOME")) and "sao paulo" in norm_txt(x.get("SERNOME"))]
-    cands = [x for x in meta if norm_txt(x.get("SERPERIODICIDADE")).startswith("mensal")
+    cands = [x for x in meta if norm_txt(x.get("PERNOME") or x.get("SERPERIODICIDADE") or "mensal").startswith("mensal")
              and "r$" in norm_txt(x.get("UNINOME")) and ("gasto" in norm_txt(x.get("SERNOME")) or "custo" in norm_txt(x.get("SERNOME")) or "valor" in norm_txt(x.get("SERNOME")))]
     if not cands:
         cands = [x for x in meta if "r$" in (x.get("UNINOME") or "").lower()]
@@ -612,10 +612,19 @@ def mais_recente(inicio_mandato):
         out["salario_minimo"] = {"rotulo": f"{MES[m - 1]}/{a}", "valor": v, "quando": a + m / 12}  # já está em reais de hoje
     except Exception as e:  # noqa: BLE001
         avisos.append(f"recente salario_minimo: {e}")
+    try:
+        mensal = sorted(serie_bcb(5793, f"01/01/{a0}"))
+        a, m, v = mensal[-1]
+        out["primario"] = {"rotulo": f"12 meses até {MES[m - 1]}/{a}", "valor": -v, "quando": a + m / 12}
+    except Exception as e:  # noqa: BLE001
+        avisos.append(f"recente primario: {e}")
     for ind in INDICADORES:
         try:
             if ind["fonte"] == "acess":
                 mensal = acessibilidade_mensal(ind["codigo"])
+            elif ind["fonte"] == "bcb_primario":
+                mensal = serie_bcb(5793, "01/01/2001")
+                br, lat = {a: -v for a, m, v in mensal if m == 12}, {}
             elif ind["fonte"] == "anp":
                 mensal = litros_mensal()
             elif ind["fonte"] == "cesta":
