@@ -592,9 +592,13 @@ def smn_mensal():
     """Salário mínimo necessário do DIEESE (Ipeadata), em R$ correntes."""
     if "smn" in _CACHE:
         return _CACHE["smn"]
-    meta = [x for x in ipea_metadados() if "salario minimo necessario" in norm_txt(x.get("SERNOME"))]
+    todas = ipea_metadados()
+    meta = [x for x in todas if "necessari" in norm_txt(x.get("SERNOME")) and "salario" in norm_txt(x.get("SERNOME"))
+            and "r$" in norm_txt(x.get("UNINOME") or "r$")]
+    meta.sort(key=lambda x: ("nominal" not in norm_txt(x.get("SERNOME")), len(x.get("SERNOME") or "")))
     if not meta:
-        raise ValueError("série do salário mínimo necessário não encontrada no Ipeadata")
+        parecidas = [(x.get("SERCODIGO"), x.get("SERNOME")) for x in todas if "dieese" in norm_txt(x.get("SERCODIGO")) and "salari" in norm_txt(x.get("SERNOME"))][:10]
+        raise ValueError(f"série do salário mínimo necessário não encontrada no Ipeadata; séries do DIEESE com 'salário': {parecidas}")
     serie = meta[0]
     vals = json.loads(baixar(f"http://www.ipeadata.gov.br/api/odata4/ValoresSerie(SERCODIGO='{serie['SERCODIGO']}')")).get("value", [])
     out = {}
