@@ -19,6 +19,7 @@ import datetime as dt
 import io
 import json
 import os
+import re
 import time
 import urllib.error
 import urllib.parse
@@ -612,8 +613,10 @@ def smn_mensal():
             and "r$" in norm_txt(x.get("UNINOME") or "r$")]
     meta.sort(key=lambda x: ("nominal" not in norm_txt(x.get("SERNOME")), len(x.get("SERNOME") or "")))
     if not meta:
-        parecidas = [(x.get("SERCODIGO"), x.get("SERNOME")) for x in todas if "dieese" in norm_txt(x.get("SERCODIGO")) and "salari" in norm_txt(x.get("SERNOME"))][:10]
-        raise ValueError(f"série do salário mínimo necessário não encontrada no Ipeadata; séries do DIEESE com 'salário': {parecidas}")
+        out = smn_dieese_site()
+        avisos_info.append("salário mínimo necessário: tabela oficial do DIEESE (dieese.org.br)")
+        _CACHE["smn"] = out
+        return out
     serie = meta[0]
     vals = json.loads(baixar(f"http://www.ipeadata.gov.br/api/odata4/ValoresSerie(SERCODIGO='{serie['SERCODIGO']}')")).get("value", [])
     out = {}
@@ -627,6 +630,31 @@ def smn_mensal():
         raise ValueError("salário mínimo necessário sem valores")
     avisos_info.append(f"salário mínimo necessário: {serie['SERCODIGO']}: {serie['SERNOME']}")
     _CACHE["smn"] = out
+    return out
+
+
+def smn_dieese_site():
+    """Tabela 'Salário mínimo nominal e necessário' publicada pelo DIEESE (desde jul/1994)."""
+    import html as _html
+    txt = baixar("https://www.dieese.org.br/analisecestabasica/salarioMinimo.html").decode("utf-8", "replace")
+    meses = {norm_txt(n): i + 1 for i, n in enumerate(["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho",
+                                                       "agosto", "setembro", "outubro", "novembro", "dezembro"])}
+    num = lambda c: float(c.replace("R$", "").replace(".", "").replace(",", ".").strip())
+    out, ano = {}, None
+    for linha in re.findall(r"<tr[^>]*>(.*?)</tr>", txt, re.S | re.I):
+        cels = [_html.unescape(re.sub(r"<[^>]+>", " ", c)).strip() for c in re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", linha, re.S | re.I)]
+        if not cels:
+            continue
+        rot = norm_txt(cels[0]).strip()
+        if re.fullmatch(r"(19|20)\d\d", rot):
+            ano = int(rot)
+        elif ano and rot in meses and len(cels) >= 3 and "R$" in cels[2]:
+            try:
+                out[(ano, meses[rot])] = num(cels[2])
+            except ValueError:
+                continue
+    if len(out) < 100:
+        raise ValueError(f"tabela do DIEESE com poucos meses ({len(out)})")
     return out
 
 
@@ -791,11 +819,12 @@ def bolsa_familia_receita():
     anual = {}
     for a in sorted({a for a, _ in rec}):
         ks = [(a, m) for m in range(1, 13)]
-        if all(k in rec for k in ks):
+        # O RTN só traz a linha do programa a partir de certo ano; mês zerado = sem registro, não gasto zero
+        if all(k in rec for k in ks) and all(bf.get(k, 0.0) > 0 for k in ks):
             anual[a] = round(100 * sum(bf.get(k, 0.0) for k in ks) / sum(rec[k] for k in ks), 2)
     ult = sorted(k for k in rec if k in bf or k[0] >= 2004)[-12:]
     recente = None
-    if len(ult) == 12:
+    if len(ult) == 12 and all(bf.get(k, 0.0) > 0 for k in ult):
         a, m = ult[-1]
         recente = {"valor": round(100 * sum(bf.get(k, 0.0) for k in ult) / sum(rec[k] for k in ult), 2),
                    "rotulo": f"12 meses até {MES[m - 1]}/{a}", "quando": a + m / 12}
