@@ -622,9 +622,6 @@ def mais_recente(inicio_mandato):
         try:
             if ind["fonte"] == "acess":
                 mensal = acessibilidade_mensal(ind["codigo"])
-            elif ind["fonte"] == "bcb_primario":
-                mensal = serie_bcb(5793, "01/01/2001")
-                br, lat = {a: -v for a, m, v in mensal if m == 12}, {}
             elif ind["fonte"] == "anp":
                 mensal = litros_mensal()
             elif ind["fonte"] == "cesta":
@@ -706,6 +703,8 @@ def coletar():
                 br, lat = renda_trabalho(), {}
             elif ind["fonte"] == "acess":
                 br, lat = _anual_media(acessibilidade_mensal(ind["codigo"])), {}
+            elif ind["fonte"] == "bcb_primario":
+                br, lat = {a: -v for a, m, v in serie_bcb(5793, "01/01/2001") if m == 12}, {}
             elif ind["fonte"] == "anp":
                 br, lat = _anual_media(litros_mensal()), {}
             elif ind["fonte"] == "cesta":
