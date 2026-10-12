@@ -203,7 +203,7 @@ INDICADORES = [
      "melhor": "neutro", "tipo": "variacao", "unidade": "% de tudo o que o país produz", "casas": 1,
      "explica": "Tudo o que União, estados e municípios gastam. Sem selo de melhor ou pior: depende do retorno.",
      "confianca": "alta", "limite": "Último ano pode ser estimativa do FMI.", "fonte_txt": "FMI"},
-    {"id": "primario", "nome": "Resultado primário", "area": "Sustentabilidade fiscal", "fonte": "imf", "codigo": "GGXONLB_NGDP",
+    {"id": "primario", "nome": "Resultado primário", "area": "Sustentabilidade fiscal", "fonte": "imf", "codigo": "auto_primario",
      "melhor": "maior", "tipo": "variacao", "unidade": "% do PIB (negativo = gastou mais do que arrecadou, sem contar juros)", "casas": 1,
      "explica": "Se o governo arrecada mais do que gasta antes de pagar juros. Déficit seguido faz a dívida crescer.",
      "confianca": "alta", "limite": "Último ano pode ser estimativa do FMI.", "fonte_txt": "FMI"},
@@ -268,8 +268,27 @@ def serie_bcb(codigo, inicio="01/01/1990"):
     return out
 
 
+def codigo_imf_primario():
+    try:
+        lista = json.loads(baixar("https://www.imf.org/external/datamapper/api/v1/indicators")).get("indicators", {})
+    except Exception as e:  # noqa: BLE001
+        avisos.append(f"lista de indicadores do FMI: {e}")
+        return None
+    cands = [(k, v.get("label", "")) for k, v in lista.items() if "primary" in str(v.get("label", "")).lower()
+             and ("balance" in str(v.get("label", "")).lower() or "net lending" in str(v.get("label", "")).lower())]
+    if cands:
+        avisos_info.append(f"FMI resultado primário: {cands[0][0]} ({cands[0][1]})")
+        return cands[0][0]
+    avisos.append("FMI: indicador de resultado primário não encontrado na lista")
+    return None
+
+
 def serie_imf(codigo):
     """FMI (World Economic Outlook). Descarta o ano corrente e projeções."""
+    if codigo == "auto_primario":
+        codigo = codigo_imf_primario()
+        if not codigo:
+            return {}
     j = json.loads(baixar(f"https://www.imf.org/external/datamapper/api/v1/{codigo}/BRA"))
     vals = j.get("values", {}).get(codigo, {}).get("BRA", {})
     return {int(a): float(v) for a, v in vals.items() if v is not None and int(a) < HOJE.year and int(a) >= ANO_INICIAL}
@@ -466,18 +485,22 @@ def gasolina_mensal():
         except Exception as e:  # noqa: BLE001
             avisos.append(f"ANP {url.rsplit('/', 1)[-1]}: {e}")
             continue
+        antes, amostra = len(out), []
         for ws in wb.worksheets:
             cab = None
             for row in ws.iter_rows(values_only=True):
-                cels = [str(c).strip().upper() if c is not None else "" for c in row]
+                cels = [" ".join(norm_txt(c).upper().split()) if c is not None else "" for c in row]
+                if len(amostra) < 12 and any(cels):
+                    amostra.append([c for c in cels if c][:6])
                 if cab is None:
-                    if any("PRODUTO" in c for c in cels) and any("PREÇO MÉDIO REVENDA" in c or "PRECO MEDIO REVENDA" in c for c in cels):
+                    if any("PRODUTO" in c for c in cels) and any("PRECO MEDIO REVENDA" in c for c in cels):
                         cab = cels
-                        i_mes = next(i for i, c in enumerate(cab) if c.startswith("M") and ("MÊS" in c or "MES" in c or "DATA" in c))
+                        i_mes = next(i for i, c in enumerate(cab) if c in ("MES", "DATA") or c.startswith("MES") or c.startswith("DATA"))
                         i_prod = next(i for i, c in enumerate(cab) if "PRODUTO" in c)
-                        i_preco = next(i for i, c in enumerate(cab) if "PREÇO MÉDIO REVENDA" in c or "PRECO MEDIO REVENDA" in c)
+                        i_preco = next(i for i, c in enumerate(cab) if "PRECO MEDIO REVENDA" in c)
                     continue
-                if "GASOLINA COMUM" not in cels[i_prod]:
+                prod = cels[i_prod] if i_prod < len(cels) else ""
+                if "GASOLINA" not in prod or "ADITIVADA" in prod or "PREMIUM" in prod or "AVIACAO" in prod:
                     continue
                 d, preco = row[i_mes], row[i_preco]
                 try:
@@ -486,6 +509,14 @@ def gasolina_mensal():
                     continue
                 if isinstance(d, (dt.date, dt.datetime)):
                     out[(d.year, d.month)] = preco
+                elif isinstance(d, str) and len(d) >= 7:
+                    try:
+                        dd = dt.datetime.strptime(d.strip()[:10], "%d/%m/%Y") if "/" in d else dt.datetime.fromisoformat(d.strip()[:10])
+                        out[(dd.year, dd.month)] = preco
+                    except ValueError:
+                        pass
+        if len(out) == antes:
+            avisos.append(f"ANP {url.rsplit('/', 1)[-1]}: nenhuma linha de gasolina; início da planilha: {amostra}")
     if not out:
         raise ValueError("planilhas da ANP sem gasolina comum")
     _CACHE["gas"] = out
@@ -497,19 +528,24 @@ def litros_mensal():
     return {k: round(sm[k] / p, 1) for k, p in gas.items() if k in sm and p > 0}
 
 
+def norm_txt(t):
+    import unicodedata
+    return unicodedata.normalize("NFD", str(t or "")).encode("ascii", "ignore").decode().lower()
+
+
 def cesta_mensal():
     """Custo da cesta básica do DIEESE em São Paulo (Ipeadata), em horas de trabalho de quem ganha o mínimo."""
     if "cesta" in _CACHE:
         return _CACHE["cesta"]
     base = "http://www.ipeadata.gov.br/api/odata4"
-    filtro = urllib.parse.quote("contains(SERNOME,'esta básica') and contains(SERNOME,'São Paulo')")
-    meta = json.loads(baixar(f"{base}/Metadados?$filter={filtro}&$select=SERCODIGO,SERNOME,SERPERIODICIDADE,UNINOME")).get("value", [])
-    cands = [x for x in meta if (x.get("SERPERIODICIDADE") or "").lower().startswith("mensal")
-             and "r$" in (x.get("UNINOME") or "").lower() and "gasto" in (x.get("SERNOME") or "").lower()]
+    todas = json.loads(baixar(f"{base}/Metadados?$select=SERCODIGO,SERNOME,SERPERIODICIDADE,UNINOME,FNTSIGLA", timeout=300)).get("value", [])
+    meta = [x for x in todas if "cesta" in norm_txt(x.get("SERNOME")) and "sao paulo" in norm_txt(x.get("SERNOME"))]
+    cands = [x for x in meta if norm_txt(x.get("SERPERIODICIDADE")).startswith("mensal")
+             and "r$" in norm_txt(x.get("UNINOME")) and ("gasto" in norm_txt(x.get("SERNOME")) or "custo" in norm_txt(x.get("SERNOME")) or "valor" in norm_txt(x.get("SERNOME")))]
     if not cands:
         cands = [x for x in meta if "r$" in (x.get("UNINOME") or "").lower()]
     if not cands:
-        raise ValueError(f"série da cesta não encontrada ({[x.get('SERNOME') for x in meta][:5]})")
+        raise ValueError(f"série da cesta não encontrada; candidatas: {[(x.get('SERCODIGO'), x.get('SERNOME'), x.get('UNINOME')) for x in meta][:8]}")
     serie = cands[0]
     status_cesta = f"{serie['SERCODIGO']}: {serie['SERNOME']}"
     vals = json.loads(baixar(f"{base}/ValoresSerie(SERCODIGO='{serie['SERCODIGO']}')")).get("value", [])
