@@ -93,7 +93,7 @@
     if ('econ' in P) comps.push(['Uso responsável da cota', P.econ, S.econ, d.meses_ativos ? `Média de ${mil(d.medio)}/mês, teto de ${mil(d.teto)}` : 'Sem gastos registrados no período']);
     if ('prod' in P) comps.push(['Produção legislativa', P.prod, S.prod, `${d.props.n} proposições como primeiro autor`]);
     if ('efet' in P) comps.push(['Efetividade', P.efet, S.efet, `${d.props.avancadas} aprovadas, no Senado ou prontas para votação`]);
-    $('comps').innerHTML = comps.map(([n, w, s, t]) => `<div class="comp"><div class="row"><strong>${n} <span class="meta">· peso ${Math.round(w * 100)}%</span></strong><span class="num" style="color:${cor(s)}">${s ?? '–'}</span></div><div class="bar"><i style="width:${s ?? 0}%;background:${cor(s)}"></i></div><p>${t}</p></div>`).join('');
+    $('comps').innerHTML = comps.map(([n, w, s, t]) => `<div class="comp"><div class="row"><div><strong>${n}</strong><span class="peso">peso ${Math.round(w * 100)}%</span></div><span class="num" style="color:${cor(s)}">${s ?? '–'}</span></div><div class="bar"><i style="width:${s ?? 0}%;background:${cor(s)}"></i></div><p>${t}</p></div>`).join('');
 
     $('alerts').innerHTML = alertas(d);
 
@@ -103,11 +103,12 @@
     document.querySelectorAll('#riskMeter i').forEach((el, j) => el.style.background = j < rn ? `var(--${rc})` : 'var(--line)');
     const tx = { good: 'OK', warn: 'Atenção', bad: 'Risco', nd: 'Sem dados', breve: 'Em breve' };
     const dotc = { good: 'good', warn: 'warn', bad: 'bad', nd: 'nd', breve: 'nd' };
-    $('checks').innerHTML = d.risco.checks.map(c => `<div class="check"><span class="dot" style="background:var(--${dotc[c.status]})"></span><div><b>${esc(c.titulo)}</b><p>${esc(c.texto)}</p></div><span class="tag v-${c.status}">${tx[c.status]}</span></div>`).join('');
-    $('forn').innerHTML = d.fornecedores.length ? `<thead><tr><th>Fornecedor</th><th class="r">% da cota</th><th class="r">Valor</th><th>Sinais</th></tr></thead><tbody>${d.fornecedores.map(f => {
-      const sub = [f.categoria, f.cnpj ? f.cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5') : ''].filter(Boolean).join(' · ');
-      return `<tr><td>${esc(titleCase(f.nome))}<small>${esc(sub)}</small></td><td class="r num">${f.pct.toLocaleString('pt-BR')}%</td><td class="r num">${brl(f.valor)}</td><td><div class="flags">${f.flags.map(s => `<span>${esc(s)}</span>`).join('') || '<span class="meta" style="font-size:12px">nenhum</span>'}</div></td></tr>`;
-    }).join('')}</tbody>` : '<tbody><tr><td class="meta">Nenhum gasto registrado no período.</td></tr></tbody>';
+    $('checks').innerHTML = d.risco.checks.map(c => `<div class="check"><span class="dot" style="background:var(--${dotc[c.status]})"></span><div><div class="ct"><b>${esc(c.titulo)}</b><span class="tag v-${c.status}">${tx[c.status]}</span></div><p>${esc(c.texto)}</p></div></div>`).join('');
+    const maxf = Math.max(1, ...d.fornecedores.map(f => f.pct));
+    $('forn').innerHTML = d.fornecedores.length ? d.fornecedores.map(f => {
+      const sub = [f.categoria, f.cnpj ? 'CNPJ ' + f.cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5') : ''].filter(Boolean).join(' · ');
+      return `<div class="fitem"><div class="fhead"><span class="fname">${esc(titleCase(f.nome))}</span><span class="num fval">${brl(f.valor)}</span></div><div class="bar"><i style="width:${f.pct / maxf * 100}%;background:${f.flags.length ? 'var(--bad)' : 'var(--accent)'}"></i></div><div class="fsub"><span>${esc(sub)}</span><span class="num">${f.pct.toLocaleString('pt-BR')}% da cota</span></div>${f.flags.length ? `<div class="flags">${f.flags.map(s => `<span>${esc(s)}</span>`).join('')}</div>` : ''}</div>`;
+    }).join('') : '<p class="meta">Nenhum gasto registrado no período.</p>';
 
     $('gTotal').textContent = brl(d.total);
     $('gPct').textContent = d.teto && d.meses_ativos ? Math.round(d.total / (d.teto * d.meses_ativos) * 100) + '%' : '–';
@@ -118,7 +119,7 @@
     $('cats').innerHTML = cats.length ? cats.slice(0, 8).map(([nome, v]) => {
       const share = d.total > 0 ? v / d.total : 0, med = cm[nome] || 0;
       const alto = med && share > med * 1.5 && share > .1;
-      return `<div class="cat"><div class="row"><span>${esc(nome)}${alto ? ' <em style="color:var(--bad)">acima da média</em>' : ''}</span><span class="num">${brl(v)}</span></div><div class="bar"><i style="width:${v / maxc * 100}%;background:${alto ? 'var(--bad)' : 'var(--accent)'}"></i></div><em>${Math.round(share * 100)}% do total · média da Câmara ${Math.round(med * 100)}%</em></div>`;
+      return `<div class="cat"><div class="row"><span>${esc(nome)}</span><span class="num">${brl(v)}</span></div><div class="bar"><i style="width:${v / maxc * 100}%;background:${alto ? 'var(--bad)' : 'var(--accent)'}"></i></div><em>${Math.round(share * 100)}% do total · média da Câmara ${Math.round(med * 100)}%${alto ? ' · <b style="color:var(--bad)">acima da média</b>' : ''}</em></div>`;
     }).join('') : '<p class="meta">Nenhum gasto registrado no período.</p>';
 
     if (d.presenca && d.presenca.total) {
@@ -132,7 +133,7 @@
     }
 
     $('propBig').innerHTML = `<div><span class="num">${d.props.n}</span><span class="meta">apresentadas</span></div><div><span class="num">${d.props.avancadas}</span><span class="meta">avançaram</span></div>`;
-    $('props').innerHTML = d.props.lista.length ? d.props.lista.map(p => `<a class="prop" href="${esc(p.url)}" target="_blank" rel="noopener"><div><code>${esc(p.tipo)} ${esc(p.numero)}/${esc(p.ano)}</code><span class="t">${esc(p.ementa)}</span></div><span class="tag ${tagSit(p.situacao)}">${esc(p.situacao || 'Em tramitação')}</span></a>`).join('') : '<p class="meta">Nenhuma proposição como primeiro autor no período.</p>';
+    $('props').innerHTML = d.props.lista.length ? d.props.lista.map(p => `<a class="prop" href="${esc(p.url)}" target="_blank" rel="noopener"><div class="ph"><code>${esc(p.tipo)} ${esc(p.numero)}/${esc(p.ano)}</code><span class="tag ${tagSit(p.situacao)}">${esc(p.situacao || 'Em tramitação')}</span></div><span class="t">${esc(p.ementa)}</span></a>`).join('') : '<p class="meta">Nenhuma proposição como primeiro autor no período.</p>';
 
     renderRank();
   }
@@ -164,7 +165,7 @@
     $('ranklist').innerHTML = l.slice(0, limite).map((x, i) => {
       const r = RISCO[x.risco] || RISCO.baixo;
       const val = aba === 'risco' ? `<span class="verdict v-${r[0]}" style="font-size:11px;padding:2px 8px">${x.pontos} pts</span>` : `<span class="bar"><i style="width:${x.nota ?? 0}%;background:${cor(x.nota)}"></i></span>`;
-      return `<button type="button" data-id="${x.id}" class="${x.id === atual ? 'on' : ''}" style="${aba === 'risco' ? 'grid-template-columns:30px 1fr auto 34px' : ''}"><span class="n">${i + 1}</span><span class="nm">${esc(x.nome)} <small>${esc(x.partido)}-${esc(x.uf)}</small></span>${val}<span class="num" style="color:${cor(x.nota)};text-align:right">${x.nota ?? '–'}</span></button>`;
+      return `<button type="button" data-id="${x.id}" class="${x.id === atual ? 'on' : ''}"><span class="n">${i + 1}</span><span class="nm"><span>${esc(x.nome)}</span><small>${esc(x.partido)} · ${esc(x.uf)}</small></span>${val}<span class="num" style="color:${cor(x.nota)};text-align:right">${x.nota ?? '–'}</span></button>`;
     }).join('');
     $('more').hidden = l.length <= limite;
   }
