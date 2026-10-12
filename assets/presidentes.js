@@ -13,6 +13,15 @@
     return `<div class="abar"><span class="an">${esc(nome)}</span><span class="bar"><i style="width:${nota ?? 0}%;background:var(--${faixa(nota)})"></i></span><span class="av num">${nota ?? '–'}</span></div>`;
   }
 
+  function placarTxt(m) {
+    const p = m.placar; if (!p || !p.total) return '';
+    const w = v => `${v / p.total * 100}%`;
+    return `<div class="placar">
+      <div class="pbar" aria-hidden="true"><i style="width:${w(p.melhor)};background:var(--good)"></i><i style="width:${w(p.igual)};background:var(--nd)"></i><i style="width:${w(p.pior)};background:var(--bad)"></i></div>
+      <p>Entregou o país <b style="color:var(--good)">melhor em ${p.melhor}</b>${p.igual ? `, igual em ${p.igual}` : ''} e <b style="color:var(--bad)">pior em ${p.pior}</b> de ${p.total} indicadores</p>
+    </div>`;
+  }
+
   // ------------------------------------------------------------ lista
   function lista(area) {
     const ms = [...D.mandatos];
@@ -25,6 +34,7 @@
         <div><span class="mn">${esc(m.nome)}</span><small>${esc(m.rotulo)} · ${periodo(m)} · ${esc(m.partido)}</small></div>
         ${m.em_andamento ? '<span class="tag v-warn">Parcial</span>' : ''}
       </div>
+      ${placarTxt(m)}
       ${area
         ? `<div class="mbig">${areaBar(area, m.areas[area])}</div>`
         : `<div class="mareas">${D.areas.map(a => areaBar(a, m.areas[a])).join('')}</div>`}
@@ -102,7 +112,23 @@
       .filter(Boolean).map(t => `<p class="disclaimer">${esc(t)}</p>`).join('');
     $('pctx').innerHTML = (m.contexto || []).map(c => `<li>${esc(c)}</li>`).join('');
     $('pctx').parentElement.hidden = !(m.contexto || []).length;
-    $('pareas').innerHTML = `<div class="label">Resultado por área, comparado aos outros mandatos</div>` + D.areas.map(a => areaBar(a, m.areas[a])).join('');
+    const VER = { melhor: ['good', 'Melhor'], pior: ['bad', 'Pior'], igual: ['nd', 'Igual'] };
+    $('ptroca').innerHTML = `<div><h3 class="lt">Como recebeu × como entregou</h3>
+      <p class="meta">Cada linha compara o último ano antes da posse com o último ano no cargo.</p></div>
+      ${placarTxt(m)}
+      ${D.areas.map(a => {
+        const linhas = D.indicadores.filter(x => x.area === a && m.indicadores[x.id] && m.indicadores[x.id].veredito);
+        if (!linhas.length) return '';
+        return `<div class="troca"><div class="label">${esc(a)}</div>${linhas.map(ind => {
+          const r = m.indicadores[ind.id], [vc, vt] = VER[r.veredito];
+          return `<div class="trow"><span class="tn">${esc(ind.nome.replace(/ médi[oa]s?$/, ''))}<small>${esc(ind.unidade)}</small></span>
+            <span class="tv num"><small>${r.recebeu.ano}</small>${fmt(r.recebeu.valor, ind.casas)}</span>
+            <span class="ta" aria-hidden="true">→</span>
+            <span class="tv num"><small>${r.entregou.ano}</small>${fmt(r.entregou.valor, ind.casas)}</span>
+            <span class="tag v-${vc}">${vt}</span></div>`;
+        }).join('')}</div>`;
+      }).join('')}`;
+    $('pareas').innerHTML =`<div class="label">Resultado por área, comparado aos outros mandatos</div>` + D.areas.map(a => areaBar(a, m.areas[a])).join('');
     $('pinds').innerHTML = D.areas.map(a => {
       const inds = D.indicadores.filter(x => x.area === a);
       return `<section class="card"><div class="ah"><h3>${esc(a)}</h3><span class="score s-${faixa(m.areas[a])} num">${m.areas[a] ?? '–'}</span></div>${inds.map(ind => cartaoIndicador(ind, m.indicadores[ind.id], m)).join('')}</section>`;

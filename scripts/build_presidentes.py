@@ -83,14 +83,20 @@ MANDATOS = [
 # --------------------------------------------------------------------- indicadores
 # tipo "variacao": compara o ano antes da posse com o último ano no cargo
 # tipo "media": média dos anos no cargo (para inflação e juros, o nível importa mais que a mudança)
-AREAS = ["Economia", "Juros e dívidas", "Segurança", "Saúde", "Educação", "Social"]
+AREAS = ["Economia", "Trabalho", "Juros e dívidas", "Segurança", "Saúde", "Educação", "Social"]
 INDICADORES = [
     {"id": "pib_pc", "nome": "PIB por habitante", "area": "Economia", "fonte": "wb", "codigo": "NY.GDP.PCAP.KD",
      "melhor": "maior", "tipo": "variacao", "pct": True, "unidade": "US$ por pessoa (valores de 2015)", "casas": 0,
      "explica": "Riqueza produzida no país dividida pela população, descontada a inflação."},
-    {"id": "desemprego", "nome": "Desemprego", "area": "Economia", "fonte": "wb", "codigo": "SL.UEM.TOTL.ZS",
-     "melhor": "menor", "tipo": "variacao", "unidade": "% da força de trabalho", "casas": 1,
-     "explica": "Pessoas procurando trabalho sem conseguir, estimativa padronizada da OIT."},
+    {"id": "ocupacao", "nome": "Pessoas trabalhando", "area": "Trabalho", "fonte": "wb", "codigo": "SL.EMP.TOTL.SP.ZS",
+     "melhor": "maior", "tipo": "variacao", "unidade": "% da população com 15 anos ou mais", "casas": 1,
+     "explica": "De todas as pessoas em idade de trabalhar, quantas estão de fato trabalhando. Não depende de quem está ou não procurando emprego, por isso é difícil de distorcer."},
+    {"id": "desemprego", "nome": "Desemprego oficial", "area": "Trabalho", "fonte": "wb", "codigo": "SL.UEM.TOTL.ZS",
+     "melhor": "menor", "tipo": "variacao", "unidade": "% de quem trabalha ou procura trabalho", "casas": 1,
+     "explica": "Conta só quem procurou emprego e não achou. Quem desistiu de procurar fica fora da conta, por isso vale olhar junto com a taxa de pessoas trabalhando."},
+    {"id": "vulneravel", "nome": "Trabalho precário", "area": "Trabalho", "fonte": "wb", "codigo": "SL.EMP.VULN.ZS",
+     "melhor": "menor", "tipo": "variacao", "unidade": "% de quem trabalha", "casas": 1,
+     "explica": "Quem trabalha por conta própria ou ajuda a família sem salário, em geral sem carteira, férias ou aposentadoria garantida."},
     {"id": "inflacao", "nome": "Inflação média", "area": "Economia", "fonte": "wb", "codigo": "FP.CPI.TOTL.ZG",
      "melhor": "menor", "tipo": "media", "unidade": "% ao ano", "casas": 1,
      "explica": "Alta média dos preços ao consumidor por ano durante o mandato."},
@@ -226,6 +232,18 @@ def medir(ind, serie, regiao, m):
     if fim <= m["base"]:
         return None
     r = {"id": ind["id"]}
+    # como recebeu e como entregou (vale para todos os indicadores)
+    ab, vb = valor_ate(serie, m["base"], m["base"] - 2)
+    af, vf = valor_ate(serie, fim, m["base"] + 1)
+    if vb is not None and vf is not None and af > ab:
+        r["recebeu"] = {"ano": ab, "valor": vb}
+        r["entregou"] = {"ano": af, "valor": vf}
+        dif = vf - vb
+        tolerancia = max(abs(vb) * 0.01, 10 ** -ind.get("casas", 1) / 2)
+        if abs(dif) < tolerancia:
+            r["veredito"] = "igual"
+        else:
+            r["veredito"] = "melhor" if (dif < 0) == (ind["melhor"] == "menor") else "pior"
     if ind["tipo"] == "media":
         anos = [a for a in range(m["base"] + 1, fim + 1) if a in serie]
         if not anos:
@@ -283,6 +301,8 @@ def main():
 
     # nota de cada área = média das notas dos seus indicadores (0 = pior resultado entre os mandatos, 100 = melhor)
     for m in mandatos:
+        vs = [r.get("veredito") for r in m["indicadores"].values() if r.get("veredito")]
+        m["placar"] = {"melhor": vs.count("melhor"), "pior": vs.count("pior"), "igual": vs.count("igual"), "total": len(vs)}
         m["areas"] = {}
         for area in AREAS:
             notas = [m["indicadores"][i["id"]]["nota"] for i in INDICADORES
@@ -295,7 +315,10 @@ def main():
         "indicadores": [{k: v for k, v in i.items() if k not in ("fonte", "codigo")} |
                         {"fonte": "Banco Mundial" if i["fonte"] == "wb" else "Banco Central do Brasil"}
                         for i in INDICADORES],
-        "series": {k: {"brasil": sorted(v[0].items()), "regiao": sorted(v[1].items())} for k, v in series.items()},
+        # gráficos a partir de 1994 (inflação a partir de 1995, para a hiperinflação não achatar o resto da série)
+        "series": {k: {"brasil": sorted((a, x) for a, x in v[0].items() if a >= (1995 if k == "inflacao" else 1994)),
+                       "regiao": sorted((a, x) for a, x in v[1].items() if a >= (1995 if k == "inflacao" else 1994))}
+                   for k, v in series.items()},
         "mandatos": mandatos,
         "avisos": avisos,
     }
