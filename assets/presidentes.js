@@ -25,6 +25,21 @@
       <div class="nbar"><i style="width:${n}%;background:var(--${fc})"></i>${n0 != null ? `<b style="left:${n0}%" title="Ao assumir: ${n0}"></b>` : ''}</div>
       ${compacto ? '' : `<p class="meta" style="margin:0">${fl}${n0 != null ? ` · ao assumir: ${n0}/100` : ''}. Mede o quanto as condições se aproximam de um padrão adequado, não o quanto mudaram.</p>`}</div>`;
   }
+  const faixaEvol = n => n == null ? ['nd', 'Sem dados suficientes'] : n >= 60 ? ['good', 'Melhorou'] : n >= 40 ? ['warn', 'Misto'] : ['bad', 'Piorou'];
+  function duasNotas(m) {
+    const [nc, nl] = faixaNivel(m.nivel_geral), [ec, el] = faixaEvol(m.evolucao_geral);
+    return `<div class="duas">
+      <div class="nota"><span class="nl">Nível de vida ${m.em_andamento ? 'agora' : 'ao sair'}</span><span class="nv num" style="color:var(--${nc})">${m.nivel_geral ?? '–'}<small>/100</small></span><span class="meta">${nl}</span></div>
+      <div class="nota"><span class="nl">Evolução no mandato</span><span class="nv num" style="color:var(--${ec})">${m.evolucao_geral ?? '–'}<small>/100</small></span><span class="meta">${el}</span></div>
+    </div>`;
+  }
+  function tresAreas(m) {
+    return `<div class="tres">${D.areas.filter(ehResultado).map(a => {
+      const n = (m.nivel || {})[a], e = (m.evolucao || {})[a], [nc] = faixaNivel(n), [ec, el] = faixaEvol(e);
+      return `<div class="tarea"><div class="nh"><b>${esc(a)}</b><span class="num"><span style="color:var(--${nc})">${n ?? '–'}</span><small> nível</small> · <span style="color:var(--${ec})">${el.toLowerCase()}</span></span></div>
+        <div class="nbar"><i style="width:${n ?? 0}%;background:var(--${nc})"></i>${(m.nivel_inicio || {})[a] != null ? `<b style="left:${m.nivel_inicio[a]}%"></b>` : ''}</div></div>`;
+    }).join('')}</div>`;
+  }
   const tagsTxt = m => (m.tags || []).map(id => (D.tags || []).find(t => t.id === id)).filter(Boolean)
     .map(t => `<span class="htag" title="${esc(t.impactos)}">⚠ ${esc(t.nome)}</span>`).join('');
 
@@ -43,18 +58,18 @@
     if (area) ms.sort((a, b) => (b.areas[area] ?? -1) - (a.areas[area] ?? -1));
     $('ordemtxt').textContent = area
       ? `Ordenado pelo resultado em ${area.toLowerCase()}, do melhor para o pior entre os mandatos. Isso não é uma nota geral do presidente.`
-      : 'Em ordem cronológica. Cada barra compara o mandato com os outros naquela área: cheia é o melhor resultado entre eles, vazia é o pior.';
+      : 'Em ordem cronológica. Cada governo mostra o nível de vida, a evolução no mandato e as três áreas principais (barra = nível; marca fina = como recebeu).';
     $('mlist').innerHTML = ms.map(m => `<li><a href="presidente.html?id=${m.id}">
       <div class="mh">
         <div><span class="mn">${esc(m.nome)}</span><small>${esc(m.rotulo)} · ${periodo(m)} · ${esc(m.partido)}</small></div>
         ${m.em_andamento ? '<span class="tag v-warn">Parcial</span>' : ''}
       </div>
-      ${nivelTxt(m, true)}
-      ${placarTxt(m)}
-      ${(m.tags || []).length ? `<div class="htags">${tagsTxt(m)}</div>` : ''}
+      ${duasNotas(m)}
+      ${tresAreas(m)}
+      ${(m.tags || []).length || (m.assistencia || {}).alerta?.length ? `<div class="htags">${tagsTxt(m)}${(m.assistencia || {}).alerta?.length ? '<span class="htag">⚠ Atenção: sustentabilidade da assistência social</span>' : ''}</div>` : ''}
       ${area
         ? `<div class="mbig">${areaBar(area, m.areas[area])}</div>`
-        : `<div class="label" style="margin-top:2px">Evolução por área</div><div class="mareas">${D.areas.filter(ehResultado).map(a => areaBar(a, m.areas[a])).join('')}</div>`}
+        : ''}
     </a></li>`).join('');
   }
 
@@ -115,7 +130,7 @@
         <div class="dp ${va > vb ? 'lead' : ''}"><span class="dpn">${nome(A)}</span><span class="dpv num">${va}</span></div>
         <div class="dp ${vb > va ? 'lead' : ''}"><span class="dpn">${nome(B)}</span><span class="dpv num">${vb}</span></div>
       </div>
-      <div class="dnivel"><span>Nível de vida ao fim: <b class="num">${A.nivel_geral ?? '–'}</b></span><span>Nível de vida ao fim: <b class="num">${B.nivel_geral ?? '–'}</b></span></div>
+      <div class="dnivel"><span>Nível de vida: <b class="num">${A.nivel_geral ?? '–'}</b><br>Evolução: <b class="num">${A.evolucao_geral ?? '–'}</b></span><span>Nível de vida: <b class="num">${B.nivel_geral ?? '–'}</b><br>Evolução: <b class="num">${B.evolucao_geral ?? '–'}</b></span></div>
       <div class="dbar" aria-hidden="true"><i style="width:${tot ? va / tot * 100 : 50}%"></i><i style="width:${tot ? vb / tot * 100 : 50}%"></i></div>
       <p class="note">Indicadores de vida da população e de custo de vida em que cada governo teve o melhor resultado na comparação entre todos os mandatos. ${A.em_andamento || B.em_andamento ? 'Mandato em andamento ainda tem dados parciais. ' : ''}Cada linha mostra como o governo recebeu → como entregou.</p>
       <div class="dhead"><span></span><span>${esc(A.sigla)}</span><span>${esc(B.sigla)}</span></div>${corpo}`;
@@ -134,6 +149,7 @@
   function iniciarLista() {
     iniciarDuelo();
     mapa();
+    if (location.hash === '#metodo' && $('metodo')) $('metodo').open = true;
     const sel = $('areasel');
     sel.innerHTML = [['', 'Linha do tempo'], ...D.areas.map(a => [a, a])]
       .map(([v, t], i) => `<button type="button" data-a="${esc(v)}" aria-pressed="${i === 0}">${esc(t)}</button>`).join('');
@@ -221,7 +237,7 @@
   // custo de vida: o que ficou mais fácil ou mais difícil de pagar com um salário mínimo
   function custoVisual(m) {
     const el = $('pcusto'); if (!el) return;
-    const itens = D.indicadores.filter(i => secao(i.area) === 'custo').map(i => {
+    const itens = D.indicadores.filter(i => i.area === 'Poder de compra' && !['Salário mínimo', 'Dívidas'].includes(i.sub)).map(i => {
       const r = m.indicadores[i.id];
       if (!r || !r.recebeu || !r.entregou || !r.recebeu.valor) return null;
       let pct = (r.entregou.valor / r.recebeu.valor - 1) * 100;
@@ -252,8 +268,7 @@
     $('pctx').innerHTML = (m.contexto || []).map(c => `<li>${esc(c)}</li>`).join('');
     $('pctx').parentElement.hidden = !(m.contexto || []).length;
     const VER = { melhor: ['good', 'Melhor'], pior: ['bad', 'Pior'], igual: ['nd', 'Igual'] };
-    $('ptroca').innerHTML = `<div><h3 class="lt">Como recebeu × como entregou</h3>
-      <p class="meta">Cada linha compara o último ano antes da posse com o último ano no cargo.</p></div>
+    $('ptroca').innerHTML = `<div><p class="meta">Cada linha compara o último ano antes da posse com o último ano no cargo.</p></div>
       ${placarTxt(m)}
       ${D.areas.map(a => {
         const linhas = D.indicadores.filter(x => x.area === a && m.indicadores[x.id] && m.indicadores[x.id].recebeu);
@@ -267,33 +282,53 @@
             <span class="tag v-${vc}">${vt}</span></div>`;
         }).join('')}</div>`;
       }).join('')}`;
-    $('pareas').innerHTML =`<div class="label">Evolução por área, comparada aos outros mandatos</div>` + D.areas.map(a => areaBar(a, m.areas[a])).join('');
+    $('pareas').innerHTML = D.areas.map(a => areaBar(a, m.areas[a])).join('');
     const bloco = a => {
       const inds = D.indicadores.filter(x => x.area === a);
       const desc = ((D.blocos || []).find(b => b.nome === a) || {}).descricao;
       return `<section class="card"><div class="ah"><h3>${esc(a)}</h3><span class="score s-${faixa(m.areas[a])} num">${m.areas[a] ?? '–'}</span></div>${desc ? `<p class="meta" style="margin:0">${esc(desc)}</p>` : ''}${inds.map(ind => cartaoIndicador(ind, m.indicadores[ind.id], m)).join('')}</section>`;
     };
-    $('pinds').innerHTML = ['principal', 'custo', 'fator'].map(sec => {
-      const as = D.areas.filter(a => secao(a) === sec); if (!as.length) return '';
-      const sub = sec === 'fator' ? '<p class="meta" style="margin:0">Ajudam a entender o que aconteceu e o que pode vir depois. Não entram no placar.</p>' : '';
-      return `<h3 class="grupo">${SECOES[sec]}</h3>${sub}` + as.map(bloco).join('');
-    }).join('');
+    $('pinds').innerHTML = D.areas.filter(ehResultado).map(bloco).join('');
+    $('pfatores').innerHTML = '<p class="meta" style="margin:0">Ajudam a entender os resultados e alimentam a projeção. Não entram nas notas.</p>' + D.areas.filter(a => !ehResultado(a)).map(bloco).join('');
+    assistencia(m);
+    $('pmetodo').innerHTML = `<p class="meta">Referências, escalas e fontes de cada indicador estão explicadas na <a href="presidentes.html#metodo">metodologia completa</a>. Cada indicador em "Indicadores em detalhe" mostra a fonte, a referência usada, o grau de confiança e as limitações.</p>`;
     custoVisual(m);
-    $('presumo').innerHTML = `<div><h3 class="lt">Dois resultados, medidos de forma independente</h3>
-      <p class="meta">Uma situação pode melhorar muito e continuar ruim, ou piorar um pouco e continuar boa. Por isso medimos as duas coisas separadas.</p></div>
-      ${nivelTxt(m)}
-      <div class="nareas">${D.areas.filter(a => m.nivel && a in m.nivel).map(a => { const v = m.nivel[a], [c] = faixaNivel(v); return `<div class="abar"><span class="an">${esc(a)}</span><span class="bar"><i style="width:${v ?? 0}%;background:var(--${c})"></i></span><span class="av num">${v ?? '–'}</span></div>`; }).join('')}</div>
-      ${placarTxt(m)}`;
+    const anterior = D.mandatos[i - 1];
+    $('presumo').innerHTML = `${duasNotas(m)}
+      <p class="meta" style="margin:0">O nível mede o quanto as condições se aproximam de um padrão adequado. A evolução mede quanto melhoraram ou pioraram no mandato. Uma coisa não depende da outra.</p>
+      ${tresAreas(m)}
+      ${anterior ? `<div class="antes"><span class="label">Comparação com o mandato anterior</span><div class="nh"><span>${esc(anterior.sigla)} (${periodo(anterior)})</span><span class="num">nível ${anterior.nivel_geral ?? '–'} · evolução ${anterior.evolucao_geral ?? '–'}</span></div><div class="nh"><b>${esc(m.sigla)}</b><span class="num"><b>nível ${m.nivel_geral ?? '–'} · evolução ${m.evolucao_geral ?? '–'}</b></span></div><a class="chip" href="presidentes.html#duelo">Comparar indicador por indicador</a></div>` : ''}`;
     const tg = (m.tags || []).map(id => (D.tags || []).find(t => t.id === id)).filter(Boolean);
-    $('ptags').hidden = !tg.length;
+    const al = (m.assistencia || {}).alerta || [];
+    $('ptags').hidden = !tg.length && !al.length;
     $('ptags').innerHTML = `<div><h3 class="lt">Atenção: acontecimentos extraordinários no período</h3>
       <p class="meta">Contexto para ler os resultados. Não dá nem tira pontos do presidente.</p></div>
+      ${al.length ? `<div class="tagcard"><b>⚠ Atenção: sustentabilidade da assistência social</b><p>No período, ${esc(al.join('; e '))}. Veja os detalhes em "Assistência social".</p></div>` : ''}
       ${tg.map(t => `<div class="tagcard"><b>⚠ ${esc(t.nome)}</b><span class="meta">${esc(t.inicio.split('-').reverse().join('/'))} a ${esc(t.fim.split('-').reverse().join('/'))}</span><p>${esc(t.impactos)}</p><p class="note">Indicadores afetados: ${esc(t.afeta.map(id => (D.indicadores.find(i => i.id === id) || {}).nome).filter(Boolean).join(', '))}. Fonte: ${esc(t.fonte)}.</p></div>`).join('')}`;
     heranca(m);
     projecao(m);
     const ant = D.mandatos[i - 1], prox = D.mandatos[i + 1];
     $('pnav').innerHTML = `${ant ? `<a class="chip" href="presidente.html?id=${ant.id}">← ${esc(ant.curto)} · ${periodo(ant)}</a>` : '<span></span>'}${prox ? `<a class="chip" href="presidente.html?id=${prox.id}">${esc(prox.curto)} · ${periodo(prox)} →</a>` : ''}`;
+    document.querySelectorAll('details.dsec').forEach(d => {
+      const alvo = d.querySelector('[id]:not(#pctx)') || d.querySelector('[id]');
+      d.hidden = !alvo || alvo.hidden || !alvo.innerHTML.trim();
+    });
     $('loading').hidden = true; $('perfil').hidden = false;
+  }
+
+  function assistencia(m) {
+    const a = m.assistencia; if (!a) { $('passist').innerHTML = ''; return; }
+    const f = a.fiscal, ef = a.efetividade || {};
+    const lin = (nome, de, para, un, cls) => `<div class="hrow"><span class="tn">${esc(nome)}<small>${esc(un)}</small></span><span class="tv num"><small>${de.ano}</small>${fmt(de.valor, 1)}</span><span class="hsit"><span class="tag v-${cls}">${fmt(para.valor, 1)}</span><small>${esc(para.rotulo || para.ano)}</small></span></div>`;
+    $('passist').innerHTML = `<p class="meta">Indicador complementar sobre o Bolsa Família (e o Auxílio Brasil em 2022). Não altera as três notas principais.</p>
+      <div class="label">1. Autonomia financeira</div><p class="note">${esc(a.autonomia.texto)}</p>
+      <div class="label">2. Efetividade social</div>
+      ${ef.extrema_pobreza ? lin('Extrema pobreza', ef.extrema_pobreza.de, ef.extrema_pobreza.para, '% da população', ef.extrema_pobreza.veredito === 'melhor' ? 'good' : ef.extrema_pobreza.veredito === 'pior' ? 'bad' : 'nd') : '<p class="note">Sem dados de pobreza para o período.</p>'}
+      ${ef.pobreza ? lin('Pobreza', ef.pobreza.de, ef.pobreza.para, '% da população', ef.pobreza.veredito === 'melhor' ? 'good' : ef.pobreza.veredito === 'pior' ? 'bad' : 'nd') : ''}
+      <p class="note">Mostra o que aconteceu com a pobreza no período. Não dá para atribuir toda a variação ao programa, porque emprego, salário mínimo e inflação também pesam. Dados de insegurança alimentar do IBGE só existem em poucos anos e não permitem comparar todos os mandatos.</p>
+      <div class="label">3. Sustentabilidade fiscal</div>
+      ${f ? lin('Gasto com o programa', f.de, f.para, '% da receita líquida do governo federal', f.variacao >= 2 ? 'warn' : 'nd') + `<p class="note">${f.variacao >= 0 ? 'Subiu' : 'Caiu'} ${fmt(Math.abs(f.variacao), 1)} ponto${Math.abs(f.variacao) >= 2 ? 's' : ''} no mandato. Fonte: Tesouro Nacional (Resultado do Tesouro Nacional).</p>` : '<p class="note">Sem dados do Tesouro para este período.</p>'}
+      <p class="note"><b>Quando aparece o alerta:</b> só se o peso do programa na receita subir 2 pontos ou mais no mandato e, ao mesmo tempo, a extrema pobreza não cair ou o governo terminar com déficit primário. O número de beneficiários sozinho nunca gera alerta.</p>`;
   }
 
   function heranca(m) {
@@ -315,7 +350,7 @@
     const P = D.projecao, el = $('pproj');
     const C = P && P.cenarios ? P.cenarios : [];
     if (!m.em_andamento || !C.length) { el.hidden = true; return; }
-    const NOME = { base: 'Base', pessimista: 'Pessimista', otimista: 'Otimista' };
+    const NOME = { base: 'Projetado' };
     el.innerHTML = `<div><span class="tag v-warn">Projeção · estimativa, não é fato</span><h3 class="lt" style="margin-top:8px">Para onde o país pode ir</h3>
       <p class="meta">Só para o governo atual. Trajetórias possíveis a partir dos dados mais recentes, separadas dos resultados medidos. Nenhuma projeção entra no nível de vida ou no placar.</p></div>
       ${C.map(c => {

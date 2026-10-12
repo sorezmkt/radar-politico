@@ -90,20 +90,11 @@ MANDATOS = [
 BLOCOS = [
     # resultados observados na vida da população (contam no placar)
     {"nome": "Poder de compra", "tipo": "resultado", "secao": "principal",
-     "descricao": "Se a renda de quem ganha pouco cresceu acima do custo de vida."},
+     "descricao": "Renda de quem ganha pouco comparada ao custo de vida: salário mínimo, alimentação, moradia, transporte, gasolina, bens de consumo e dívidas."},
     {"nome": "Emprego e renda", "tipo": "resultado", "secao": "principal",
-     "descricao": "Desemprego, carteira assinada, trabalho precário e renda real do trabalho."},
+     "descricao": "Desemprego, renda real do trabalho e informalidade (carteira assinada)."},
     {"nome": "Pobreza e desigualdade", "tipo": "resultado", "secao": "principal",
      "descricao": "Se a pobreza caiu e se os ganhos chegaram à população de baixa renda."},
-    # custo de vida e acesso ao consumo (contam no placar): o preço comparado ao salário mínimo
-    {"nome": "Alimentação", "tipo": "resultado", "secao": "custo",
-     "descricao": "Quantas horas de trabalho com salário mínimo custa a cesta básica."},
-    {"nome": "Moradia e energia", "tipo": "resultado", "secao": "custo",
-     "descricao": "Aluguel e conta de luz comparados ao salário mínimo."},
-    {"nome": "Transporte e combustível", "tipo": "resultado", "secao": "custo",
-     "descricao": "Passagem de ônibus e gasolina comparadas ao salário mínimo."},
-    {"nome": "Bens de consumo", "tipo": "resultado", "secao": "custo",
-     "descricao": "Celular, computador, eletrodomésticos, roupas, moto e carro comparados ao salário mínimo."},
     # fatores que explicam os resultados (não contam no placar)
     {"nome": "Sustentabilidade fiscal", "tipo": "fator", "secao": "fator",
      "descricao": "Receitas, gastos, resultado primário e dívida: desequilíbrios que podem limitar os próximos governos."},
@@ -207,6 +198,30 @@ INDICADORES = [
      "confianca": "alta", "limite": "Juros ao consumidor são bem maiores que a Selic.", "fonte_txt": "Banco Central"},
     # 11. Investimentos e produtividade
 ]
+
+# Poder de compra reúne subgrupos (salário, dívidas, alimentação, moradia, transporte, bens). Cada subgrupo pesa igual,
+# para que os 6 itens de bens de consumo não pesem mais que a cesta básica ou o salário mínimo.
+_SUB_CUSTO = {"Alimentação", "Moradia e energia", "Transporte e combustível", "Bens de consumo"}
+for _ind in INDICADORES:
+    if _ind["area"] in _SUB_CUSTO:
+        _ind["sub"], _ind["area"] = _ind["area"], "Poder de compra"
+    elif _ind["id"] == "salario_minimo":
+        _ind["sub"] = "Salário mínimo"
+    elif _ind["id"] == "endividamento":
+        _ind["sub"] = "Dívidas"
+    else:
+        _ind["sub"] = _ind["nome"]
+
+
+def media_por_sub(valores):
+    """valores: lista de (sub, valor). Média dos subgrupos, cada subgrupo com o mesmo peso."""
+    grupos = {}
+    for sub, v in valores:
+        if v is not None:
+            grupos.setdefault(sub, []).append(v)
+    if not grupos:
+        return None
+    return round(sum(sum(v) / len(v) for v in grupos.values()) / len(grupos))
 
 # ------------------------------------------------ nível de vida: referência adequada e escala de 0 a 100
 # Cada indicador recebe uma nota de nível (0 = pior situação, 100 = padrão adequado), calculada sempre do mesmo jeito.
@@ -731,6 +746,105 @@ def mais_recente(inicio_mandato):
     return out
 
 
+def bolsa_familia_receita():
+    """Gasto com Bolsa Família / Auxílio Brasil em % da receita líquida do governo federal (Tesouro Nacional, RTN)."""
+    import openpyxl
+    pkg = json.loads(baixar("https://www.tesourotransparente.gov.br/ckan/api/3/action/package_show?id=resultado-do-tesouro-nacional"))
+    recs = pkg.get("result", {}).get("resources", [])
+    url = next((r["url"] for r in recs if "serie" in norm_txt(r.get("name")) and "mensal" in norm_txt(r.get("name"))
+                and str(r.get("format", "")).lower() == "xlsx"), None)
+    if not url:
+        raise ValueError("planilha da série histórica do RTN não encontrada")
+    wb = openpyxl.load_workbook(io.BytesIO(baixar(url, timeout=300)), read_only=True, data_only=True)
+    bf, rec, amostra = {}, {}, []
+    for ws in wb.worksheets:
+        cols = None
+        for row in ws.iter_rows(values_only=True):
+            datas = {i: c for i, c in enumerate(row) if isinstance(c, (dt.date, dt.datetime))}
+            if cols is None:
+                if len(datas) >= 12:
+                    cols = {i: (c.year, c.month) for i, c in datas.items()}
+                continue
+            rot = next((norm_txt(c) for c in row[:4] if isinstance(c, str) and c.strip()), "")
+            if not rot:
+                continue
+            if len(amostra) < 40:
+                amostra.append(rot[:60])
+            alvo = None
+            if "bolsa familia" in rot or "auxilio brasil" in rot:
+                alvo = bf
+            elif "receita liquida" in rot and not rec:
+                alvo = "rec"
+            if alvo is None:
+                continue
+            for i, k in cols.items():
+                v = row[i] if i < len(row) else None
+                if isinstance(v, (int, float)):
+                    if alvo == "rec":
+                        rec[k] = float(v)
+                    else:
+                        bf[k] = max(bf.get(k, 0.0), float(v))
+        if bf and rec:
+            break
+    if not bf or not rec:
+        raise ValueError(f"linhas não encontradas no RTN (bolsa={len(bf)}, receita={len(rec)}); rótulos: {amostra[:25]}")
+    anual = {}
+    for a in sorted({a for a, _ in rec}):
+        ks = [(a, m) for m in range(1, 13)]
+        if all(k in rec for k in ks):
+            anual[a] = round(100 * sum(bf.get(k, 0.0) for k in ks) / sum(rec[k] for k in ks), 2)
+    ult = sorted(k for k in rec if k in bf or k[0] >= 2004)[-12:]
+    recente = None
+    if len(ult) == 12:
+        a, m = ult[-1]
+        recente = {"valor": round(100 * sum(bf.get(k, 0.0) for k in ult) / sum(rec[k] for k in ult), 2),
+                   "rotulo": f"12 meses até {MES[m - 1]}/{a}", "quando": a + m / 12}
+    avisos_info.append(f"RTN: {url.rsplit('/', 1)[-1]}")
+    return anual, recente
+
+
+def assistencia_social(mandatos, series):
+    """Indicador complementar: não altera as notas principais."""
+    try:
+        anual, recente = bolsa_familia_receita()
+    except Exception as e:  # noqa: BLE001
+        avisos.append(f"assistência social (RTN): {str(e)[:900]}")
+        anual, recente = {}, None
+    for m in mandatos:
+        out = {"autonomia": {"status": "sem_dados", "texto": "Não há série oficial pública que acompanhe a renda própria das famílias beneficiárias ao longo do tempo. Desde 2023, a regra de proteção permite que famílias que aumentam a renda continuem recebendo metade do benefício por até 2 anos, o que suaviza a saída do programa."}}
+        # efetividade: o que aconteceu com a pobreza no mesmo período (sem atribuir a causa só ao programa)
+        ef = {}
+        for iid in ("extrema_pobreza", "pobreza"):
+            r = m["indicadores"].get(iid)
+            if r and r.get("recebeu") and r.get("entregou"):
+                ef[iid] = {"de": r["recebeu"], "para": r["entregou"], "veredito": r.get("veredito")}
+        out["efetividade"] = ef
+        # sustentabilidade fiscal: peso do programa na receita líquida
+        ab, vb = valor_ate(anual, m["base"], m["base"] - 1) if anual else (None, None)
+        if m["fim"] is None and recente:
+            af, vf, rot = int(recente["quando"]), recente["valor"], recente["rotulo"]
+        else:
+            fim = m["fim"] or (max(anual) if anual else 0)
+            af, vf = valor_ate(anual, fim, m["base"] + 1) if anual else (None, None)
+            rot = None
+        if vb is not None and vf is not None:
+            out["fiscal"] = {"de": {"ano": ab, "valor": vb}, "para": {"ano": af, "valor": vf} | ({"rotulo": rot} if rot else {}),
+                             "variacao": round(vf - vb, 2)}
+        # alerta só com evidência: peso subiu 2 pontos ou mais E (extrema pobreza não caiu OU governo fechou com déficit primário)
+        alerta = []
+        f = out.get("fiscal")
+        if f and f["variacao"] >= 2.0:
+            ext = ef.get("extrema_pobreza")
+            prim = m["indicadores"].get("primario", {}).get("entregou", {}).get("valor")
+            if ext and ext["veredito"] in ("pior", "igual"):
+                alerta.append(f"o peso do programa na receita subiu {f['variacao']:.1f} pontos e a extrema pobreza não caiu no período")
+            if prim is not None and prim < 0:
+                alerta.append(f"o peso do programa na receita subiu {f['variacao']:.1f} pontos com o governo em déficit primário ({prim:.1f}% do PIB)")
+        out["alerta"] = alerta
+        m["assistencia"] = out
+    return anual
+
+
 def cenarios_projecao(series, recentes, proj):
     """Trajetórias possíveis para o governo atual. Estimativas, nunca resultados."""
     out = []
@@ -747,19 +861,17 @@ def cenarios_projecao(series, recentes, proj):
             if f["nome"].startswith("Crescimento"):
                 for a, v in f["pontos"]:
                     pib.setdefault(a, v)
-        base, pess, otim = [], [], []
+        base = []
         vb = vp = vo = sm0
         for a in anos:
             g = pib.get(a - 2)
             ganho = max(0.6, min(2.5, g)) if g is not None else 0.6
             vb *= 1 + ganho / 100
-            vp *= 1.006
-            vo *= 1.025
-            base.append([a, round(vb)]); pess.append([a, round(vp)]); otim.append([a, round(vo)])
+            base.append([a, round(vb)])
         out.append({"id": "poder_compra", "nome": "Poder de compra do salário mínimo", "unidade": "R$ por mês, em valores de hoje",
                     "atual": round(sm0), "horizonte": f"{anos[0]} a {anos[-1]}",
-                    "cenarios": {"base": base, "pessimista": pess, "otimista": otim},
-                    "premissas": "Regra de reajuste em vigor: inflação (INPC) mais o crescimento do PIB de dois anos antes, com ganho real entre 0,6% e 2,5% ao ano. Cenário base usa o PIB observado e a expectativa do mercado; pessimista usa o ganho mínimo (0,6%); otimista, o máximo (2,5%).",
+                    "cenarios": {"base": base},
+                    "premissas": "Regra de reajuste em vigor: inflação (INPC) mais o crescimento do PIB de dois anos antes, com ganho real entre 0,6% e 2,5% ao ano. O PIB usado é o observado e, para os anos seguintes, a expectativa do mercado.",
                     "riscos": "Mudança na regra pelo Congresso; inflação acima do previsto entre um reajuste e outro.",
                     "incerteza": "média", "fonte": "Leis 14.663/2023 e 15.077/2024, IBGE/Banco Mundial (PIB) e boletim Focus"})
     except Exception as e:  # noqa: BLE001
@@ -780,30 +892,12 @@ def cenarios_projecao(series, recentes, proj):
         a1, v1 = ult[-1], pob[ult[-1]]
         tend = (pob[ult[-1]] - pob[ult[0]]) / (ult[-1] - ult[0])
         anos_p = list(range(a1 + 1, HOJE.year + 3))
-        cen = {"base": [], "pessimista": [], "otimista": []}
-        for a in anos_p:
-            k = a - a1
-            cen["otimista"].append([a, round(max(0.0, v1 + tend * k), 1)])
-            cen["base"].append([a, round(max(0.0, v1 + tend * k * 0.5), 1)])
-            cen["pessimista"].append([a, round(v1, 1)])
+        cen = {"base": [[a, round(max(0.0, v1 + tend * (a - a1) * 0.5), 1)] for a in anos_p]}
         out.append({"id": "pobreza", "nome": "Pobreza", "unidade": "% da população (US$ 6,85 por dia)", "atual": round(v1, 1),
                     "atual_ano": a1, "horizonte": f"{anos_p[0]} a {anos_p[-1]}", "cenarios": cen,
-                    "premissas": f"Não existe projeção oficial de pobreza. Estimativa do Radar Político a partir da tendência de {ult[0]} a {ult[-1]} ({tend:+.1f} ponto por ano): otimista mantém a tendência, base mantém metade dela, pessimista supõe estagnação.",
+                    "premissas": f"Não existe projeção oficial de pobreza. Estimativa do Radar Político a partir da tendência de {ult[0]} a {ult[-1]} ({tend:+.1f} ponto por ano): a projeção supõe que metade dessa tendência continue.",
                     "riscos": "Mudanças em programas de transferência de renda, inflação de alimentos e desemprego mudam esse quadro rapidamente.",
                     "incerteza": "alta", "fonte": "Banco Mundial (dados observados) e cálculo do Radar Político"})
-    # 4. Inflação: mercado e FMI
-    ipca = next((f for f in proj.get("focus", []) if f["nome"].startswith("Inflação")), None)
-    imf_inf = next((f for f in proj.get("fmi", []) if f["id"] == "inflacao"), None)
-    if ipca or imf_inf:
-        cen = {}
-        if ipca:
-            cen["base"] = ipca["pontos"]
-        if imf_inf:
-            cen["alternativo (FMI)"] = [p for p in imf_inf["pontos"] if p[0] >= HOJE.year]
-        out.append({"id": "inflacao", "nome": "Inflação (IPCA)", "unidade": "% no ano", "horizonte": "próximos 3 anos",
-                    "cenarios": cen, "premissas": "Mediana das expectativas do mercado (boletim Focus do Banco Central) e projeção do FMI.",
-                    "riscos": "Câmbio, preço de alimentos e de combustíveis e a política fiscal.", "incerteza": "média",
-                    "fonte": "Banco Central (Focus) e FMI"})
     # 5. Sustentabilidade fiscal: dívida pelo FMI
     div = next((f for f in proj.get("fmi", []) if f["id"] == "divida"), None)
     if div:
@@ -1004,11 +1098,16 @@ def main():
         area_de = {i["id"]: i["area"] for i in INDICADORES}
         vs = [r.get("veredito") for k, r in m["indicadores"].items() if r.get("veredito") and area_de[k] in RESULTADOS]
         m["placar"] = {"melhor": vs.count("melhor"), "pior": vs.count("pior"), "igual": vs.count("igual"), "total": len(vs)}
-        m["areas"] = {}
+        m["areas"], m["evolucao"] = {}, {}
+        pesos_ver = {"melhor": 100, "igual": 50, "pior": 0}
         for area in AREAS:
-            notas = [m["indicadores"][i["id"]]["nota"] for i in INDICADORES
-                     if i["area"] == area and i["id"] in m["indicadores"] and "nota" in m["indicadores"][i["id"]]]
-            m["areas"][area] = round(sum(notas) / len(notas)) if notas else None
+            inds = [i for i in INDICADORES if i["area"] == area and i["id"] in m["indicadores"]]
+            m["areas"][area] = media_por_sub([(i["sub"], m["indicadores"][i["id"]].get("nota")) for i in inds])
+            if area in RESULTADOS:
+                # evolução da área: % dos indicadores que melhoraram (igual conta metade), com subgrupos de mesmo peso
+                m["evolucao"][area] = media_por_sub([(i["sub"], pesos_ver.get(m["indicadores"][i["id"]].get("veredito"))) for i in inds])
+        ev = [v for v in m["evolucao"].values() if v is not None]
+        m["evolucao_geral"] = round(sum(ev) / len(ev)) if len(ev) >= 2 else None
 
     # nível de vida: situação real ao assumir e ao sair, pela referência de cada indicador
     try:
@@ -1037,12 +1136,11 @@ def main():
             if area not in RESULTADOS:
                 continue
             for chave, destino in (("nivel_fim", m["nivel"]), ("nivel_inicio", m["nivel_inicio"])):
-                ns = [m["indicadores"][i["id"]][chave] for i in INDICADORES if i["area"] == area and i["id"] in m["indicadores"]
-                      and m["indicadores"][i["id"]].get(chave) is not None]
-                destino[area] = round(sum(ns) / len(ns)) if ns else None
+                destino[area] = media_por_sub([(i["sub"], m["indicadores"][i["id"]].get(chave)) for i in INDICADORES
+                                               if i["area"] == area and i["id"] in m["indicadores"]])
         for chave, origem in (("nivel_geral", m["nivel"]), ("nivel_geral_inicio", m["nivel_inicio"])):
             vs = [v for v in origem.values() if v is not None]
-            m[chave] = round(sum(vs) / len(vs)) if len(vs) >= 4 else None
+            m[chave] = round(sum(vs) / len(vs)) if len(vs) == 3 else None  # só com as 3 áreas medidas
             m[chave + "_areas"] = len(vs)
         m["tags"] = tags_do_mandato(m)
 
@@ -1068,6 +1166,7 @@ def main():
 
     proj = projecoes()
     proj["cenarios"] = cenarios_projecao(series, recentes, proj)
+    assistencia_social(mandatos, series)
     saida = {
         "atualizado": dt.datetime.now(dt.timezone(dt.timedelta(hours=-3))).strftime("%Y-%m-%d %H:%M"),
         "areas": AREAS,

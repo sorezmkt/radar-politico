@@ -40,36 +40,41 @@
     <div id="dres"></div>
   </section>
 
-  <section class="card" id="mapa">
-    <div><h3 class="lt">Mapa de comparação</h3>
-      <p class="meta">Cada quadrado é um indicador em um mandato. Verde é o melhor resultado entre todos os mandatos, vermelho é o pior. Toque no nome de um governo para ver os detalhes.</p></div>
+  <details class="card dsec" id="mapa"><summary>Mapa de comparação de todos os indicadores</summary>
+    <div><p class="meta">Cada quadrado é um indicador em um mandato. Verde é o melhor resultado entre todos os mandatos, vermelho é o pior. Toque no nome de um governo para ver os detalhes.</p></div>
     <div class="hmwrap"><table class="hm" id="hm"></table></div>
     <div class="legend"><span><i style="background:var(--good)"></i>Melhor</span><span><i style="background:var(--warn)"></i>Médio</span><span><i style="background:var(--bad)"></i>Pior</span><span><i style="background:var(--line)"></i>Sem dados</span></div>
-  </section>
+  </details>
 
   <div class="label" style="margin-top:4px">Todos os mandatos</div>
   <div class="tabs areasel" id="areasel" role="group" aria-label="Escolher área"></div>
 
   <section class="card">
-    <p class="meta" id="ordemtxt">Em ordem cronológica. Cada barra compara o mandato com os outros naquela área: cheia é o melhor resultado entre eles, vazia é o pior.</p>
+    <p class="meta" id="ordemtxt">Em ordem cronológica. Cada governo mostra o nível de vida, a evolução no mandato e as três áreas principais (barra = nível; marca fina = como recebeu).</p>
     <ol class="mlist" id="mlist"><li class="empty">Carregando dados…</li></ol>
   </section>
 
-  <section class="card method" id="metodo">
-    <h3>Como ler e como calculamos</h3>
-    <p>A pergunta central é: durante cada governo, ficou mais fácil ou mais difícil para a população trabalhar, pagar as despesas, consumir e melhorar de vida?</p>
-    <p><b style="color:var(--ink)">Dois resultados independentes.</b> O <b>nível de vida</b> (0 a 100) mede o quanto as condições reais se aproximam de um padrão adequado ao Brasil. A <b>evolução</b> mede quanto elas melhoraram ou pioraram durante o mandato, comparada aos outros mandatos. Uma situação pode melhorar muito e continuar ruim, por isso os dois aparecem separados.</p>
+  <details class="card method dsec" id="metodo">
+    <summary>Metodologia e fontes</summary>
+    <p>A pergunta central: a população está vivendo bem, as condições melhoraram durante cada governo e quais riscos podem comprometer o futuro?</p>
+    <p><b style="color:var(--ink)">Três indicadores principais.</b></p>
     <ol>
-      <li><b>Indicadores:</b> só os essenciais. Poder de compra (salário mínimo corrigido pelo INPC e endividamento), emprego e renda (desemprego, carteira assinada e renda real do trabalho), pobreza (pobreza, extrema pobreza e fatia da renda dos 20% mais pobres), alimentação (horas de trabalho para a cesta básica), moradia (aluguel e luz), transporte (ônibus e litros de gasolina por salário mínimo) e bens de consumo (celular, computador, eletrodomésticos, roupas, moto e carro). Preços são sempre comparados com o salário mínimo.</li>
-      <li><b>Referências do nível de vida:</b> cada indicador tem uma régua pública. Salário mínimo: comparado ao salário mínimo necessário do DIEESE (Constituição, art. 7º, IV). Cesta básica: adequado quando custa até 25% da jornada. Extrema pobreza: meta de 3% do Banco Mundial. Pobreza: metade do nível de 2015 (meta 1.2 da ONU). Desemprego: 5%, perto da média da OCDE. Onde não existe norma, a régua vai do pior ao melhor momento do Brasil na série histórica, e isso fica indicado no indicador.</li>
-      <li><b>Evolução:</b> compara o início e o fim do mandato. Para o governo atual, usa o dado mais recente publicado. O placar de melhor ou pior conta só os indicadores essenciais.</li>
-      <li><b>Tags de atenção:</b> marcam choques externos ou desastres de grande escala (pandemia, guerra, crises financeiras, crises hídricas, enchentes), com período, impactos e fonte. Só contextualizam: não dão nem tiram pontos.</li>
-      <li><b>Projeção:</b> só para o governo atual, com cenários, horizonte, premissas, riscos e grau de incerteza. Nunca entra no nível de vida nem no placar.</li>
+      <li><b>Poder de compra:</b> renda comparada ao custo de vida. Salário mínimo corrigido pelo INPC, endividamento das famílias e quanto do salário mínimo vai para alimentação (cesta básica), moradia (aluguel e luz), transporte (ônibus e gasolina) e bens de consumo (celular, computador, eletrodomésticos, roupas, moto e carro). Cada grupo pesa igual, para que muitos itens de um mesmo tipo não dominem a nota.</li>
+      <li><b>Emprego e renda:</b> desemprego, carteira assinada (o oposto da informalidade) e renda real do trabalho.</li>
+      <li><b>Pobreza e desigualdade:</b> pobreza, extrema pobreza e fatia da renda que fica com os 20% mais pobres.</li>
     </ol>
-    <p><b style="color:var(--ink)">Contexto, não pontuação.</b> Inflação, juros, impostos, resultado primário e dívida aparecem como fatores que explicam os resultados e alimentam a projeção, mas não entram nas notas, para não contar o mesmo efeito duas vezes. Cada página também mostra a herança recebida.</p>
-    <p><b style="color:var(--ink)">Limites.</b> Carteira assinada e renda do trabalho só existem desde 2012; preços por item, desde 1999; gasolina, desde 2001. Pobreza sai com um a dois anos de atraso. Não há preço oficial em reais de aluguel ou celular de referência, nem dados regionais comparáveis para todos os indicadores. Quando falta dado, aparece "sem dados", nunca uma estimativa.</p>
-    <p class="src">Fontes: IBGE (IPCA por subitem, INPC e PNAD Contínua), Banco Central (salário mínimo, Selic, endividamento e boletim Focus), ANP (preço da gasolina), DIEESE (cesta básica, via Ipeadata), FMI (contas públicas e projeções) e Banco Mundial (pobreza, desigualdade, emprego, investimento e produtividade). Atualizado automaticamente. <span id="upd2"></span></p>
-  </section>
+    <p>Inflação, juros, impostos, resultado primário e dívida explicam os resultados, mas não entram nas notas, porque o efeito deles já aparece nos três indicadores. Assim o mesmo efeito não é contado duas vezes.</p>
+    <p><b style="color:var(--ink)">Duas notas independentes, de 0 a 100.</b></p>
+    <ol>
+      <li><b>Nível de vida:</b> o quanto as condições reais se aproximam de um padrão adequado. Cada indicador usa uma referência pública. Salário mínimo: o salário mínimo necessário calculado pelo DIEESE (Constituição, art. 7º, IV). Cesta básica: nota 100 quando custa até 25% da jornada do mês. Extrema pobreza: meta de 3% do Banco Mundial. Pobreza: metade do nível de 2015 (meta 1.2 da ONU). Desemprego: 5%, perto da média da OCDE. Onde não existe norma, a régua vai do pior ao melhor momento do Brasil na série, e isso aparece indicado. A nota só é calculada quando há dados nas três áreas.</li>
+      <li><b>Evolução do mandato:</b> a parte dos indicadores principais que melhorou entre o início e o fim do mandato (melhora conta 100, estabilidade 50, piora 0). Para o governo atual, usa o dado mais recente publicado. Melhorar não quer dizer que a situação seja boa: por isso as notas aparecem separadas.</li>
+    </ol>
+    <p><b style="color:var(--ink)">Assistência social (complementar).</b> Mostra, para o Bolsa Família, a autonomia financeira das famílias (sem série oficial pública, o que é informado), a evolução da pobreza e da extrema pobreza e o peso do programa na receita líquida do governo federal (Tesouro Nacional). A tag "Atenção: sustentabilidade da assistência social" só aparece se esse peso subir 2 pontos ou mais no mandato e, ao mesmo tempo, a extrema pobreza não cair ou o governo terminar com déficit primário. O número de beneficiários sozinho nunca gera alerta, e não presumimos que o benefício desestimule o trabalho. Não altera as notas.</p>
+    <p><b style="color:var(--ink)">Tags de atenção.</b> Marcam acontecimentos extraordinários (pandemia, guerra, crises financeiras, crises hídricas, enchentes) com período, impactos documentados e fonte. Só dão contexto: não somam nem tiram pontos.</p>
+    <p><b style="color:var(--ink)">Projeção.</b> Só para o governo atual, separada dos resultados medidos: um cenário projetado para poder de compra, emprego, pobreza e dívida pública, com horizonte, premissas, riscos, grau de incerteza e fonte. Nunca entra nas notas.</p>
+    <p><b style="color:var(--ink)">Limites.</b> Carteira assinada e renda do trabalho só existem desde 2012; preços por item, desde 1999; gasolina, desde 2001. Pobreza sai com um a dois anos de atraso. Quando falta dado, aparece "sem dados", nunca uma estimativa.</p>
+    <p class="src">Fontes: IBGE (IPCA por subitem, INPC e PNAD Contínua), Banco Central (salário mínimo, Selic, endividamento, resultado primário e boletim Focus), ANP (gasolina), DIEESE (cesta básica e salário mínimo necessário, via Ipeadata), Tesouro Nacional (gasto com o Bolsa Família), FMI (contas públicas e projeções) e Banco Mundial (pobreza e desigualdade). Atualizado automaticamente. <span id="upd2"></span></p>
+  </details>
 
   <footer>Radar Político · projeto independente, sem vínculo com partidos ou governos.</footer>
 </div>

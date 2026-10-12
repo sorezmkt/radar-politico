@@ -380,3 +380,27 @@ table.hm tr.hmgrupo th{font-family:var(--display);font-size:13px;font-weight:800
 .ptab thead th{font-size:11px;color:var(--muted);font-weight:600}
 .ptab tbody th{text-align:left;font-weight:600}
 .pc .note{margin:0}
+
+/* Página enxuta: duas notas, três áreas e seções expansíveis */
+.duas{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.duas .nota{display:flex;flex-direction:column;gap:2px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
+.duas .nl{font-size:12.5px;font-weight:600;color:var(--muted)}
+.duas .nv{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:34px;line-height:1.05}
+.duas .nv small{font-size:14px;color:var(--muted);font-weight:600}
+.tres{display:flex;flex-direction:column;gap:10px}
+.tarea .nh,.antes .nh{display:flex;justify-content:space-between;gap:10px;font-size:14px;align-items:baseline}
+.tarea .nh small{color:var(--muted)}
+.tarea .nbar{margin-top:5px}
+.antes{display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:1px solid var(--line)}
+.antes .chip{align-self:flex-start;margin-top:4px}
+details.dsec{padding:0}
+details.dsec>summary{list-style:none;cursor:pointer;padding:15px 44px 15px 16px;font-weight:600;font-size:15px;position:relative}
+details.dsec>summary::-webkit-details-marker{display:none}
+details.dsec>summary::after{content:'';position:absolute;right:18px;top:50%;width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-70%) rotate(45deg);transition:transform .15s}
+details.dsec[open]>summary::after{transform:translateY(-30%) rotate(-135deg)}
+details.dsec>:not(summary){padding:0 16px 16px}
+details.dsec>.stack{padding:0 10px 12px}
+details.dsec[hidden]{display:none}
+details.dsec.method>p,details.dsec.method>ol{margin:0 16px 12px;padding:0}
+details.dsec.method>ol{padding-left:20px}
+@media (max-width:380px){.duas .nv{font-size:29px}}
