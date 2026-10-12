@@ -10,7 +10,7 @@
   const ini = n => n.split(' ').filter(w => w.length > 2).slice(0, 2).map(w => w[0]).join('');
   const titleCase = s => s.toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase());
 
-  let IDX = null, ORD = [], atual = null, aba = 'top', limite = 15;
+  let IDX = null, ORD = [], atual = null;
   const cacheDep = {};
 
   async function getJSON(url) {
@@ -135,7 +135,6 @@
     $('propBig').innerHTML = `<div><span class="num">${d.props.n}</span><span class="meta">apresentadas</span></div><div><span class="num">${d.props.avancadas}</span><span class="meta">avançaram</span></div>`;
     $('props').innerHTML = d.props.lista.length ? d.props.lista.map(p => `<a class="prop" href="${esc(p.url)}" target="_blank" rel="noopener"><div class="ph"><code>${esc(p.tipo)} ${esc(p.numero)}/${esc(p.ano)}</code><span class="tag ${tagSit(p.situacao)}">${esc(p.situacao || 'Em tramitação')}</span></div><span class="t">${esc(p.ementa)}</span></a>`).join('') : '<p class="meta">Nenhuma proposição como primeiro autor no período.</p>';
 
-    renderRank();
   }
 
   async function abrir(id, rolar = true) {
@@ -144,30 +143,13 @@
       const d = cacheDep[id] || (cacheDep[id] = await getJSON(`data/dep/${id}.json`));
       $('perfil').hidden = false; $('loading').hidden = true;
       render(d);
-      if (location.hash !== '#' + id) history.replaceState(null, '', '#' + id);
+      const url = 'deputado.html?id=' + id;
+      if (location.search !== '?id=' + id) history[rolar ? 'pushState' : 'replaceState']({ id }, '', url);
       document.title = `${d.nome} · Radar Político`;
       if (rolar) window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (e) {
       $('loading').hidden = false; $('loading').textContent = 'Não foi possível carregar a ficha deste deputado.';
     }
-  }
-
-  function lista() {
-    const uf = $('ufSel').value;
-    let l = ORD.filter(x => !uf || x.uf === uf);
-    if (aba === 'bottom') l = l.filter(x => x.nota != null).reverse();
-    if (aba === 'risco') l = [...l].sort((a, b) => b.pontos - a.pontos || (a.nota ?? 0) - (b.nota ?? 0));
-    return l;
-  }
-
-  function renderRank() {
-    const l = lista();
-    $('ranklist').innerHTML = l.slice(0, limite).map((x, i) => {
-      const r = RISCO[x.risco] || RISCO.baixo;
-      const val = aba === 'risco' ? `<span class="verdict v-${r[0]}" style="font-size:11px;padding:2px 8px">${x.pontos} pts</span>` : `<span class="bar"><i style="width:${x.nota ?? 0}%;background:${cor(x.nota)}"></i></span>`;
-      return `<button type="button" data-id="${x.id}" class="${x.id === atual ? 'on' : ''}"><span class="n">${i + 1}</span><span class="nm"><span>${esc(x.nome)}</span><small>${esc(x.partido)} · ${esc(x.uf)}</small></span>${val}<span class="num" style="color:${cor(x.nota)};text-align:right">${x.nota ?? '–'}</span></button>`;
-    }).join('');
-    $('more').hidden = l.length <= limite;
   }
 
   function sugerir() {
@@ -189,15 +171,10 @@
     ORD = IDX.deputados.filter(d => d.nota != null);
     const [a, h] = (IDX.atualizado || '').split(' ');
     $('upd').textContent = a ? `Dados atualizados em ${a.split('-').reverse().join('/')} às ${h}` : '';
-    if (IDX.fontes && IDX.fontes.presenca) $('mPres').textContent = IDX.fontes.presenca;
-    if (IDX.referencias && IDX.referencias.prod_p90) $('mProd').textContent = `${IDX.referencias.prod_p90} ou mais no período (nível dos 10% mais produtivos)`;
-    const ufs = [...new Set(IDX.deputados.map(d => d.uf))].sort();
-    $('ufSel').innerHTML += ufs.map(u => `<option value="${u}">${u}</option>`).join('');
-    $('rankCard').hidden = false;
 
-    const alvo = location.hash.replace('#', '');
-    const ok = IDX.deputados.some(d => String(d.id) === alvo);
-    await abrir(ok ? alvo : (ORD[0] || IDX.deputados[0]).id, false);
+    const alvo = new URLSearchParams(location.search).get('id') || location.hash.replace('#', '');
+    if (!IDX.deputados.some(d => String(d.id) === alvo)) { location.replace('./'); return; }
+    await abrir(alvo, false);
   }
 
   $('q').addEventListener('input', sugerir);
@@ -208,17 +185,8 @@
     const b = e.target.closest('button[data-id]'); if (!b) return;
     $('q').value = ''; $('sugg').hidden = true; $('q').blur(); abrir(b.dataset.id);
   });
-  $('ranklist').addEventListener('click', e => { const b = e.target.closest('button[data-id]'); if (b) abrir(b.dataset.id); });
-  $('tabs').addEventListener('click', e => {
-    const b = e.target.closest('button[data-t]'); if (!b) return;
-    aba = b.dataset.t; limite = 15;
-    $('tabs').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
-    renderRank();
-  });
-  $('ufSel').addEventListener('change', () => { limite = 15; renderRank(); });
-  $('more').addEventListener('click', () => { limite += 30; renderRank(); });
   document.addEventListener('click', e => { if (!e.target.closest('.search')) $('sugg').hidden = true; });
-  window.addEventListener('hashchange', () => { const id = location.hash.slice(1); if (id && +id !== atual) abrir(id); });
+  window.addEventListener('popstate', () => { const id = new URLSearchParams(location.search).get('id'); if (id && +id !== atual) abrir(id, false); });
 
   iniciar();
 })();

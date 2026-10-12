@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Deputado · Radar Político</title>
+<meta name="description" content="Veja quanto cada deputado federal gasta, se comparece às sessões, o que propõe e quais sinais de risco aparecem nos gastos. Dados oficiais da Câmara, atualizados todo dia.">
+<meta property="og:title" content="Radar Político">
+<meta property="og:description" content="Eficiência e gastos dos deputados federais com dados oficiais da Câmara.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'%3E%3Ccircle cx='17' cy='17' r='15' fill='none' stroke='%231F3FA8' stroke-width='3'/%3E%3Cpath d='M17 17 L28 9' stroke='%231F3FA8' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='17' cy='17' r='3' fill='%231F3FA8'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="./">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="15" fill="none" stroke="var(--accent)" stroke-width="2.5"/><circle cx="17" cy="17" r="8" fill="none" stroke="var(--accent)" stroke-width="2" opacity=".55"/><path d="M17 17 L28 9" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/><circle cx="17" cy="17" r="2.6" fill="var(--accent)"/></svg>
+      <h1>Radar Político</h1>
+    </a>
+    <span class="upd" id="upd"></span>
+  </header>
+
+  <a class="back" href="./">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    Voltar ao início
+  </a>
+
+  <div class="search">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="q" type="search" placeholder="Nome do deputado, partido ou estado (ex.: MG)" autocomplete="off" aria-label="Buscar deputado">
+    <div class="sugg" id="sugg" hidden></div>
+  </div>
+
+  <div class="card empty" id="loading">Carregando dados…</div>
+
+  <div id="perfil" hidden class="stack">
+    <section class="card">
+      <div class="ficha">
+        <div class="who">
+          <div class="avatar" id="av"></div>
+          <div style="min-width:0">
+            <h2 id="nome"></h2>
+            <div class="meta" id="meta"></div>
+            <div class="facts" id="facts"></div>
+          </div>
+        </div>
+        <div class="gaugebox">
+          <span class="label">Índice de eficiência</span>
+          <svg viewBox="0 0 240 140" id="gauge" role="img"></svg>
+          <span class="verdict" id="verdict"></span>
+          <span class="rank" id="rank"></span>
+          <span class="riskpill" id="riskpill"></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="label">Como a nota foi formada</div>
+      <div class="comps" id="comps"></div>
+    </section>
+
+    <section class="card">
+      <div class="label">Alertas automáticos</div>
+      <div class="alerts" id="alerts"></div>
+    </section>
+
+    <section class="card">
+      <div class="riskhead">
+        <div>
+          <div class="label">Sinais de risco de irregularidade</div>
+          <div class="risklvl" id="riskLvl"></div>
+        </div>
+        <div class="riskmeter" id="riskMeter" aria-hidden="true"><i></i><i></i><i></i></div>
+      </div>
+      <div class="checks" id="checks"></div>
+      <div class="label">Maiores fornecedores pagos com a cota</div>
+      <div class="flist" id="forn"></div>
+      <p class="disclaimer">Estes sinais são cruzamentos automáticos de dados públicos e apontam onde vale olhar com mais atenção. Não são prova nem acusação de crime. Para denunciar, procure a Ouvidoria da Câmara ou o Ministério Público Federal.</p>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <div class="label">Cota parlamentar · últimos 12 meses</div>
+        <div class="big">
+          <div><span class="num" id="gTotal"></span><span class="meta">gasto no período</span></div>
+          <div><span class="num" id="gPct"></span><span class="meta">do teto usado</span></div>
+        </div>
+        <div class="chartbox"><svg id="chart" viewBox="0 0 360 190" role="img" aria-label="Gasto mensal comparado à média da Câmara"></svg></div>
+        <div class="legend">
+          <span><i style="background:var(--accent)"></i>Gasto do deputado</span>
+          <span><i style="background:var(--muted);height:2px"></i>Média da Câmara</span>
+          <span><i style="background:var(--bad);height:2px"></i>Teto da cota</span>
+        </div>
+        <p class="note">Os deputados têm até 3 meses para apresentar notas, então os meses mais recentes ainda podem crescer.</p>
+      </section>
+
+      <section class="card">
+        <div class="label">Para onde foi o dinheiro</div>
+        <div class="cats" id="cats"></div>
+      </section>
+
+      <section class="card">
+        <div class="label">Presença</div>
+        <div class="big" id="presBig"></div>
+        <div class="pres" id="presBar"></div>
+        <p class="note" id="presNote"></p>
+      </section>
+
+      <section class="card">
+        <div class="label">Proposições de autoria · últimos 12 meses</div>
+        <div class="big" id="propBig"></div>
+        <div class="props" id="props"></div>
+      </section>
+    </div>
+  </div>
+
+  <section class="card more-card">
+    <p class="meta">A nota e os sinais de risco seguem uma metodologia pública, igual para todos os deputados.</p>
+    <div class="facts"><a class="chip" href="./#metodo">Como calculamos</a><a class="chip" href="./">Ver os 50 menores índices</a></div>
+  </section>
+
+  <footer>Radar Político · projeto independente, sem vínculo com partidos ou com a Câmara dos Deputados.</footer>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

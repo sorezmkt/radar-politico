@@ -50,7 +50,7 @@ jobs:
       - name: Preparar site
         run: |
           mkdir -p _site
-          cp -r index.html assets data .nojekyll _site/
+          cp -r index.html deputado.html assets data .nojekyll _site/
 
       - uses: actions/upload-pages-artifact@v3
         with:
