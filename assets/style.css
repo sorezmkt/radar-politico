@@ -352,3 +352,31 @@ table.hm tr.hmgrupo th{font-family:var(--display);font-size:13px;font-weight:800
 .dv{text-align:right;font-weight:600;font-size:13px}
 .drow2{grid-template-columns:minmax(0,124px) minmax(0,1fr) 48px}
 .dn2{white-space:normal;line-height:1.2}
+
+/* Nível de vida, tags e cenários */
+.nivel{display:flex;flex-direction:column;gap:6px}
+.nh{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.nl{font-weight:600;font-size:14px}
+.nv{font-family:var(--display);font-weight:800;font-size:26px;line-height:1}
+.nv small{font-size:13px;color:var(--muted);font-weight:500}
+.nbar{position:relative;height:10px;border-radius:99px;background:var(--line)}
+.nbar i{display:block;height:100%;border-radius:99px}
+.nbar b{position:absolute;top:-4px;bottom:-4px;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--ink);opacity:.55}
+.nareas{display:flex;flex-direction:column;gap:6px}
+.nareas .abar{grid-template-columns:minmax(0,1fr) 90px 28px;font-size:13px}
+.nareas .abar .an{color:var(--ink)}
+.htags{display:flex;flex-wrap:wrap;gap:6px}
+.htag{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:99px;color:var(--warn);background:var(--warn-soft)}
+.tagcard{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:10px;background:var(--warn-soft);border-left:4px solid var(--warn)}
+.tagcard p{margin:4px 0 0;font-size:13.5px}
+.dnivel{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12.5px;color:var(--muted);text-align:center;margin-top:6px}
+.inivel{display:flex;flex-direction:column;gap:5px;padding:10px 12px;border-radius:10px;border:1px solid var(--line)}
+.inivel .nh span:first-child{font-size:13px;font-weight:600}
+.inivel .nh small{color:var(--muted);font-weight:400}
+.pc{display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:1px solid var(--line)}
+.ptab{overflow-x:auto}
+.ptab table{border-collapse:collapse;font-size:13px;width:100%}
+.ptab th,.ptab td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.ptab thead th{font-size:11px;color:var(--muted);font-weight:600}
+.ptab tbody th{text-align:left;font-weight:600}
+.pc .note{margin:0}

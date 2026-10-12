@@ -97,7 +97,7 @@ BLOCOS = [
      "descricao": "Se a pobreza caiu e se os ganhos chegaram à população de baixa renda."},
     # custo de vida e acesso ao consumo (contam no placar): o preço comparado ao salário mínimo
     {"nome": "Alimentação", "tipo": "resultado", "secao": "custo",
-     "descricao": "Quanto trabalho custa a cesta básica e se a comida ficou mais ou menos acessível."},
+     "descricao": "Quantas horas de trabalho com salário mínimo custa a cesta básica."},
     {"nome": "Moradia e energia", "tipo": "resultado", "secao": "custo",
      "descricao": "Aluguel e conta de luz comparados ao salário mínimo."},
     {"nome": "Transporte e combustível", "tipo": "resultado", "secao": "custo",
@@ -109,8 +109,6 @@ BLOCOS = [
      "descricao": "Receitas, gastos, resultado primário e dívida: desequilíbrios que podem limitar os próximos governos."},
     {"nome": "Inflação e juros", "tipo": "fator", "secao": "fator",
      "descricao": "Inflação geral, inflação das famílias de baixa renda e juros básicos."},
-    {"nome": "Investimentos e produtividade", "tipo": "fator", "secao": "fator",
-     "descricao": "Se investimentos e produtividade criam condições para mais renda e emprego no futuro."},
 ]
 AREAS = [b["nome"] for b in BLOCOS]
 RESULTADOS = {b["nome"] for b in BLOCOS if b["tipo"] == "resultado"}
@@ -147,10 +145,6 @@ INDICADORES = [
      "melhor": "maior", "tipo": "variacao", "unidade": "% de quem trabalha", "casas": 1,
      "explica": "Dos que trabalham, quantos são empregados de empresas privadas com carteira. Mede a qualidade do emprego.",
      "confianca": "alta", "limite": "Pesquisa do IBGE só existe desde 2012.", "fonte_txt": "IBGE (PNAD Contínua)"},
-    {"id": "precario", "nome": "Trabalho precário", "area": "Emprego e renda", "fonte": "wb", "codigo": "SL.EMP.VULN.ZS",
-     "melhor": "menor", "tipo": "variacao", "unidade": "% de quem trabalha", "casas": 1,
-     "explica": "Quem trabalha por conta própria ou ajuda a família sem salário, em geral sem carteira, férias ou aposentadoria.",
-     "confianca": "média", "limite": "Estimativa da OIT; aproxima a informalidade, mas não é a taxa oficial de informalidade do IBGE.", "fonte_txt": "Banco Mundial / OIT"},
     {"id": "renda_trabalho", "nome": "Renda média do trabalho", "area": "Emprego e renda", "fonte": "sidra_renda",
      "melhor": "maior", "tipo": "variacao", "pct": True, "unidade": "R$ por mês, descontada a inflação", "casas": 0,
      "explica": "Quanto ganha, em média, quem trabalha, já descontada a inflação.",
@@ -168,16 +162,11 @@ INDICADORES = [
      "melhor": "maior", "tipo": "variacao", "unidade": "% de toda a renda do país", "casas": 1,
      "explica": "Quanto da renda total fica com os 20% mais pobres. Se sobe, os ganhos chegaram a quem ganha menos.",
      "confianca": "alta", "limite": "Publicado com um ou dois anos de atraso.", "fonte_txt": "Banco Mundial (com dados do IBGE)"},
-    {"id": "gini", "nome": "Desigualdade de renda", "area": "Pobreza e desigualdade", "fonte": "wb", "codigo": "SI.POV.GINI",
-     "melhor": "menor", "tipo": "variacao", "unidade": "índice de Gini, de 0 a 100", "casas": 1,
-     "explica": "Quanto maior, mais concentrada é a renda.",
-     "confianca": "alta", "limite": "Publicado com um ou dois anos de atraso.", "fonte_txt": "Banco Mundial (com dados do IBGE)"},
     # 4. Alimentação
     {"id": "cesta_horas", "nome": "Horas de trabalho para comprar a cesta básica", "area": "Alimentação", "fonte": "cesta",
      "melhor": "menor", "tipo": "variacao", "unidade": "horas de trabalho com salário mínimo", "casas": 0,
      "explica": "Quantas horas quem ganha o salário mínimo precisa trabalhar para comprar a cesta básica do DIEESE (jornada de 220 horas por mês).",
      "confianca": "alta", "limite": "Cesta da cidade de São Paulo, a série mais longa do DIEESE. Em outras capitais o valor muda.", "fonte_txt": "DIEESE (via Ipeadata) e Banco Central"},
-    _acess("acess_alimentacao", "Comida em casa", "Alimentação", "alimentacao", "alta"),
     # 5. Moradia e energia
     _acess("acess_aluguel", "Aluguel", "Moradia e energia", "aluguel"),
     _acess("acess_energia", "Conta de luz", "Moradia e energia", "energia", "alta"),
@@ -199,10 +188,6 @@ INDICADORES = [
      "melhor": "menor", "tipo": "variacao", "unidade": "% de tudo o que o país produz", "casas": 1,
      "explica": "Impostos e contribuições de União, estados e municípios em proporção da economia.",
      "confianca": "alta", "limite": "Último ano pode ser estimativa do FMI.", "fonte_txt": "FMI"},
-    {"id": "gasto_total", "nome": "Gasto público", "area": "Sustentabilidade fiscal", "fonte": "imf", "codigo": "exp",
-     "melhor": "neutro", "tipo": "variacao", "unidade": "% de tudo o que o país produz", "casas": 1,
-     "explica": "Tudo o que União, estados e municípios gastam. Sem selo de melhor ou pior: depende do retorno.",
-     "confianca": "alta", "limite": "Último ano pode ser estimativa do FMI.", "fonte_txt": "FMI"},
     {"id": "primario", "nome": "Resultado primário", "area": "Sustentabilidade fiscal", "fonte": "bcb_primario", "codigo": 5793,
      "melhor": "maior", "tipo": "variacao", "unidade": "% do PIB (negativo = gastou mais do que arrecadou, sem contar juros)", "casas": 1,
      "explica": "Se o governo arrecada mais do que gasta antes de pagar juros. Déficit seguido faz a dívida crescer.",
@@ -216,24 +201,88 @@ INDICADORES = [
      "melhor": "menor", "tipo": "media", "unidade": "% ao ano", "casas": 1,
      "explica": "Inflação das famílias que ganham até 5 salários mínimos, média do mandato.",
      "confianca": "alta", "limite": "Já está embutida no poder de compra do salário mínimo; aparece aqui como contexto, não entra no placar.", "fonte_txt": "IBGE (via Banco Central)"},
-    {"id": "inflacao", "nome": "Inflação geral (IPCA)", "area": "Inflação e juros", "fonte": "bcb_ipca", "codigo": 433,
-     "melhor": "menor", "tipo": "media", "unidade": "% ao ano", "casas": 1,
-     "explica": "Inflação oficial do país, média do mandato.",
-     "confianca": "alta", "limite": "Já está embutida nos indicadores de custo de vida; aparece aqui como contexto.", "fonte_txt": "IBGE (via Banco Central)"},
     {"id": "selic", "nome": "Juros básicos (Selic)", "area": "Inflação e juros", "fonte": "bcb_selic",
      "melhor": "menor", "tipo": "media", "unidade": "% ao ano", "casas": 1,
      "explica": "Média da Selic no mandato. Puxa os juros do cartão, do crediário e do financiamento.",
      "confianca": "alta", "limite": "Juros ao consumidor são bem maiores que a Selic.", "fonte_txt": "Banco Central"},
     # 11. Investimentos e produtividade
-    {"id": "investimento", "nome": "Investimento", "area": "Investimentos e produtividade", "fonte": "wb", "codigo": "NE.GDI.FTOT.ZS",
-     "melhor": "maior", "tipo": "variacao", "unidade": "% de tudo o que o país produz", "casas": 1,
-     "explica": "Quanto o país investe em fábricas, máquinas, obras e moradias.",
-     "confianca": "alta", "limite": "", "fonte_txt": "Banco Mundial (com dados do IBGE)"},
-    {"id": "produtividade", "nome": "Produtividade do trabalho", "area": "Investimentos e produtividade", "fonte": "wb", "codigo": "SL.GDP.PCAP.EM.KD",
-     "melhor": "maior", "tipo": "variacao", "pct": True, "unidade": "US$ produzidos por trabalhador por ano", "casas": 0,
-     "explica": "Quanto cada trabalhador produz em média. Sem ganho de produtividade, salários não sobem de forma sustentável.",
-     "confianca": "média", "limite": "Estimativa da OIT.", "fonte_txt": "Banco Mundial / OIT"},
 ]
+
+# ------------------------------------------------ nível de vida: referência adequada e escala de 0 a 100
+# Cada indicador recebe uma nota de nível (0 = pior situação, 100 = padrão adequado), calculada sempre do mesmo jeito.
+# "fixa": valor adequado definido por norma ou meta pública; "historica": melhor e pior momento do Brasil desde o início da série.
+REFERENCIAS = {
+    "salario_minimo": {"tipo": "smn", "texto": "100 = salário mínimo igual ao salário mínimo necessário calculado pelo DIEESE, o valor que cobriria as despesas básicas de uma família de 4 pessoas, como prevê a Constituição (art. 7º, IV)."},
+    "endividamento": {"tipo": "historica", "texto": "Escala entre o menor e o maior endividamento das famílias registrado desde 2005."},
+    "desemprego": {"tipo": "fixa", "bom": 5.0, "texto": "100 = desemprego de 5%, nível próximo da média dos países da OCDE; 0 = pior desemprego do Brasil desde 1995."},
+    "carteira": {"tipo": "historica", "texto": "Escala entre a menor e a maior fatia de trabalhadores com carteira desde 2012."},
+    "renda_trabalho": {"tipo": "historica", "texto": "Escala entre a menor e a maior renda real do trabalho desde 2012."},
+    "pobreza": {"tipo": "ods", "texto": "100 = metade da pobreza de 2015, a meta 1.2 dos Objetivos de Desenvolvimento Sustentável da ONU para 2030; 0 = pior nível do Brasil desde 1995."},
+    "extrema_pobreza": {"tipo": "fixa", "bom": 3.0, "texto": "100 = no máximo 3% da população, a meta do Banco Mundial para acabar com a extrema pobreza; 0 = pior nível do Brasil desde 1995."},
+    "renda_pobres": {"tipo": "historica", "texto": "Escala entre a menor e a maior fatia de renda dos 20% mais pobres desde 1995."},
+    "cesta_horas": {"tipo": "fixa", "bom": 55.0, "ruim": 220.0, "texto": "100 = cesta básica custando até 55 horas (25% de uma jornada de 220 horas; famílias de baixa renda gastam de 20% a 25% da renda com alimentação, segundo a POF/IBGE 2017-2018); 0 = cesta custando o mês inteiro de trabalho."},
+}
+for _iid in ("acess_aluguel", "acess_energia", "acess_onibus", "litros_gasolina", "acess_celular", "acess_computador",
+             "acess_eletro", "acess_roupas", "acess_moto", "acess_carro"):
+    REFERENCIAS[_iid] = {"tipo": "historica", "texto": "Não existe preço de referência oficial em reais para este item. A escala vai do momento em que ele esteve menos acessível (0) ao mais acessível (100) para quem ganha o salário mínimo, desde o início da série."}
+
+
+def nota_nivel(ind, valor, serie, ano=None, smn_ratio=None):
+    """Converte um valor em nota de nível de vida (0 a 100) pela referência do indicador."""
+    ref = REFERENCIAS.get(ind["id"])
+    if not ref or valor is None or not serie:
+        return None
+    menor_melhor = ind["melhor"] == "menor"
+    vals = list(serie.values())
+    pior = max(vals) if menor_melhor else min(vals)
+    if ref["tipo"] == "smn":
+        return round(max(0.0, min(100.0, smn_ratio))) if smn_ratio is not None else None
+    if ref["tipo"] == "historica":
+        bom = min(vals) if menor_melhor else max(vals)
+    elif ref["tipo"] == "ods":
+        if 2015 not in serie:
+            return None
+        bom = serie[2015] / 2
+    else:
+        bom = ref["bom"]
+        pior = ref.get("ruim", pior)
+    if bom == pior:
+        return None
+    return round(max(0.0, min(100.0, 100 * (valor - pior) / (bom - pior))))
+
+
+# ------------------------------------------------ tags de atenção histórica
+# Critério: choque externo ou desastre natural de grande escala, reconhecido por fonte oficial, que alterou
+# preços, emprego ou renda no período. A tag só contextualiza: não muda nenhuma nota.
+TAGS = [
+    {"id": "asia_russia", "nome": "Crises financeiras da Ásia e da Rússia", "inicio": "1997-07", "fim": "1999-01",
+     "impactos": "Fuga de capitais, alta forte dos juros e pressão sobre o emprego.",
+     "afeta": ["desemprego", "selic"], "fonte": "Banco Central do Brasil (Relatórios Anuais 1997 e 1998)"},
+    {"id": "energia_2001", "nome": "Crise de energia e racionamento", "inicio": "2001-06", "fim": "2002-02",
+     "impactos": "Corte obrigatório de consumo de energia, freio na produção e no emprego.",
+     "afeta": ["desemprego", "acess_energia"], "fonte": "Câmara de Gestão da Crise de Energia Elétrica (2001)"},
+    {"id": "crise_2008", "nome": "Crise financeira global", "inicio": "2008-09", "fim": "2009-12",
+     "impactos": "Queda das exportações e do crédito, demissões no fim de 2008 e início de 2009.",
+     "afeta": ["desemprego", "carteira", "renda_trabalho"], "fonte": "IBGE e Banco Central do Brasil"},
+    {"id": "hidrica_2014", "nome": "Crise hídrica no Sudeste", "inicio": "2014-01", "fim": "2015-12",
+     "impactos": "Seca nos reservatórios, energia mais cara (bandeiras tarifárias) e falta de água em São Paulo.",
+     "afeta": ["acess_energia"], "fonte": "Agência Nacional de Águas e ANEEL"},
+    {"id": "covid", "nome": "Pandemia de Covid-19", "inicio": "2020-03", "fim": "2022-12",
+     "impactos": "Paralisação da atividade, perda de empregos em 2020, auxílio emergencial alterando pobreza e renda, e alta de preços de alimentos.",
+     "afeta": ["desemprego", "carteira", "renda_trabalho", "pobreza", "extrema_pobreza", "cesta_horas"], "fonte": "Organização Mundial da Saúde e IBGE"},
+    {"id": "ucrania", "nome": "Guerra na Ucrânia", "inicio": "2022-02", "fim": "2022-12",
+     "impactos": "Alta mundial de combustíveis, fertilizantes e alimentos.",
+     "afeta": ["litros_gasolina", "cesta_horas", "inpc"], "fonte": "FMI (World Economic Outlook, out/2022)"},
+    {"id": "rs_2024", "nome": "Enchentes no Rio Grande do Sul", "inicio": "2024-04", "fim": "2024-07",
+     "impactos": "Maior desastre climático do estado: perdas na produção, alta pontual de alimentos e efeito sobre o emprego regional.",
+     "afeta": ["cesta_horas", "inpc"], "fonte": "Defesa Civil do RS e IBGE"},
+]
+
+
+def tags_do_mandato(m):
+    ini = m["inicio"][:7]
+    fim = (m["termino"] or HOJE.isoformat())[:7]
+    return [t["id"] for t in TAGS if t["inicio"] <= fim and t["fim"] >= ini]
 
 # --------------------------------------------------------------------- coleta
 
@@ -533,12 +582,48 @@ def norm_txt(t):
     return unicodedata.normalize("NFD", str(t or "")).encode("ascii", "ignore").decode().lower()
 
 
+def ipea_metadados():
+    if "ipea_meta" not in _CACHE:
+        _CACHE["ipea_meta"] = json.loads(baixar("http://www.ipeadata.gov.br/api/odata4/Metadados", timeout=300)).get("value", [])
+    return _CACHE["ipea_meta"]
+
+
+def smn_mensal():
+    """Salário mínimo necessário do DIEESE (Ipeadata), em R$ correntes."""
+    if "smn" in _CACHE:
+        return _CACHE["smn"]
+    meta = [x for x in ipea_metadados() if "salario minimo necessario" in norm_txt(x.get("SERNOME"))]
+    if not meta:
+        raise ValueError("série do salário mínimo necessário não encontrada no Ipeadata")
+    serie = meta[0]
+    vals = json.loads(baixar(f"http://www.ipeadata.gov.br/api/odata4/ValoresSerie(SERCODIGO='{serie['SERCODIGO']}')")).get("value", [])
+    out = {}
+    for v in vals:
+        try:
+            d = dt.date.fromisoformat(str(v["VALDATA"])[:10])
+            out[(d.year, d.month)] = float(v["VALVALOR"])
+        except (KeyError, TypeError, ValueError):
+            continue
+    if not out:
+        raise ValueError("salário mínimo necessário sem valores")
+    avisos_info.append(f"salário mínimo necessário: {serie['SERCODIGO']}: {serie['SERNOME']}")
+    _CACHE["smn"] = out
+    return out
+
+
+def smn_ratio():
+    """Salário mínimo como % do salário mínimo necessário: média anual e último mês."""
+    sm, smn = sm_mensal(), smn_mensal()
+    mensal = {k: 100 * sm[k] / v for k, v in smn.items() if k in sm and v > 0}
+    return _anual_media(mensal), (mensal[max(mensal)] if mensal else None)
+
+
 def cesta_mensal():
     """Custo da cesta básica do DIEESE em São Paulo (Ipeadata), em horas de trabalho de quem ganha o mínimo."""
     if "cesta" in _CACHE:
         return _CACHE["cesta"]
     base = "http://www.ipeadata.gov.br/api/odata4"
-    todas = json.loads(baixar(f"{base}/Metadados", timeout=300)).get("value", [])
+    todas = ipea_metadados()
     meta = [x for x in todas if "cesta" in norm_txt(x.get("SERNOME")) and "sao paulo" in norm_txt(x.get("SERNOME"))]
     cands = [x for x in meta if norm_txt(x.get("PERNOME") or x.get("SERPERIODICIDADE") or "mensal").startswith("mensal")
              and "r$" in norm_txt(x.get("UNINOME")) and ("gasto" in norm_txt(x.get("SERNOME")) or "custo" in norm_txt(x.get("SERNOME")) or "valor" in norm_txt(x.get("SERNOME")))]
@@ -639,6 +724,90 @@ def mais_recente(inicio_mandato):
         if pts:
             a, q, v = pts[-1]
             out[iid] = {"rotulo": f"{q}º trimestre de {a}", "valor": v, "quando": a + q * 3 / 12}
+    return out
+
+
+def cenarios_projecao(series, recentes, proj):
+    """Trajetórias possíveis para o governo atual. Estimativas, nunca resultados."""
+    out = []
+    anos = list(range(HOJE.year + 1, HOJE.year + 4))
+    # 1. Poder de compra: regra do salário mínimo (Lei 14.663/2023, com ganho real limitado entre 0,6% e 2,5% pela Lei 15.077/2024)
+    try:
+        sm0 = recentes["salario_minimo"]["valor"]
+        pib = {}
+        try:
+            pib.update(serie_wb("NY.GDP.MKTP.KD.ZG")[0])
+        except Exception as e:  # noqa: BLE001
+            avisos.append(f"PIB para projeção: {e}")
+        for f in proj.get("focus", []):
+            if f["nome"].startswith("Crescimento"):
+                for a, v in f["pontos"]:
+                    pib.setdefault(a, v)
+        base, pess, otim = [], [], []
+        vb = vp = vo = sm0
+        for a in anos:
+            g = pib.get(a - 2)
+            ganho = max(0.6, min(2.5, g)) if g is not None else 0.6
+            vb *= 1 + ganho / 100
+            vp *= 1.006
+            vo *= 1.025
+            base.append([a, round(vb)]); pess.append([a, round(vp)]); otim.append([a, round(vo)])
+        out.append({"id": "poder_compra", "nome": "Poder de compra do salário mínimo", "unidade": "R$ por mês, em valores de hoje",
+                    "atual": round(sm0), "horizonte": f"{anos[0]} a {anos[-1]}",
+                    "cenarios": {"base": base, "pessimista": pess, "otimista": otim},
+                    "premissas": "Regra de reajuste em vigor: inflação (INPC) mais o crescimento do PIB de dois anos antes, com ganho real entre 0,6% e 2,5% ao ano. Cenário base usa o PIB observado e a expectativa do mercado; pessimista usa o ganho mínimo (0,6%); otimista, o máximo (2,5%).",
+                    "riscos": "Mudança na regra pelo Congresso; inflação acima do previsto entre um reajuste e outro.",
+                    "incerteza": "média", "fonte": "Leis 14.663/2023 e 15.077/2024, IBGE/Banco Mundial (PIB) e boletim Focus"})
+    except Exception as e:  # noqa: BLE001
+        avisos.append(f"cenário poder de compra: {e}")
+    # 2. Emprego: FMI
+    lur = next((f for f in proj.get("fmi", []) if f["id"] == "desemprego"), None)
+    if lur:
+        lur = lur | {"pontos": [p for p in lur["pontos"] if p[0] >= HOJE.year]}
+        out.append({"id": "emprego", "nome": "Desemprego", "unidade": "% da força de trabalho", "horizonte": f"{lur['pontos'][0][0]} a {lur['pontos'][-1][0]}",
+                    "cenarios": {"base": lur["pontos"]},
+                    "premissas": "Projeção do FMI no World Economic Outlook mais recente.",
+                    "riscos": "Juros altos por mais tempo e desaceleração mundial podem elevar o desemprego.",
+                    "incerteza": "média", "fonte": "FMI"})
+    # 3. Pobreza: tendência recente (estimativa própria, sem projeção oficial)
+    pob = series.get("pobreza", ({}, {}))[0]
+    if len(pob) >= 3:
+        ult = sorted(pob)[-3:]
+        a1, v1 = ult[-1], pob[ult[-1]]
+        tend = (pob[ult[-1]] - pob[ult[0]]) / (ult[-1] - ult[0])
+        anos_p = list(range(a1 + 1, HOJE.year + 3))
+        cen = {"base": [], "pessimista": [], "otimista": []}
+        for a in anos_p:
+            k = a - a1
+            cen["otimista"].append([a, round(max(0.0, v1 + tend * k), 1)])
+            cen["base"].append([a, round(max(0.0, v1 + tend * k * 0.5), 1)])
+            cen["pessimista"].append([a, round(v1, 1)])
+        out.append({"id": "pobreza", "nome": "Pobreza", "unidade": "% da população (US$ 6,85 por dia)", "atual": round(v1, 1),
+                    "atual_ano": a1, "horizonte": f"{anos_p[0]} a {anos_p[-1]}", "cenarios": cen,
+                    "premissas": f"Não existe projeção oficial de pobreza. Estimativa do Radar Político a partir da tendência de {ult[0]} a {ult[-1]} ({tend:+.1f} ponto por ano): otimista mantém a tendência, base mantém metade dela, pessimista supõe estagnação.",
+                    "riscos": "Mudanças em programas de transferência de renda, inflação de alimentos e desemprego mudam esse quadro rapidamente.",
+                    "incerteza": "alta", "fonte": "Banco Mundial (dados observados) e cálculo do Radar Político"})
+    # 4. Inflação: mercado e FMI
+    ipca = next((f for f in proj.get("focus", []) if f["nome"].startswith("Inflação")), None)
+    imf_inf = next((f for f in proj.get("fmi", []) if f["id"] == "inflacao"), None)
+    if ipca or imf_inf:
+        cen = {}
+        if ipca:
+            cen["base"] = ipca["pontos"]
+        if imf_inf:
+            cen["alternativo (FMI)"] = [p for p in imf_inf["pontos"] if p[0] >= HOJE.year]
+        out.append({"id": "inflacao", "nome": "Inflação (IPCA)", "unidade": "% no ano", "horizonte": "próximos 3 anos",
+                    "cenarios": cen, "premissas": "Mediana das expectativas do mercado (boletim Focus do Banco Central) e projeção do FMI.",
+                    "riscos": "Câmbio, preço de alimentos e de combustíveis e a política fiscal.", "incerteza": "média",
+                    "fonte": "Banco Central (Focus) e FMI"})
+    # 5. Sustentabilidade fiscal: dívida pelo FMI
+    div = next((f for f in proj.get("fmi", []) if f["id"] == "divida"), None)
+    if div:
+        div = div | {"pontos": [p for p in div["pontos"] if p[0] >= HOJE.year]}
+        out.append({"id": "fiscal", "nome": "Dívida pública", "unidade": "% do PIB", "horizonte": f"{div['pontos'][0][0]} a {div['pontos'][-1][0]}",
+                    "cenarios": {"base": div["pontos"]},
+                    "premissas": "Projeção do FMI, que considera as regras fiscais em vigor e a trajetória de juros.",
+                    "riscos": "Juros mais altos e déficits maiores aceleram a alta; superávits a contêm.", "incerteza": "média", "fonte": "FMI"})
     return out
 
 
@@ -837,6 +1006,42 @@ def main():
                      if i["area"] == area and i["id"] in m["indicadores"] and "nota" in m["indicadores"][i["id"]]]
             m["areas"][area] = round(sum(notas) / len(notas)) if notas else None
 
+    # nível de vida: situação real ao assumir e ao sair, pela referência de cada indicador
+    try:
+        smn_anual, smn_ult = smn_ratio()
+    except Exception as e:  # noqa: BLE001
+        avisos.append(f"salário mínimo necessário: {e}")
+        smn_anual, smn_ult = {}, None
+    for m in mandatos:
+        for ind in INDICADORES:
+            r = m["indicadores"].get(ind["id"])
+            if not r or ind["id"] not in series or ind["id"] not in REFERENCIAS:
+                continue
+            serie = series[ind["id"]][0]
+            for lado, chave in (("recebeu", "nivel_inicio"), ("entregou", "nivel_fim")):
+                x = r.get(lado)
+                if not x:
+                    continue
+                ratio = None
+                if ind["id"] == "salario_minimo":
+                    ratio = smn_ult if (lado == "entregou" and x.get("rotulo")) else smn_anual.get(x["ano"])
+                    if ratio is not None:
+                        r["smn_" + lado] = round(ratio, 1)
+                r[chave] = nota_nivel(ind, x["valor"], serie, smn_ratio=ratio)
+        m["nivel"], m["nivel_inicio"] = {}, {}
+        for area in AREAS:
+            if area not in RESULTADOS:
+                continue
+            for chave, destino in (("nivel_fim", m["nivel"]), ("nivel_inicio", m["nivel_inicio"])):
+                ns = [m["indicadores"][i["id"]][chave] for i in INDICADORES if i["area"] == area and i["id"] in m["indicadores"]
+                      and m["indicadores"][i["id"]].get(chave) is not None]
+                destino[area] = round(sum(ns) / len(ns)) if ns else None
+        for chave, origem in (("nivel_geral", m["nivel"]), ("nivel_geral_inicio", m["nivel_inicio"])):
+            vs = [v for v in origem.values() if v is not None]
+            m[chave] = round(sum(vs) / len(vs)) if len(vs) >= 4 else None
+            m[chave + "_areas"] = len(vs)
+        m["tags"] = tags_do_mandato(m)
+
     # herança: como estava cada indicador ao assumir, comparado à média histórica, e se vinha melhorando ou piorando
     for ind in INDICADORES:
         if ind["id"] not in series or ind["melhor"] == "neutro":
@@ -857,11 +1062,15 @@ def main():
                 h["desde"] = a2
             m.setdefault("heranca", {})[ind["id"]] = h
 
+    proj = projecoes()
+    proj["cenarios"] = cenarios_projecao(series, recentes, proj)
     saida = {
         "atualizado": dt.datetime.now(dt.timezone(dt.timedelta(hours=-3))).strftime("%Y-%m-%d %H:%M"),
         "areas": AREAS,
         "blocos": BLOCOS,
-        "projecao": projecoes(),
+        "projecao": proj,
+        "referencias": REFERENCIAS,
+        "tags": TAGS,
         "indicadores": [{k: v for k, v in i.items() if k not in ("fonte", "codigo", "fonte_txt")} | {"fonte": i.get("fonte_txt", "")}
                         for i in INDICADORES],
         # gráficos a partir de 1994 (inflação a partir de 1995, para a hiperinflação não achatar o resto da série)
