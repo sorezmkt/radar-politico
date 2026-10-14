@@ -1,0 +1,98 @@
+/* Radar Político — páginas de partidos. Reaproveita style.css e só acrescenta o que é novo aqui. */
+.brand .sub{font-family:var(--body);font-weight:600;font-size:13px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-left:4px;vertical-align:middle}
+
+/* Totais do ano */
+.totais{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(min-width:700px){.totais{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.tot{display:flex;flex-direction:column;gap:2px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);min-width:0}
+.tot .label{font-size:10.5px}
+.tot .v{font-family:var(--display);font-weight:800;font-size:clamp(20px,5.4vw,26px);line-height:1.1}
+.tot small{color:var(--muted);font-size:12px}
+
+/* Lista de partidos */
+.phead,.plist a{display:grid;grid-template-columns:minmax(0,1fr) 92px 78px;gap:10px;align-items:center}
+.phead{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:0 6px 6px;border-bottom:1px solid var(--line)}
+.phead span:nth-child(2){text-align:right}
+.phead span:nth-child(3){text-align:center}
+.plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.plist li{border-bottom:1px solid var(--line)}
+.plist li:last-child{border-bottom:0}
+.plist a{padding:10px 6px;color:inherit;text-decoration:none;border-radius:8px}
+.plist a:hover,.plist a:focus-visible{background:var(--accent-soft);outline:none}
+.pnm{display:flex;align-items:center;gap:10px;min-width:0}
+.sigla{flex:none;min-width:44px;height:30px;padding:0 6px;border-radius:8px;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:12.5px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.pnm>span:last-child{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.pnm b{font-weight:500;font-size:13.5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pnm small{color:var(--muted);font-size:12px}
+.pval{display:flex;flex-direction:column;align-items:flex-end;gap:4px;font-size:14px}
+.pubbar{width:100%;max-width:96px;height:5px;border-radius:99px;background:var(--line);overflow:hidden}
+.pubbar i{display:block;height:100%;background:var(--accent)}
+.pval small{color:var(--muted);font-size:11px}
+.plist .rk{justify-self:center}
+.plist li.off a{opacity:.62}
+
+/* Ficha do partido */
+.pficha{display:grid;grid-template-columns:1fr;gap:18px;align-items:center}
+@media(min-width:700px){.pficha{grid-template-columns:1.4fr 1fr}}
+.avatar.sg{font-size:17px;border-radius:16px;width:76px;height:76px;padding:4px;text-align:center;line-height:1.05}
+.riskbox{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--bg);text-align:center}
+.riskbox .risklvl{font-size:22px}
+.riskbox .riskmeter i{width:44px;height:12px}
+.riskbox p{margin:0;font-size:13px;color:var(--muted)}
+
+.nums{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(min-width:780px){.nums{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+/* Alertas detalhados */
+.alist{display:flex;flex-direction:column;gap:10px}
+details.al{border:1px solid var(--line);border-radius:12px;border-left:4px solid var(--line);background:var(--surface)}
+details.al.bad{border-left-color:var(--bad)}
+details.al.warn{border-left-color:var(--warn)}
+details.al.good{border-left-color:var(--good)}
+details.al>summary{list-style:none;cursor:pointer;padding:13px 40px 13px 14px;position:relative;display:flex;flex-direction:column;gap:4px}
+details.al>summary::-webkit-details-marker{display:none}
+details.al>summary::after{content:'';position:absolute;right:16px;top:20px;width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .15s}
+details.al[open]>summary::after{transform:rotate(-135deg);top:24px}
+.alh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.alh b{font-size:15px}
+.alh .tag{flex:none;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap}
+details.al>summary p{margin:0;font-size:13.5px;color:var(--muted)}
+.albody{display:flex;flex-direction:column;gap:12px;padding:0 14px 14px}
+.albody h4{margin:0 0 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;font-family:var(--body)}
+.albody p{margin:0;font-size:14px}
+.albody .concl{padding:10px 12px;border-radius:10px;background:var(--accent-soft);font-size:14px}
+.albody ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;gap:3px}
+.grp{display:flex;flex-direction:column;gap:6px}
+.grp>.label{padding-top:2px}
+.regs{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.reg{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border-bottom:1px solid var(--line);font-size:13.5px}
+.reg:last-child{border-bottom:0}
+.reg .rh{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.reg .rh b{font-weight:500;min-width:0;overflow-wrap:anywhere}
+.reg .rh .num{white-space:nowrap}
+.reg small{color:var(--muted);font-size:12px;overflow-wrap:anywhere}
+.reg .cmp{color:var(--bad);font-size:12.5px}
+.reg a{font-size:12.5px;font-weight:600;align-self:flex-start}
+
+/* Blocos de valores */
+.vlist{display:flex;flex-direction:column;gap:10px}
+.vitem .row{display:flex;justify-content:space-between;gap:10px;font-size:13.5px}
+.vitem .row span:first-child{min-width:0}
+.vitem .bar{height:9px;margin-top:4px}
+.vitem em{font-style:normal;color:var(--muted);font-size:12px}
+.vitem ul{margin:6px 0 0;padding-left:16px;font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;gap:2px}
+.vitem ul li{display:flex;justify-content:space-between;gap:10px}
+.vitem ul li span:first-child{min-width:0;overflow-wrap:anywhere}
+.vitem details summary{cursor:pointer;color:var(--accent);font-size:12.5px;margin-top:4px}
+
+.obrig{display:flex;flex-direction:column;gap:12px}
+.ob .nh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:14px}
+.ob .nbar{margin-top:6px}
+.ob p{margin:4px 0 0;font-size:12.5px;color:var(--muted)}
+
+.yrs{display:flex;gap:6px;flex-wrap:wrap}
+.hist .legend{margin-top:4px}
+@media(max-width:480px){.pnm{flex-direction:column;align-items:flex-start;gap:4px}.plist .rk{font-size:11px;padding:3px 6px}}
+@media(min-width:700px){.phead,.plist a{grid-template-columns:minmax(0,1fr) 130px 96px}}
+details.regras>summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:14px}
+details.regras ol{margin-top:10px}

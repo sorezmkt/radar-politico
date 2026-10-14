@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Partidos · Radar Político</title>
+<meta name="description" content="Quanto cada partido recebe de dinheiro público, como gasta e quais alertas automáticos aparecem nas contas dos diretórios nacionais. Dados oficiais do TSE.">
+<meta property="og:title" content="Partidos · Radar Político">
+<meta property="og:description" content="Receitas, gastos e alertas nas contas dos partidos com dados oficiais do TSE.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'%3E%3Ccircle cx='17' cy='17' r='15' fill='none' stroke='%230e2e6c' stroke-width='3'/%3E%3Cpath d='M17 17 L28 9' stroke='%230e2e6c' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='17' cy='17' r='3' fill='%230e2e6c'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/partidos.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="partidos.html">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="15" fill="none" stroke="var(--accent)" stroke-width="2.5"/><circle cx="17" cy="17" r="8" fill="none" stroke="var(--accent)" stroke-width="2" opacity=".55"/><path d="M17 17 L28 9" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/><circle cx="17" cy="17" r="2.6" fill="var(--accent)"/></svg>
+      <h1>Radar Político <span class="sub">Partidos</span></h1>
+    </a>
+    <span class="upd" id="upd"></span>
+  </header>
+
+  <section class="hero">
+    <h2>Para onde vai o dinheiro dos partidos?</h2>
+    <p class="intro">Quanto cada diretório nacional recebeu, quanto disso é dinheiro público, como gastou e quais pontos das contas merecem uma segunda olhada. Tudo calculado com as prestações de contas oficiais entregues ao TSE.</p>
+  </section>
+
+  <div class="search">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="q" type="search" placeholder="Pesquise um partido pela sigla ou pelo nome" autocomplete="off" aria-label="Buscar partido">
+    <div class="sugg" id="sugg" hidden></div>
+  </div>
+
+  <section class="card" id="resumo">
+    <div class="listhead">
+      <div>
+        <h2 class="lt">Contas de <span id="anoT">–</span></h2>
+        <p class="meta" id="anoSub">Carregando dados…</p>
+      </div>
+      <div class="tabs" id="anos" role="group" aria-label="Ano das contas"></div>
+    </div>
+    <div class="totais" id="totais"></div>
+  </section>
+
+  <section class="card">
+    <div class="listhead">
+      <div>
+        <h2 class="lt">Os partidos</h2>
+        <p class="meta" id="listSub">Toque num partido para ver a ficha completa.</p>
+      </div>
+      <div class="tabs" id="ordem" role="group" aria-label="Ordenar por">
+        <button type="button" data-o="receita" aria-pressed="true">Mais dinheiro</button>
+        <button type="button" data-o="pontos" aria-pressed="false">Mais alertas</button>
+        <button type="button" data-o="nome" aria-pressed="false">A a Z</button>
+      </div>
+    </div>
+    <div class="phead" aria-hidden="true"><span>Partido</span><span>Recebeu</span><span>Alertas</span></div>
+    <ol class="plist" id="lista"><li class="empty">Carregando dados…</li></ol>
+  </section>
+
+  <section class="card method" id="metodo">
+    <h3>Metodologia aberta</h3>
+    <p>Os números vêm da prestação de contas anual que cada partido entrega à Justiça Eleitoral e que o TSE publica no Portal de Dados Abertos. Por enquanto o Radar olha só os <b style="color:var(--ink)">diretórios nacionais</b>, que recebem e distribuem a maior parte do Fundo Partidário e do Fundo Eleitoral. Diretórios estaduais e municipais entram numa próxima etapa.</p>
+    <p><b style="color:var(--ink)">O que é cada número.</b> <i>Recebeu</i> soma as receitas em dinheiro do ano (valores estimáveis, como serviços doados, ficam à parte). <i>Dinheiro público</i> são as cotas do Fundo Partidário e do Fundo Especial de Financiamento de Campanha pagas pelo TSE. <i>Gastos</i> são pagamentos a fornecedores, funcionários, tributos e tarifas. <i>Repasses</i> são transferências para candidatos e para outras direções do partido; ficam separados dos gastos para não contar o mesmo dinheiro duas vezes.</p>
+    <p><b style="color:var(--ink)">Alertas automáticos.</b> Seis regras fixas, iguais para todos os partidos, que produzem sempre o mesmo resultado com os mesmos dados. Nenhuma inteligência artificial decide nada. Cada alerta mostra o que foi encontrado, a regra aplicada, os lançamentos que sustentam a observação (com link para o comprovante no sistema do TSE quando ele existe) e o que ainda precisa ser verificado.</p>
+    <details class="regras"><summary>Ver as seis regras em detalhe</summary><ol id="regras"></ol></details>
+    <div class="faixas"><span class="meta">Nível de atenção:</span><span class="verdict v-good">0 a 2 pontos baixo</span><span class="verdict v-warn">3 a 5 moderado</span><span class="verdict v-bad">6 ou mais alto</span></div>
+    <p>Cada alerta vermelho vale 2 pontos e cada amarelo vale 1. O ano em curso aparece como <b style="color:var(--ink)">parcial</b>: o partido tem até 30 de junho do ano seguinte para entregar a conta completa, então até lá o arquivo do TSE traz só o que já foi enviado.</p>
+    <p><b style="color:var(--ink)">Limites.</b> Os dados são declarados pelo próprio partido e podem ser corrigidos depois. Estar no arquivo do TSE não significa que as contas foram aprovadas: o julgamento costuma levar anos. Um alerta <b style="color:var(--ink)">não é prova de fraude ou ilegalidade</b>; indica onde vale a pena olhar com mais atenção. Comparações entre anos usam valores corrigidos pelo IPCA <span id="ipcaRef"></span>, e anos de eleição são comparados com anos de eleição.</p>
+    <p class="src">Fontes: <a href="https://dadosabertos.tse.jus.br/dataset/?q=presta%C3%A7%C3%A3o+de+contas+partid%C3%A1rias" target="_blank" rel="noopener">Prestação de contas anual partidária</a> e notas fiscais (Portal de Dados Abertos do TSE), consulta pública no <a href="https://divulgaspca.tse.jus.br/" target="_blank" rel="noopener">DivulgaSPCA</a>, IPCA do IBGE via Banco Central e situação de CNPJ da Receita Federal via BrasilAPI e Minha Receita. O código é aberto em <a href="https://github.com/sorezmkt/radar-politico">github.com/sorezmkt/radar-politico</a>.</p>
+  </section>
+
+  <footer>Radar Político · projeto independente, sem vínculo com partidos ou com a Justiça Eleitoral.</footer>
+</div>
+<script src="assets/partidos.js"></script>
+</body>
+</html>
