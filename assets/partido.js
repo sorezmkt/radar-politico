@@ -106,7 +106,7 @@
     $('riskLvl').textContent = rl; $('riskLvl').style.color = `var(--${rc})`;
     document.querySelectorAll('#riskMeter i').forEach((el, j) => el.style.background = j < rn ? `var(--${rc})` : 'var(--line)');
     const nAl = a.alertas.filter(x => x.status === 'warn' || x.status === 'bad').length;
-    const fat = (a.risco.fatores || []).map(f => `${f.titulo.toLowerCase()} (${f.pontos})`).join(', ');
+    const fat = (a.risco.fatores || []).map(f => `${f.titulo} (${f.pontos})`).join(', ');
     $('riskTxt').textContent = a.sem_movimento ? 'Sem contas para analisar.' : `${a.risco.pontos} ${a.risco.pontos === 1 ? 'ponto' : 'pontos'} · ${nAl} de ${a.alertas.length} regras com algo a verificar${fat ? '. Pontos vindos de: ' + fat : ''}`;
 
     const R = a.receitas, Gs = a.gastos, Tr = a.transferencias;
