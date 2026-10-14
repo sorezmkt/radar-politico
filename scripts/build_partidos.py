@@ -34,7 +34,7 @@ import urllib.request
 import zipfile
 from collections import Counter, defaultdict
 
-from comum import precisa_reconsultar, pontuar, situacao_cnpj
+from comum import aberta_ha_pouco, campos_receita, dias_desde_abertura, precisa_detalhe, precisa_reconsultar, pontuar, sinais_empresa_nova, situacao_cnpj
 
 csv.field_size_limit(10_000_000)
 
@@ -424,14 +424,16 @@ def registro(r, A, valor=None):
 
 # ---------------------------------------------------------------- CNPJ
 
-def consultar_cnpjs(cnpjs):
+def consultar_cnpjs(cnpjs, primeiros=None):
+    """primeiros: data do primeiro pagamento de cada CNPJ, para buscar atividade e capital das empresas recém-abertas."""
     try:
         with open(CNPJ_CACHE, encoding="utf-8") as f:
             cache = json.load(f)
     except (FileNotFoundError, ValueError):
         cache = {}
     limite_idade = (HOJE - dt.timedelta(days=60)).isoformat()
-    novos = [c for c in sorted(cnpjs) if c not in cache or cache[c].get("ts", "") < limite_idade or precisa_reconsultar(cache[c])]
+    novos = [c for c in sorted(cnpjs) if c not in cache or cache[c].get("ts", "") < limite_idade or precisa_reconsultar(cache[c])
+             or (precisa_detalhe(cache[c]) and aberta_ha_pouco(cache[c], (primeiros or {}).get(c)))]
     log(f"CNPJ: {len(cnpjs)} necessários, {len(novos)} a consultar")
     inicio, feitos = time.time(), 0
     for c in novos[:LIMITE_CNPJ_NOVOS]:
@@ -445,7 +447,7 @@ def consultar_cnpjs(cnpjs):
                 info = {
                     "situacao": norm(j.get("descricao_situacao_cadastral") or ""),
                     "abertura": j.get("data_inicio_atividade") or "",
-                    "data_situacao": j.get("data_situacao_cadastral") or "",
+                    **campos_receita(j),
                     "razao": j.get("razao_social") or "",
                     "ts": HOJE.isoformat(),
                 }
@@ -997,17 +999,15 @@ def regra_cnpj(forn, cache, ano):
             flags.append(txt)
         elif tipo == "depois":
             depois.append((f, txt))
-        ab = info.get("abertura", "")
-        try:
-            abd = dt.date.fromisoformat(ab[:10])
-            if f["primeiro"]:
-                dias = (f["primeiro"] - abd).days
-                if dias < 0:
-                    flags.append("pagamento registrado antes da data de abertura da empresa (pode ser erro de data no lançamento)")
-                elif dias < 180:
-                    flags.append(f"empresa aberta {dias} dias antes do primeiro pagamento")
-        except ValueError:
-            pass
+        dias = dias_desde_abertura(info, f["primeiro"])
+        if dias is not None and dias < 0:
+            flags.append("pagamento registrado antes da data de abertura da empresa (pode ser erro de data no lançamento)")
+        elif dias is not None and dias < 180:
+            # sozinha, empresa nova é sinal fraco; com valor alto e mais um sinal independente, vira prioridade
+            extra = sinais_empresa_nova(info, f["valor"], f["ultimo"], f["cats"].most_common(1)[0][0])
+            flags.append(f"empresa aberta {dias} dias antes do primeiro pagamento" + (" e " + "; ".join(extra) if extra else ""))
+            if extra and f["valor"] >= 500000:
+                grave = True
         if flags:
             achados.append((f, flags, grave))
     dados_depois = [{"grupo": "Encerraram depois dos pagamentos (não conta para o alerta)", "registros": [
@@ -1032,8 +1032,11 @@ def regra_cnpj(forn, cache, ano):
 
 REGRA_CNPJ = ("Consulta na Receita Federal, via BrasilAPI e Minha Receita, os 40 maiores fornecedores com CNPJ que receberam R$ 10 mil ou mais no ano. "
               "Sinaliza CNPJ que já estava baixado, inapto ou suspenso antes do último pagamento (a data da situação vem da Receita; quando ela não informa a data, só entra quem recebeu R$ 100 mil ou mais) "
-              "e empresa aberta menos de 180 dias antes do primeiro pagamento. Empresa que encerrou depois dos pagamentos aparece só para conferência. "
-              "Fica vermelho quando uma empresa já baixada ou inapta recebeu R$ 100 mil ou mais; empresa recém-aberta sozinha fica no máximo amarelo.")
+              "e empresa aberta menos de 180 dias antes do primeiro pagamento. Para a empresa recém-aberta, procura mais três sinais independentes na Receita: "
+              "atividade registrada que não combina com o tipo de gasto, capital social mais de 50 vezes menor que o valor recebido e empresa fechada até 1 ano depois do último pagamento. "
+              "Empresa que encerrou depois dos pagamentos, sem ser recém-aberta, aparece só para conferência. "
+              "Fica vermelho quando uma empresa já baixada ou inapta recebeu R$ 100 mil ou mais, ou quando uma empresa recém-aberta recebeu R$ 500 mil ou mais e tem pelo menos um dos sinais extras; "
+              "empresa recém-aberta sem sinal extra fica amarela.")
 
 
 MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
@@ -1105,13 +1108,15 @@ def main():
             resumos[sg][ano] = resumo_ano(sg, ano, D, R, anos[ano])
 
     # CNPJs dos maiores fornecedores de cada partido
-    precisa = set()
+    precisa, primeiros = set(), {}
     for sg, porano in resumos.items():
         for ano, rs in porano.items():
             for f in sorted(rs["fornecedores_raw"].values(), key=lambda f: -f["valor"])[:40]:
                 if len(f["doc"]) == 14 and f["valor"] >= 10000:
                     precisa.add(f["doc"])
-    cache_cnpj = consultar_cnpjs(precisa)
+                    if f["primeiro"] and (f["doc"] not in primeiros or f["primeiro"] < primeiros[f["doc"]]):
+                        primeiros[f["doc"]] = f["primeiro"]
+    cache_cnpj = consultar_cnpjs(precisa, primeiros)
 
     # referências entre partidos de cada ano (concentração e documentação)
     ref_conc, ref_doc = defaultdict(list), defaultdict(lambda: defaultdict(list))

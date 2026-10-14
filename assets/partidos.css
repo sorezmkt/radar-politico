@@ -97,3 +97,4 @@ details.al>summary p{margin:0;font-size:13.5px;color:var(--muted)}
 details.regras>summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:14px}
 details.regras ol{margin-top:10px}
 details.al>summary .rel{font-size:12px;color:var(--muted);font-style:italic}
+#anoSub.parcial{color:var(--warn);font-weight:600}

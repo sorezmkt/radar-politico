@@ -78,3 +78,84 @@ def pontuar(alertas, chave_txt="encontrado"):
     for c in contados:
         c.pop("_k")
     return total, contados
+
+
+# ---------------------------------------------------------------- empresa recém-aberta
+
+# divisões da CNAE (2 primeiros dígitos) que combinam com cada tipo de gasto; tipos amplos demais ficam de fora
+CNAE_COMPATIVEL = {
+    "Advocacia e consultoria jurídica": {"69"},
+    "Contabilidade": {"69"},
+    "Informática": {"62", "63", "95"},
+    "Propaganda e publicidade": {"18", "58", "59", "60", "63", "73", "74", "82", "90"},
+    "Divulgação do mandato": {"18", "58", "59", "60", "63", "73", "74", "82", "90"},
+    "Pesquisas de opinião": {"70", "72", "73", "74", "82"},
+    "Consultorias e pesquisas": {"62", "63", "69", "70", "72", "73", "74", "82", "85", "94"},
+    "Viagens e transporte": {"47", "49", "50", "51", "52", "55", "77", "79"},
+    "Eventos, congressos e seminários": {"55", "56", "73", "77", "79", "82", "90", "93"},
+    "Combustíveis": {"46", "47"},
+    "Locação de veículos": {"49", "77"},
+    "Segurança": {"80"},
+    "Hospedagem": {"55"},
+    "Alimentação": {"10", "47", "56"},
+    "Aluguéis e condomínios": {"68", "77"},
+}
+
+
+def campos_receita(j):
+    """Campos da BrasilAPI / Minha Receita guardados no cache de CNPJ."""
+    def cod(x):
+        return str(x.get("codigo") if isinstance(x, dict) else x or "").zfill(7)
+    try:
+        capital = float(j.get("capital_social") or 0)
+    except (TypeError, ValueError):
+        capital = 0.0
+    return {
+        "data_situacao": j.get("data_situacao_cadastral") or "",
+        "cnae": str(j.get("cnae_fiscal") or "").zfill(7) if j.get("cnae_fiscal") else "",
+        "cnae_desc": j.get("cnae_fiscal_descricao") or "",
+        "cnaes2": [cod(x) for x in (j.get("cnaes_secundarios") or []) if cod(x).strip("0")],
+        "capital": capital,
+    }
+
+
+def precisa_detalhe(info):
+    """Entradas antigas do cache não têm atividade nem capital social; só fazem falta para empresas recém-abertas."""
+    return "capital" not in info
+
+
+def dias_desde_abertura(info, primeiro_pagamento):
+    ab = data_receita((info or {}).get("abertura"))
+    if ab is None or primeiro_pagamento is None:
+        return None
+    return (primeiro_pagamento - ab).days
+
+
+def sinais_empresa_nova(info, valor, ultimo_pagamento, categoria):
+    """
+    Sinais independentes que tornam uma empresa recém-aberta mais relevante:
+      - nenhuma atividade registrada na Receita (principal ou secundária) combina com o tipo de gasto;
+      - capital social menor que 2% do que a empresa recebeu (recebeu mais de 50 vezes o próprio capital);
+      - a empresa foi baixada, ficou inapta ou suspensa até 1 ano depois do último pagamento.
+    Devolve a lista de textos explicando cada sinal encontrado.
+    """
+    info = info or {}
+    sinais = []
+    esperadas = CNAE_COMPATIVEL.get(categoria)
+    cnaes = [c for c in [info.get("cnae", "")] + list(info.get("cnaes2", [])) if c]
+    if esperadas and cnaes and not any(c[:2] in esperadas for c in cnaes):
+        desc = info.get("cnae_desc") or info.get("cnae", "")
+        sinais.append(f"atividade registrada na Receita ({desc.lower()}) não combina com {categoria.lower()}")
+    cap = info.get("capital")
+    if isinstance(cap, (int, float)) and cap > 0 and valor > 50 * cap:
+        sinais.append(f"capital social de R$ {cap:,.0f}".replace(",", ".") + f", {valor / cap:.0f} vezes menor que o valor recebido")
+    if info.get("situacao", "") not in ATIVA:
+        quando = data_receita(info.get("data_situacao"))
+        if quando and ultimo_pagamento and 0 <= (quando - ultimo_pagamento).days <= 365:
+            sinais.append(f"empresa {info['situacao'].lower()} em {quando:%d/%m/%Y}, menos de 1 ano depois do último pagamento")
+    return sinais
+
+
+def aberta_ha_pouco(info, primeiro_pagamento, dias=180):
+    d = dias_desde_abertura(info, primeiro_pagamento)
+    return d is not None and d < dias
