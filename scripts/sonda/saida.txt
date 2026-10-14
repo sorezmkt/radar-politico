@@ -1,28 +1,31 @@
-Traceback (most recent call last):
-  File "/home/runner/work/radar-politico/radar-politico/scripts/sonda/sonda_emendas.py", line 19, in <module>
-    pa = tudo("plano_acao_especial", passo=5000)
-         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/radar-politico/radar-politico/scripts/sonda/sonda_emendas.py", line 13, in tudo
-    d = get(f"{B}{tab}?select={select}&limit={passo}&offset={off}&order=1")
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/radar-politico/radar-politico/scripts/sonda/sonda_emendas.py", line 7, in get
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/urllib/request.py", line 215, in urlopen
-    return opener.open(url, data, timeout)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/urllib/request.py", line 521, in open
-    response = meth(req, response)
-               ^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/urllib/request.py", line 630, in http_response
-    response = self.parent.error(
-               ^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/urllib/request.py", line 559, in error
-    return self._call_chain(*args)
-           ^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/urllib/request.py", line 492, in _call_chain
-    result = func(*args)
-             ^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/urllib/request.py", line 639, in http_error_default
-    raise HTTPError(req.full_url, code, msg, hdrs, fp)
-urllib.error.HTTPError: HTTP Error 400: Bad Request
+plano_acao_especial: 1000 linhas em 1s
+ situacao: [('CIENTE', 1000)]
+ ano: [(2020, 1000)]
+ impedimento: [('', 1000)]
+ emendas distintas: 155 planos por emenda max: [('202041850004', 31), ('202040990004', 27), ('202040870001', 23)]
+plano_trabalho_especial: 1000 linhas em 2s
+ exemplo: {"id_plano_trabalho": 5, "situacao_plano_trabalho": "CONCLUIDO_NT_TCU", "ind_orcamento_proprio_plano_trabalho": "Sim", "data_inicio_execucao_plano_trabalho": "2024-07-03T00:00:00", "data_fim_execucao_plano_trabalho": "2027-07-03T00:00:00", "prazo_execucao_meses_plano_trabalho": 36, "id_plano_acao": 73944, "classificacao_orcamentaria_pt": "08.000 - Secretaria de Infraestrutura Urbana e Rural\n08.001 - Infraestrutura Urbana e Rural\n26.782.0015.1020 - Pavimentação de Estradas Vicinais", "ind_justificativa_prorrogacao_atraso_pt": false, "ind_justificativa_prorrogacao_paralizacao_pt": false, "justificativa_prorrogacao_pt": ""}
+  [situacao_plano_trabalho] [('CONCLUIDO_NT_TCU', 978), ('Em Ajuste do Plano de Trabalho', 13), ('APROVADO', 4), ('Enviado para Análise', 4), ('Em Complementação', 1)]
+  [ind_orcamento_proprio_plano_trabalho] [('Sim', 987), ('Não', 13)]
+  [ind_justificativa_prorrogacao_atraso_pt] [('False', 1000)]
+  [ind_justificativa_prorrogacao_paralizacao_pt] [('False', 998), ('True', 2)]
+  fim execucao ex: [('2027', 356), ('2026', 221), ('2025', 206), ('2024', 117), ('2023', 38), ('2028', 20), ('2022', 19), ('2021', 15), ('2029', 6), ('2020', 2)]
+relatorio_gestao_novo_especial: 1000 linhas em 1s
+ exemplo: {"id_relatorio_gestao_novo": 1, "data_e_hora_relatorio_gestao_novo": "2024-11-14T11:21:25.206812", "tipo_relatorio_gestao_novo": "Parcial", "valor_executado_relatorio_gestao_novo": 1500000.0, "valor_pendente_relatorio_gestao_novo": 0.0, "situacao_relatorio_gestao_novo": "DISPONIBILIZADO", "id_plano_acao": 34385}
+  [tipo_relatorio_gestao_novo] [('Final', 668), ('Parcial', 332)]
+  [situacao_relatorio_gestao_novo] [('DISPONIBILIZADO', 882), ('EM_ELABORACAO', 118)]
+relatorio_gestao_especial: 1000 linhas em 1s
+ exemplo: {"id_relatorio_gestao": 4, "situacao_relatorio_gestao": "DISPONIBILIZADO", "parecer_relatorio_gestao": "Termo de Contrato nº40/2020, Processo Licitatório nº105/2020, Tomada de Preços nº08/2020, Objeto: Contratação de empresa especializada para construção de Passeios para Pedestres da Rua Horácio Dutra, Convenio entre Município e União através de Transferências Especiais do Ministério da Economia..", "id_plano_acao": 4430}
+  [situacao_relatorio_gestao] [('DISPONIBILIZADO', 788), ('EM_ELABORACAO', 212)]
+  [parecer_relatorio_gestao] [('Prestação de contas', 10), ('CEF Ag. 4473 - São Miguel do Guaporé/RO', 6), ('Objeto: Informatização da Rede Municipal de Educação.', 4), ('EDITAL DE CONCORRÊNCIA N.º 004/2021 - Constitui o objeto da presente l', 4), ('Em anexo Relatório de Gestão Parcial,  dos recursos recebidos através ', 3), ('A Prefeitura Municipal de Lavras do Sul, através da Secretaria Municip', 3), ('O objeto proposto foi executado integralmente, sendo, Recapeamento asf', 3), ('Inclusão de Documentos de Licitação e Prestação de Contas', 3), ('O Município de Gaspar optou por aplicar os recursos da Emenda Parlamen', 3), ('O presente recurso foi utilizado nas despesas listadas abaixo:\nDESPESA', 3), ('Processo Administrativo nº 33054/2022 encaminhado ao setor de Licitaçã', 3), ('Os recursos da emenda especial destinada ao Estado da Bahia foram exec', 3)]
+plano_trabalho_analise_especial: 1000 linhas em 1s
+ exemplo: {"id_plano_trabalho_analise": 5, "codigo_siorg_orgao_analise_pt": 308800, "nome_orgao_analise_pt": "Ministério da Fazenda", "situacao_planejamento_pt": "CONCLUIDO_NT_TCU", "situacao_parecer_analise_pt": "Solicitar Complementação", "texto_parecer_analise_pt": "Conforme normativos vigentes, o plano de trabalho está sendo devolvido ao recebedor para adequação, a fim de assegurar que o número de finalidades indicadas não exceda o de metas informadas, classificadas por função.                                                                                                           \nSolicitamos, assim, que as finalidades sejam devidamente ajustadas às metas estabelecidas e que o plano de trabalho seja reenviado para análise do órgão ou entidade setorial.\n \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
+  [situacao_planejamento_pt] [('CONCLUIDO_NT_TCU', 979), ('EM_ADITIVACAO', 21)]
+  [situacao_parecer_analise_pt] [('Solicitar Complementação', 1000)]
+  [situacao_analise_pt] [('Concluída', 1000)]
+  reprovado>0: 0
+executor_especial: 1000 linhas em 1s
+ exemplo: {"id_plano_acao": 73944, "id_executor": 3, "cnpj_executor": "80912124000182", "nome_executor": "MUNICIPIO DE SAO MIGUEL DA BOA VISTA", "objeto_executor": "Execução de obra para pavimentação asfáltica sobre calçamento (reperfilagem) e sinalização na comunidade da Linha de Poço Parado.", "vl_custeio_executor": 0.0, "vl_investimento_executor": 200000.0, "ind_recursos_gerenciados_conta_especifica_executor": "Não", "codigo_banco_executor": "104", "nome_banco_executor": "Caixa Econômica Federal", "numero_agencia_executor": 1077, "dv_agencia_executor": "4", "nome_agencia_executor": "MARAVILHA", "numero_conta_executor": 575861842, "dv_conta_executor": "6", "codigo_situacao_dado_bancario_executor": 4, "descricao_situacao_dado_bancario_executor": "Conta Ativa"}
+  [ind_recursos_gerenciados_conta_especifica_executor] [('Não', 976), ('Sim', 24)]
+  [codigo_situacao_dado_bancario_executor] [('4', 1000)]
+  [descricao_situacao_dado_bancario_executor] [('Conta Ativa', 1000)]
