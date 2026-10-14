@@ -27,6 +27,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Testar as regras de alerta
+        run: python -m unittest discover -s tests
+
       - name: Baixar dados oficiais e calcular notas
         env:
           # num push (mudança no site) consulta menos CNPJs para publicar rápido; o robô diário completa o resto
