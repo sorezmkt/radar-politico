@@ -80,7 +80,7 @@
       ['Emendas Pix', curto(F.tipos.pix.emp), `${pct(F.tipos.pix.emp, t.emp)}% do reservado`],
     ].map(([l, v, s]) => `<div class="tot"><span class="label">${l}</span><span class="v num">${v}</span><small>${s}</small></div>`).join('');
     const nb = F.checks.filter(c => c.status === 'bad').length, nw = F.checks.filter(c => c.status === 'warn').length;
-    const [rc, rl, rn] = F.pontos >= 4 ? ['bad', 'Alto', 3] : F.pontos >= 2 ? ['warn', 'Moderado', 2] : ['good', 'Baixo', 1];
+    const [rc, rl, rn] = F.pontos >= 3 ? ['bad', 'Alto', 3] : F.pontos >= 2 ? ['warn', 'Moderado', 2] : ['good', 'Baixo', 1];
     $('riskLvl').textContent = `${rl} · ${F.pontos} ${F.pontos === 1 ? 'ponto' : 'pontos'}`;
     $('riskLvl').style.color = `var(--${rc})`;
     document.querySelectorAll('#riskMeter i').forEach((el, j) => { el.style.background = j < rn ? `var(--${rc})` : 'var(--line)'; });

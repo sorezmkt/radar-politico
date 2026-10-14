@@ -418,7 +418,7 @@ def regra_pix(emendas_dep, pix, media=None):
         return {**base, "status": "nd", "texto": "Não há emenda Pix (transferência especial) paga neste período.", "registros": []}
     if pix is None:
         return {**base, "status": "nd", "texto": "O Transferegov não respondeu nesta atualização; a conferência volta na próxima.", "registros": []}
-    regs, atras, sem_plano, sem_registro, valor_atras = [], 0, 0, 0, 0.0
+    regs, atras, sem_plano, sem_registro, valor_atras, valor_sem_plano = [], 0, 0, 0, 0.0, 0.0
     for e in alvo:
         planos = pix.get(e["cod"], [])
         if not planos:
@@ -435,6 +435,7 @@ def regra_pix(emendas_dep, pix, media=None):
                 desc = f"execução terminou em {fim:%d/%m/%Y} e o relatório final não foi localizado"
             else:
                 sem_plano += 1
+                valor_sem_plano += valor
                 desc = "plano de trabalho não cadastrado"
             regs.append({"emenda": e["cod"], "ano": e["ano"], "beneficiario": p.get("nome_beneficiario_plano_acao") or "",
                          "uf": p.get("uf_beneficiario_plano_acao") or "", "plano": p.get("codigo_plano_acao") or "",
@@ -449,12 +450,12 @@ def regra_pix(emendas_dep, pix, media=None):
     if atras:
         partes.append(f"{atras} {'plano' if atras == 1 else 'planos'} com prazo de execução vencido há mais de 6 meses sem relatório final de prestação de contas ({fmt(valor_atras)})")
     if sem_plano:
-        partes.append(f"{sem_plano} {'plano' if sem_plano == 1 else 'planos'} de ação sem plano de trabalho cadastrado")
+        partes.append(f"{sem_plano} {'plano' if sem_plano == 1 else 'planos'} de ação sem plano de trabalho cadastrado ({fmt(valor_sem_plano)})")
     pago_pix = sum(pago_total(e) for e in alvo)
     parte = valor_atras / pago_pix * 100 if pago_pix else 0
     if parte >= 30 and valor_atras >= 3_000_000:
         st = "bad"
-    elif (parte >= 15 and valor_atras >= 1_000_000) or sem_plano:
+    elif (parte >= 15 and valor_atras >= 1_000_000) or valor_sem_plano >= 1_000_000:
         st = "warn"
     else:
         st = "good"
