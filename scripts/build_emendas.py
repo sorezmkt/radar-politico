@@ -22,6 +22,7 @@ Regras que o robô segue:
 """
 import csv
 import datetime as dt
+import gzip
 import io
 import json
 import os
@@ -39,6 +40,7 @@ csv.field_size_limit(10_000_000)
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data")
 OUT = os.path.join(DATA, "emendas")
+CACHE_PIX = os.path.join(ROOT, "cache", "pix.json.gz")
 UA = {"User-Agent": "RadarPolitico/1.0 (+https://github.com/sorezmkt/radar-politico)"}
 
 URL_EMENDAS = "https://portaldatransparencia.gov.br/download-de-dados/emendas-parlamentares/UNICO"
@@ -279,44 +281,68 @@ def tabela_te(tab, campos, passo=1000):
         url = f"{URL_TE}{tab}?select={','.join(campos)}&order={PK[tab]}&limit={passo}&offset={off}"
         d = json.loads(baixar(url, timeout=120))
         out += d
+        time.sleep(0.4)  # a API bloqueia (403) quem consulta rápido demais
         if len(d) < passo:
             return out
         off += passo
 
 
-def carregar_pix():
-    """Planos de ação das transferências especiais, com plano de trabalho e relatórios de gestão, indexados pelo código da emenda."""
+def baixar_pix():
+    """Baixa as tabelas do Transferegov. Devolve None se a API não responder."""
     try:
         pa = tabela_te("plano_acao_especial", ["id_plano_acao", "codigo_plano_acao", "ano_plano_acao", "situacao_plano_acao",
                                                 "cnpj_beneficiario_plano_acao", "nome_beneficiario_plano_acao", "uf_beneficiario_plano_acao",
                                                 "numero_emenda_parlamentar_plano_acao", "valor_custeio_plano_acao", "valor_investimento_plano_acao",
                                                 "motivo_impedimento_plano_acao"])
         pt = tabela_te("plano_trabalho_especial", ["id_plano_trabalho", "id_plano_acao", "situacao_plano_trabalho",
-                                                    "data_inicio_execucao_plano_trabalho", "data_fim_execucao_plano_trabalho",
-                                                    "ind_justificativa_prorrogacao_atraso_pt", "ind_justificativa_prorrogacao_paralizacao_pt"])
+                                                    "data_inicio_execucao_plano_trabalho", "data_fim_execucao_plano_trabalho"])
         rgn = tabela_te("relatorio_gestao_novo_especial", ["id_relatorio_gestao_novo", "id_plano_acao", "tipo_relatorio_gestao_novo",
-                                                            "situacao_relatorio_gestao_novo", "data_e_hora_relatorio_gestao_novo",
-                                                            "valor_executado_relatorio_gestao_novo", "valor_pendente_relatorio_gestao_novo"])
+                                                            "situacao_relatorio_gestao_novo", "data_e_hora_relatorio_gestao_novo"])
         rg = tabela_te("relatorio_gestao_especial", ["id_relatorio_gestao", "id_plano_acao", "situacao_relatorio_gestao"])
     except Exception as e:  # noqa: BLE001
-        aviso(f"Transferegov indisponível nesta rodada ({e}); a regra das emendas Pix fica sem dados.")
+        aviso(f"Transferegov não respondeu nesta rodada ({e}).")
         return None
-    status["contagens"]["pix"] = {"planos_acao": len(pa), "planos_trabalho": len(pt), "relatorios_novos": len(rgn), "relatorios_antigos": len(rg)}
-    log(f"Transferegov: {len(pa)} planos de ação, {len(pt)} planos de trabalho, {len(rgn) + len(rg)} relatórios")
     trab = defaultdict(list)
     for r in pt:
-        trab[r["id_plano_acao"]].append(r)
+        trab[r["id_plano_acao"]].append({"data_fim_execucao_plano_trabalho": r["data_fim_execucao_plano_trabalho"],
+                                         "situacao": r["situacao_plano_trabalho"]})
     rel = defaultdict(list)
     for r in rgn:
         rel[r["id_plano_acao"]].append({"tipo": r["tipo_relatorio_gestao_novo"], "situacao": r["situacao_relatorio_gestao_novo"],
-                                        "data": (r["data_e_hora_relatorio_gestao_novo"] or "")[:10],
-                                        "executado": r["valor_executado_relatorio_gestao_novo"], "pendente": r["valor_pendente_relatorio_gestao_novo"]})
+                                        "data": (r["data_e_hora_relatorio_gestao_novo"] or "")[:10]})
     for r in rg:
         rel[r["id_plano_acao"]].append({"tipo": "Antigo", "situacao": r["situacao_relatorio_gestao"]})
-    por_emenda = defaultdict(list)
+    planos = []
     for p in pa:
         p["trabalho"] = trab.get(p["id_plano_acao"], [])
         p["relatorios"] = rel.get(p["id_plano_acao"], [])
+        planos.append(p)
+    return planos
+
+
+def carregar_pix():
+    """
+    Planos de ação das transferências especiais, com plano de trabalho e relatórios de gestão, indexados pelo código da emenda.
+    Quando a API falha, usa a última cópia boa guardada em cache/pix.json.gz e avisa a data dela.
+    """
+    planos = baixar_pix()
+    if planos:
+        os.makedirs(os.path.dirname(CACHE_PIX), exist_ok=True)
+        with gzip.open(CACHE_PIX, "wt", encoding="utf-8") as f:
+            json.dump({"data": HOJE.isoformat(), "planos": planos}, f, ensure_ascii=False, separators=(",", ":"))
+        status["pix_data"] = HOJE.isoformat()
+    elif os.path.exists(CACHE_PIX):
+        with gzip.open(CACHE_PIX, "rt", encoding="utf-8") as f:
+            c = json.load(f)
+        planos = c["planos"]
+        status["pix_data"] = c["data"]
+        aviso(f"Usando a cópia do Transferegov de {c['data']}.")
+    else:
+        return None
+    status["contagens"]["pix_planos_acao"] = len(planos)
+    log(f"Transferegov: {len(planos)} planos de ação (dados de {status['pix_data']})")
+    por_emenda = defaultdict(list)
+    for p in planos:
         por_emenda[str(p["numero_emenda_parlamentar_plano_acao"] or "")].append(p)
     return por_emenda
 
@@ -497,7 +523,8 @@ def regra_fora_estado(emendas_dep, uf_dep):
     if fora <= 0:
         return {**base, "status": "good", "texto": f"Todas as emendas com destino informado foram para {uf_dep}, o estado que o deputado representa.", "registros": []}
     ufs = ", ".join(u for u, _ in por_uf.most_common(4))
-    txt = f"{pct:.0f}% do valor reservado ({fmt(fora)}) foi para fora de {uf_dep} ({ufs})."
+    txt = f"{pct:.0f}%" if pct >= 1 else "Menos de 1%"
+    txt += f" do valor reservado ({fmt(fora)}) foi para fora de {uf_dep} ({ufs})."
     st = "warn" if pct >= 20 and fora >= 1_000_000 else "good"
     if st == "warn":
         txt += " Não é proibido, mas é incomum e vale entender o motivo."
@@ -688,6 +715,7 @@ def main():
         }
     if quadro_pix:
         resumo["pix"] = quadro_pix
+        resumo["pix_data"] = status.get("pix_data")
     resumo["sinais"] = sorted(({"id": x["id"], "nome": x["nome"], "partido": x["partido"], "uf": x["uf"], "pontos": x["pontos"], "bad": x["bad"], "warn": x["warn"], "emp": x["emp"]}
                                for x in lista if x["pontos"] > 0), key=lambda x: (-x["pontos"], -x["emp"]))[:40]
     resumo["grupos_nome"] = GRUPOS

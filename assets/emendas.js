@@ -146,6 +146,7 @@
         ['Prazo vencido sem relatório', p.atrasado, `mais de 6 meses depois do fim · ${curto(p.atrasado.valor)}`, 'bad'],
         ['Sem plano de trabalho', p.sem_plano, `planos de 2024 em diante · ${curto(p.sem_plano.valor)}`, 'warn'],
       ].map(([l, x, s, c]) => `<div class="tot ${c}"><span class="label">${l}</span><span class="v num">${x.n.toLocaleString('pt-BR')}</span><small>${pct(x.n, tot)}% · ${s}</small></div>`).join('');
+      if (R.pix_data && R.pix_data !== (R.atualizado || '').slice(0, 10)) $('pix').insertAdjacentHTML('afterend', `<p class="note">O Transferegov não respondeu na última atualização; os números são da consulta de ${R.pix_data.split('-').reverse().join('/')}.</p>`);
       $('pixCard').hidden = false;
     }
     render();
