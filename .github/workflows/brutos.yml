@@ -1,0 +1,23 @@
+name: Extrair arquivos nacionais (temporário)
+on:
+  push:
+    branches: [brutos-tmp]
+    paths: [.github/workflows/brutos.yml]
+permissions:
+  contents: write
+jobs:
+  x:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          B=https://cdn.tse.jus.br/estatistica/sead/odsele/prestacao_contas_anual_partidaria
+          mkdir -p brutos && cd brutos
+          for a in 2022 2023 2024 2025 2026; do
+            curl -sSfLo c.zip $B/prestacao_contas_anual_partidaria_$a.zip && unzip -o -j c.zip "*_${a}_BR.csv" && rm c.zip
+            curl -sSfLo n.zip $B/prestacao_contas_anual_partidaria_notafiscal_$a.zip && unzip -o -j n.zip "*_${a}_BR.csv" && rm n.zip || true
+          done
+          gzip -9 *.csv; ls -la
+      - run: |
+          git config user.name radar-bot; git config user.email radar-bot@users.noreply.github.com
+          git add brutos && git commit -m brutos && git push
