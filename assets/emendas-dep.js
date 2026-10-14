@@ -10,12 +10,19 @@
   };
   const brl = v => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
-  const titulo = s => (s || '').toLowerCase().replace(/(^|[\s(/-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase()).replace(/\b(De|Da|Do|Das|Dos|E)\b/g, w => w.toLowerCase());
+  const titulo = s => (s || '').toLowerCase().replace(/(^|[\s(/-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase()).replace(/\b(De|Da|Do|Das|Dos|E)\b/g, w => w.toLowerCase()).replace('(Uf)', '(estado)');
   const doc = d => d && d.length === 14 ? `CNPJ ${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}` : '';
   const TIPO = { individual: 'Com finalidade definida', pix: 'Pix (transferência especial)' };
   const TX = { bad: 'Prioridade de verificação', warn: 'Atenção', good: 'Sem sinal', nd: 'Sem dados' };
   const GRUPO = { publico: 'Prefeituras, estados e órgãos públicos', banco: 'Caixa e Banco do Brasil (repassam a obras e convênios)', entidade: 'Entidades privadas sem fins lucrativos', empresa: 'Empresas privadas', pf: 'Pessoas físicas', outro: 'Outros ou sem informação' };
   const PIXSIT = { ok: ['good', 'relatório final entregue'], andamento: ['nd', 'dentro do prazo'], atrasado: ['bad', 'prazo vencido sem relatório final'], sem_plano: ['warn', 'sem plano de trabalho'] };
+  const destino = e => {
+    const l = (e.local || '').trim();
+    if (l && !/^(múltiplo|nacional|sem informação)$/i.test(l)) return titulo(l);
+    if (e.fav && e.fav[0]) return titulo(e.fav[0].nome);
+    if (e.conv && e.conv[0]) return titulo(e.conv[0].convenente);
+    return titulo(e.acao) || 'Destino não informado';
+  };
   let F = null, FILTRO = 'todas';
 
   const barra = (rot, v, max, sub, cor) => `<div class="vitem"><div class="row"><span>${rot}</span><span class="num">${curto(v)}</span></div>
@@ -52,7 +59,7 @@
     $('emendas').innerHTML = ems.slice(0, 200).map(e => {
       const pp = pct(e.pago, e.emp);
       const pix = (e.pix || []).map(p => { const [c, t] = PIXSIT[p.situacao] || ['nd', p.situacao]; return `<li>${esc(titulo(p.beneficiario))}: <span class="v-${c} mini">${t}</span>${p.fim ? ` · execução até ${p.fim.split('-').reverse().join('/')}` : ''}</li>`; }).join('');
-      return `<details class="al em"><summary><div class="alh"><b>${esc(titulo(e.local) || 'Destino não informado')}</b><span class="num">${curto(e.emp)}</span></div>
+      return `<details class="al em"><summary><div class="alh"><b>${esc(destino(e))}</b><span class="num">${curto(e.emp)}</span></div>
         <p>${e.ano} · ${TIPO[e.tipo] || e.tipo} · ${esc(e.funcao)} · ${pp}% pago</p><div class="bar"><i style="width:${pp}%;background:var(--accent)"></i></div></summary>
         <div class="albody">
           <p>${esc(titulo(e.acao))}</p>

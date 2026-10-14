@@ -10,7 +10,7 @@
     return (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
   };
   const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
-  const titulo = s => (s || '').toLowerCase().replace(/(^|[\s(/-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase()).replace(/\b(De|Da|Do|Das|Dos|E)\b/g, w => w.toLowerCase());
+  const titulo = s => (s || '').toLowerCase().replace(/(^|[\s(/-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase()).replace(/\b(De|Da|Do|Das|Dos|E)\b/g, w => w.toLowerCase()).replace('(Uf)', '(estado)');
   const TIPOS = {
     individual: ['Individual com finalidade definida', 'O deputado ou senador indica o destino e a área; o dinheiro passa por convênio ou programa federal.'],
     pix: ['Individual Pix (transferência especial)', 'O dinheiro cai direto na conta da prefeitura ou do estado, sem convênio.'],

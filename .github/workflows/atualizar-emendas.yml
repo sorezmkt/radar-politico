@@ -4,8 +4,6 @@ on:
   schedule:
     - cron: "23 11 * * *"   # todo dia às 08:23 (horário de Brasília); o Portal da Transparência atualiza as emendas diariamente
   workflow_dispatch:
-  push:
-    branches: [emendas]   # temporário: roda com dados reais no ramo de desenvolvimento
 
 permissions:
   contents: write
