@@ -29,7 +29,7 @@ import urllib.request
 import zipfile
 from collections import Counter, defaultdict
 
-from comum import precisa_reconsultar, pontuar, situacao_cnpj
+from comum import aberta_ha_pouco, campos_receita, dias_desde_abertura, precisa_detalhe, precisa_reconsultar, pontuar, sinais_empresa_nova, situacao_cnpj
 
 csv.field_size_limit(10_000_000)
 
@@ -431,14 +431,18 @@ def carregar_presenca(deps):
 # ---------------------------------------------------------------- 5. CNPJ
 
 
-def consultar_cnpjs(cnpjs):
+def consultar_cnpjs(cnpjs, primeiros=None):
+    """primeiros: data do primeiro pagamento de cada CNPJ, para buscar atividade e capital das empresas recém-abertas."""
     try:
         with open(CNPJ_CACHE, encoding="utf-8") as f:
             cache = json.load(f)
     except (FileNotFoundError, ValueError):
         cache = {}
     limite_idade = (HOJE - dt.timedelta(days=60)).isoformat()
-    novos = [c for c in sorted(cnpjs) if c not in cache or cache[c].get("ts", "") < limite_idade or precisa_reconsultar(cache[c])]
+    novos = [c for c in sorted(cnpjs) if c not in cache or cache[c].get("ts", "") < limite_idade or precisa_reconsultar(cache[c])
+             or (precisa_detalhe(cache[c]) and aberta_ha_pouco(cache[c], (primeiros or {}).get(c)))]
+    # empresas recém-abertas primeiro: são as que mudam um alerta se a consulta não couber no tempo desta execução
+    novos.sort(key=lambda c: (not (c in cache and aberta_ha_pouco(cache[c], (primeiros or {}).get(c))), c))
     log(f"CNPJ: {len(cnpjs)} necessários, {len(novos)} a consultar")
     inicio, feitos = time.time(), 0
     for c in novos[:LIMITE_CNPJ_NOVOS]:
@@ -448,11 +452,11 @@ def consultar_cnpjs(cnpjs):
         info = None
         for url in (f"https://brasilapi.com.br/api/cnpj/v1/{c}", f"https://minhareceita.org/{c}"):
             try:
-                j = json.loads(baixar(url, tentativas=2, timeout=30))
+                j = json.loads(baixar(url, tentativas=1, timeout=20))  # a outra API é a segunda tentativa
                 info = {
                     "situacao": norm(j.get("descricao_situacao_cadastral") or ""),
                     "abertura": j.get("data_inicio_atividade") or "",
-                    "data_situacao": j.get("data_situacao_cadastral") or "",
+                    **campos_receita(j),
                     "razao": j.get("razao_social") or "",
                     "ts": HOJE.isoformat(),
                 }
@@ -506,7 +510,7 @@ def main():
     presenca = carregar_presenca(deps)
 
     # fornecedores que merecem checagem de CNPJ: os 8 maiores de cada deputado (acima de 2% do total)
-    precisa = set()
+    precisa, primeiros = set(), {}
     for did, c in cota.items():
         total = sum(c["mensal"])
         if total <= 0:
@@ -516,10 +520,12 @@ def main():
         for f in fs:
             if len(f["doc"]) == 14 and f["valor"] / total >= 0.02 and f["cats"].most_common(1)[0][0] not in SEM_CNPJ:
                 precisa.add(f["doc"])
+                if f["primeiro"] and (f["doc"] not in primeiros or f["primeiro"] < primeiros[f["doc"]]):
+                    primeiros[f["doc"]] = f["primeiro"]
                 n += 1
             if n >= 8:
                 break
-    cnpj = consultar_cnpjs(precisa) if precisa else {}
+    cnpj = consultar_cnpjs(precisa, primeiros) if precisa else {}
 
     # médias da Câmara
     medias, cats_total, geral = [], Counter(), 0.0
@@ -602,6 +608,7 @@ def main():
                             item["flags"].append("aberta depois do 1º pagamento")
                         elif meses < 6:
                             item["flags"].append(f"aberta {round(meses)} meses antes do 1º pagamento")
+                            item["_sinais"] = sinais_empresa_nova(info, f["valor"], f["ultimo"], item["categoria"])
                 # a situação de hoje só conta se já valia quando o deputado ainda pagava o fornecedor
                 tipo, txt = situacao_cnpj(info, f["ultimo"])
                 if tipo in ("antes", "sem_data"):
@@ -635,12 +642,14 @@ def main():
             novas = [f for f in verificados if any(x.startswith("aberta") for x in f["flags"]) and f["pct"] >= 2]
             irreg = [f for f in verificados if f.get("_cnpj", ("",))[0] in ("antes", "sem_data")]
             depois = [f for f in verificados if f.get("_cnpj", ("",))[0] == "depois"]
-            # empresa recém-aberta sozinha merece conferência, mas não é indício forte: fica no máximo amarelo
-            checks.append({"id": "recem_aberta", "titulo": "Empresa recém-aberta", "status": "warn" if novas else "good",
+            # empresa recém-aberta sozinha merece conferência (amarelo); com 10% ou mais da cota e mais um sinal independente, vira prioridade
+            graves = [f for f in novas if f.get("_sinais") and f["pct"] >= 10]
+            checks.append({"id": "recem_aberta", "titulo": "Empresa recém-aberta", "status": "bad" if graves else "warn" if novas else "good",
                            "_chaves": {f["_chave"]: f["valor"] for f in novas},
                            "texto": ("; ".join(
-                               f"{f['nome']} recebeu antes da data de abertura registrada na Receita" if f.get("meses_ate_pagamento", 0) < 0
-                               else f"{f['nome']} começou a receber {round(f.get('meses_ate_pagamento', 0))} meses depois de abrir"
+                               (f"{f['nome']} recebeu antes da data de abertura registrada na Receita" if f.get("meses_ate_pagamento", 0) < 0
+                                else f"{f['nome']} começou a receber {round(f.get('meses_ate_pagamento', 0))} meses depois de abrir")
+                               + (" (" + "; ".join(f["_sinais"]) + ")" if f.get("_sinais") else "")
                                for f in novas) + ".")
                            if novas else f"Nenhum dos {len(verificados)} maiores fornecedores verificados foi aberto menos de 6 meses antes do primeiro pagamento."})
             st_cnpj = "bad" if any(f["_cnpj"][0] == "antes" for f in irreg) else "warn" if irreg else "good"
@@ -667,6 +676,7 @@ def main():
         for f in fornecedores:
             f.pop("_chave", None)
             f.pop("_cnpj", None)
+            f.pop("_sinais", None)
         nivel = "alto" if pts >= 4 else "moderado" if pts >= 2 else "baixo"
 
         # proposições

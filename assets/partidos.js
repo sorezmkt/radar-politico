@@ -35,7 +35,8 @@
     const ativos = ps.filter(p => !p.anos[ano].sem_movimento);
     const soma = k => ps.reduce((s, p) => s + (p.anos[ano][k] || 0), 0);
     const ref = (IDX.referencias || {})[ano];
-    $('anoSub').textContent = `${parc ? 'Parcial: só o que os partidos já enviaram ao TSE · ' : ''}${ativos.length} diretórios nacionais com movimento${el ? ' · ano de eleição' : ''}${ref ? ` · arquivo do TSE gerado em ${ref}` : ''}`;
+    $('anoSub').classList.toggle('parcial', parc);
+    $('anoSub').textContent = `${parc ? `Ano parcial: só o que os partidos já enviaram ao TSE até agora, por isso há menos gastos e menos alertas. A conta completa sai até 30/06/${+ano + 1} · ` : ''}${ativos.length} diretórios nacionais com movimento${el ? ' · ano de eleição' : ''}${ref ? ` · arquivo do TSE gerado em ${ref}` : ''}`;
     const pub = soma('publico'), rec = soma('receita');
     $('totais').innerHTML = [
       ['Receberam', curto(rec), 'em dinheiro no ano'],
@@ -61,7 +62,7 @@
         <span class="rk v-${rc}">${rl}</span>
       </a></li>`;
     }).join('') || '<li class="empty">Nenhum partido com contas neste ano.</li>';
-    guardar('rp-ano', ano);
+    if (!parc) guardar('rp-ano', ano); // o ano em curso não fica guardado: quem volta cai no último ano completo
   }
 
   async function iniciar() {
@@ -77,7 +78,8 @@
     const [d, h] = (IDX.atualizado || '').split(' ');
     $('upd').textContent = d ? `Dados atualizados em ${d.split('-').reverse().join('/')} às ${h}` : '';
     const anos = IDX.anos.map(String);
-    const pedido = new URLSearchParams(location.search).get('ano') || lerg('rp-ano');
+    const salvo = lerg('rp-ano');
+    const pedido = new URLSearchParams(location.search).get('ano') || (salvo && !(IDX.parciais || []).includes(+salvo) ? salvo : null);
     const fechados = anos.filter(a => !(IDX.parciais || []).includes(+a));
     ANO = anos.includes(pedido) ? pedido : (fechados[fechados.length - 1] || anos[anos.length - 1]);
     $('anos').innerHTML = anos.map(a => `<button type="button" data-a="${a}">${a}${(IDX.parciais || []).includes(+a) ? ' (parcial)' : ''}</button>`).join('');

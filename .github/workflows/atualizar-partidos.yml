@@ -2,7 +2,7 @@ name: Atualizar dados dos partidos e publicar
 
 on:
   schedule:
-    - cron: "41 10 * * 1"   # toda segunda às 07:41 (horário de Brasília); o TSE atualiza esses arquivos poucas vezes por mês
+    - cron: "41 10 * * *"   # todo dia às 07:41 (horário de Brasília); o TSE muda pouco, mas cada rodada completa as consultas de CNPJ que ficaram para trás
   workflow_dispatch:
 
 permissions:

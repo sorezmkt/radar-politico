@@ -94,9 +94,33 @@ class Cnpj(unittest.TestCase):
         self.assertIsNone(situacao_cnpj({"situacao": "ATIVA"}, ult)[0])
 
     def test_empresa_recem_aberta_sozinha_fica_no_maximo_amarelo(self):
-        forn = {"44555666000177": {"doc": "44555666000177", "nome": "Nova LTDA", "valor": 500000, "primeiro": dt.date(2025, 3, 1), "ultimo": dt.date(2025, 6, 1)}}
+        forn = {"44555666000177": {"doc": "44555666000177", "nome": "Nova LTDA", "valor": 500000, "primeiro": dt.date(2025, 3, 1), "ultimo": dt.date(2025, 6, 1), "cats": __import__("collections").Counter({"Outras despesas": 1})}}
         cache = {"44555666000177": {"situacao": "ATIVA", "abertura": "2025-02-01", "data_situacao": "2025-02-01"}}
         self.assertEqual(bp.regra_cnpj(forn, cache, 2025)["status"], "warn")
+
+    def forn_novo(self, valor, cat="Propaganda e publicidade"):
+        from collections import Counter
+        return {"44555666000177": {"doc": "44555666000177", "nome": "Nova LTDA", "valor": valor, "primeiro": dt.date(2025, 3, 1),
+                                   "ultimo": dt.date(2025, 6, 1), "cats": Counter({cat: valor})}}
+
+    def test_empresa_nova_com_valor_alto_e_outro_sinal_fica_vermelha(self):
+        cache = {"44555666000177": {"situacao": "ATIVA", "abertura": "2025-02-01", "cnae": "4781400", "cnae_desc": "Comércio varejista de artigos do vestuário",
+                                    "cnaes2": [], "capital": 500000}}
+        a = bp.regra_cnpj(self.forn_novo(600000), cache, 2025)
+        self.assertEqual(a["status"], "bad")
+        self.assertIn("não combina com propaganda", a["dados"][0]["registros"][0]["descricao"])
+
+    def test_capital_social_minusculo_conta_como_sinal(self):
+        cache = {"44555666000177": {"situacao": "ATIVA", "abertura": "2025-02-01", "cnae": "7311400", "cnaes2": [], "capital": 1000}}
+        self.assertEqual(bp.regra_cnpj(self.forn_novo(600000), cache, 2025)["status"], "bad")
+
+    def test_empresa_nova_compativel_e_com_capital_fica_amarela(self):
+        cache = {"44555666000177": {"situacao": "ATIVA", "abertura": "2025-02-01", "cnae": "7311400", "cnaes2": [], "capital": 100000}}
+        self.assertEqual(bp.regra_cnpj(self.forn_novo(600000), cache, 2025)["status"], "warn")
+
+    def test_empresa_nova_com_sinal_mas_valor_menor_fica_amarela(self):
+        cache = {"44555666000177": {"situacao": "ATIVA", "abertura": "2025-02-01", "cnae": "7311400", "cnaes2": [], "capital": 1000}}
+        self.assertEqual(bp.regra_cnpj(self.forn_novo(200000), cache, 2025)["status"], "warn")
 
     def test_empresa_que_fechou_depois_nao_acende(self):
         forn = {"44555666000177": {"doc": "44555666000177", "nome": "Antiga LTDA", "valor": 500000, "primeiro": dt.date(2022, 3, 1), "ultimo": dt.date(2022, 6, 1)}}
