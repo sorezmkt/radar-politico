@@ -6,11 +6,12 @@ def get(url, timeout=300):
     req = urllib.request.Request(url, headers=UA)
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return json.loads(r.read())
+PK={"plano_acao_especial":"id_plano_acao","plano_trabalho_especial":"id_plano_trabalho","relatorio_gestao_novo_especial":"id_relatorio_gestao_novo","relatorio_gestao_especial":"id_relatorio_gestao","plano_trabalho_analise_especial":"id_plano_trabalho_analise","executor_especial":"id_executor"}
 def tudo(tab, select="*", passo=10000):
     out, off = [], 0
     t = time.time()
     while True:
-        d = get(f"{B}{tab}?select={select}&limit={passo}&offset={off}&order=1")
+        d = get(f"{B}{tab}?select={select}&limit={passo}&offset={off}&order={PK[tab]}")
         out += d
         if len(d) < passo: break
         off += passo
