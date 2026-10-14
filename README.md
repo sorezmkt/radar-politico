@@ -36,7 +36,7 @@ Páginas próprias, ainda sem link na página dos deputados, sobre as contas dos
 Como funciona:
 
 - `scripts/build_partidos.py` baixa as prestações de contas anuais do TSE (de 2022 até o ano em curso, que aparece como parcial), o arquivo de comprovantes e o IPCA, e gera `data/partidos/index.json` e `data/partidos/<partido>.json`.
-- `.github/workflows/atualizar-partidos.yml` roda toda segunda às 07:41 (Brasília). Rodar à mão: **Actions → Atualizar dados dos partidos e publicar → Run workflow**.
+- `.github/workflows/atualizar-partidos.yml` roda todo dia às 07:41 (Brasília). Rodar à mão: **Actions → Atualizar dados dos partidos e publicar → Run workflow**.
 - `data/partidos/status.json` mostra o diagnóstico da última execução.
 
 Fontes: [Prestação de contas anual partidária](https://dadosabertos.tse.jus.br/dataset/?q=presta%C3%A7%C3%A3o+de+contas+partid%C3%A1rias) (Portal de Dados Abertos do TSE), [DivulgaSPCA](https://divulgaspca.tse.jus.br/), IPCA (IBGE, via [API do Banco Central](https://dadosabertos.bcb.gov.br/)) e situação de CNPJ via BrasilAPI e Minha Receita. Tudo gratuito, sem chave de API.
