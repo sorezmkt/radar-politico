@@ -1,40 +1,28 @@
-deputados 513
-senadores 81
-autores individuais 2023+ 890
-deputados casados por nome: 501 ambíguos na Câmara: [] também senador: []
-sem emenda individual 2023+: ['Dr Flávio', 'Gilmar Machado', 'Inácio Arruda', 'Itamar Paim', 'José Carlos Araujo', 'Leonardo Gadelha', 'Marina Silva', 'Missionário José Olimpio', 'Paulo Soares', 'Priscila Costa', 'Sônia Guajajara', 'Yury Bruno']
-autores com 2 códigos: [('ALAN RICK', Counter({'4394': 49, '3036': 22})), ('ATILA LIRA', Counter({'4309': 16, '1935': 5})), ('BETO FARO', Counter({'4266': 40, '2152': 2})), ('EFRAIM FILHO', Counter({'4270': 51, '2449': 12})), ('LAERCIO OLIVEIRA', Counter({'4274': 41, '2608': 9})), ('TEREZA CRISTINA', Counter({'4279': 62, '3769': 11}))]
-autores que não são deputado nem senador atual: 314 ['ABILIO SANTANA', 'ABOU ANNI', 'ACIR GURGACZ', 'AELTON FREITAS', 'ALCIDES RODRIGUES', 'ALE SILVA', 'ALESSANDRO MOLON', 'ALEX SANTANA', 'ALEXANDRE FROTA', 'ALEXANDRE PADILHA', 'ALEXANDRE SILVEIRA', 'ALEXIS FONTEYNE', 'ALINE SLEUTJES', 'ALVARO DIAS', 'ANDRE DE PAULA', 'ANGELA AMIN', 'AROLDO MARTINS', 'AUREA CAROLINA', 'BETO ROSADO', 'BILAC PINTO', 'BIRA DO PINDARE', 'BOSCO COSTA', 'BOSCO SARAIVA', 'BOZZELLA', 'BRUNA FURLAN', 'CACA LEAO', 'CAMILO CAPIBERIBE', 'CAPITAO DERRITE', 'CAPITAO FABIO ABREU', 'CAPITAO WAGNER', 'CARLA ZAMBELLI', 'CARLOS BEZERRA', 'CARMEN ZANOTTO', 'CASSIO ANDRADE', 'CELINA LEAO', 'CELIO MOURA', 'CELSO MALDANER', 'CHARLLES EVANGELISTA', 'CHICO D ANGELO', 'CHIQUINHO BRAZAO', 'CHRISTIANE DE SOUZA YARED', 'CHRISTINO AUREO', 'CLARISSA GAROTINHO', 'CORONEL ARMANDO', 'CORONEL TADEU', 'CRISTIANO VALE', 'DANIEL COELHO', 'DANIEL SILVEIRA', 'DANILO CABRAL', 'DARCI DE MATOS', 'DARIO BERGER', 'DAVID MIRANDA', 'DELEGADO ANTONIO FURTADO', 'DELEGADO PABLO', 'DELEGADO WALDIR', 'DENIS BEZERRA', 'DR LEONARDO', 'DRA SORAYA MANATO', 'DRA VANDA MILANI', 'DULCE MIRANDA']
-PF por tipo/natureza: [(('Emenda de Relator', 'Sem informação'), 104784), (('Emenda Individual - Transferências com Finalidade Definida', 'Sem informação'), 36747), (('Emenda de Bancada', 'Sem informação'), 27462), (('Emenda de Comissão', 'Sem informação'), 12236), (('Emenda Individual - Transferências com Finalidade Definida', ''), 6), (('Emenda de Bancada', ''), 2)]
-PF exemplos: [('ADAO CABRAL DAS NEVES', '2581,00', 'MERLONG SOLANO'), ('ADINALSON RODRIGUES DO NORTE', '1369,46', 'FRED COSTA'), ('ADRIELLE STEFANE ALVES STERING', '2200,00', 'BANCADA DE RONDONIA'), ('ADSON TENORIO FRANCA', '654,92', 'ANDRE ABDON'), ('AILLA ODORIZZI DA COSTA TEIXEIRA', '400,00', 'BANCADA DE RONDONIA'), ('ALBERI NORONHA', '950,28', 'BOHN GASS'), ('ALDERLENE DA SILVA COSTA', '4400,00', 'BANCADA DE RONDONIA'), ('ALEX DOUGLAS MARTINS DEMIER', '330,19', 'IGOR TIMO'), ('ALINE EVANGELISTA DE ANDRADE MENDES', '3115,00', 'BANCADA DE RONDONIA'), ('ALMERINDA DE SOUSA PINHEIRO', '3674,62', 'BANCADA DE GOIAS')]
-natureza 2023+ (mi): [('Fundo Público da Administração Direta Municipal', 45464), ('Município', 39956), ('Sociedade de Economia Mista', 33982), ('Sociedade Empresária Limitada', 8254), ('Fundo Público da Administração Direta Estadual ou do Distrito Federal', 6819), ('Associação Privada', 5714), ('Estado ou Distrito Federal', 2806), ('Fundação Privada', 2343), ('Órgão Público do Poder Executivo Estadual ou do Distrito Federal', 2319), ('Empresa Pública', 998), ('Sociedade Anônima Fechada', 447), ('Autarquia Estadual ou do Distrito Federal', 447), ('Sem informação', 250), ('Consórcio Público de Direito Público (Associação Pública)', 240), ('Cooperativa', 156), ('Sociedade Anônima Aberta', 100), ('Fundação Pública de Direito Público Estadual ou do Distrito Federal', 97), ('Serviço Social Autônomo', 72), ('Empresário (Individual)', 68), ('Órgão Público do Poder Executivo Municipal', 54), ('Organização Internacional', 48), ('Entidade Sindical', 38), ('Estabelecimento, no Brasil, de Sociedade Estrangeira', 31), ('Organização Social (OS)', 30), ('Consórcio de Sociedades', 24), ('Sociedade Simples Limitada', 23), ('Órgão Público Autônomo Estadual ou do Distrito Federal', 19), ('Órgão Público do Poder Judiciário Estadual', 15), ('Autarquia Municipal', 9), ('Organização Religiosa', 8), ('Fundação Pública de Direito Público Municipal', 7), ('Sociedade Simples Pura', 3), ('Fundação Pública de Direito Privado Municipal', 3), ('', 2), ('Consórcio Público de Direito Privado', 0), ('Empresa Simples de Inovação - Inova Simples', 0), ('Serviço Notarial e Registral (Cartório)', 0), ('Produtor Rural (Pessoa Física)', 0), ('Sociedade Empresária em Nome Coletivo', 0)]
-emendas pix linhas 5108 códigos 5108
-plano_acao total: None
-endpoint /programa_especial []
-endpoint /plano_acao_especial []
-endpoint /empenho_especial []
-endpoint /documento_habil_especial []
-endpoint /ordem_pagamento_ordem_bancaria_especial []
-endpoint /historico_pagamento_especial []
-endpoint /relatorio_gestao_especial []
-endpoint /relatorio_gestao_novo_especial []
-endpoint /meta_especial []
-endpoint /executor_especial []
-endpoint /plano_trabalho_especial []
-endpoint /finalidade_especial []
-endpoint /plano_trabalho_analise_especial []
-endpoint /orgao_analise_pendente_especial []
-def programa_especial ['id_programa', 'ano_programa', 'modalidade_programa', 'codigo_programa', 'id_orgao_superior_programa', 'sigla_orgao_superior_programa', 'nome_orgao_superior_programa', 'id_orgao_programa', 'sigla_orgao_programa', 'nome_orgao_programa', 'id_unidade_gestora_programa', 'documentos_origem_programa', 'id_unidade_orcamentaria_responsavel_programa', 'data_inicio_ciencia_programa', 'data_fim_ciencia_programa', 'valor_necessidade_financeira_programa', 'valor_total_disponibilizado_programa', 'valor_impedido_programa', 'valor_a_disponibilizar_programa', 'valor_documentos_habeis_gerados_programa', 'valor_obs_geradas_programa', 'valor_disponibilidade_atual_programa']
-def plano_acao_especial ['id_plano_acao', 'codigo_plano_acao', 'ano_plano_acao', 'modalidade_plano_acao', 'situacao_plano_acao', 'cnpj_beneficiario_plano_acao', 'nome_beneficiario_plano_acao', 'uf_beneficiario_plano_acao', 'codigo_banco_plano_acao', 'codigo_situacao_dado_bancario_plano_acao', 'nome_banco_plano_acao', 'numero_agencia_plano_acao', 'dv_agencia_plano_acao', 'numero_conta_plano_acao', 'dv_conta_plano_acao', 'nome_parlamentar_emenda_plano_acao', 'ano_emenda_parlamentar_plano_acao', 'codigo_parlamentar_emenda_plano_acao', 'sequencial_emenda_parlamentar_plano_acao', 'numero_emenda_parlamentar_plano_acao', 'codigo_emenda_parlamentar_formatado_plano_acao', 'codigo_descricao_areas_politicas_publicas_plano_acao', 'descricao_programacao_orcamentaria_plano_acao', 'motivo_impedimento_plano_acao', 'valor_custeio_plano_acao', 'valor_investimento_plano_acao', 'id_programa']
-def empenho_especial ['id_empenho', 'id_minuta_empenho', 'numero_empenho', 'situacao_empenho', 'descricao_situacao_empenho', 'tipo_documento_empenho', 'descricao_tipo_documento_empenho', 'status_processamento_empenho', 'ug_responsavel_empenho', 'ug_emitente_empenho', 'descricao_ug_emitente_empenho', 'fonte_recurso_empenho', 'plano_interno_empenho', 'ptres_empenho', 'grupo_natureza_despesa_empenho', 'natureza_despesa_empenho', 'subitem_empenho', 'categoria_despesa_empenho', 'modalidade_despesa_empenho', 'cnpj_beneficiario_empenho', 'nome_beneficiario_empenho', 'uf_beneficiario_empenho', 'numero_ro_empenho', 'data_emissao_empenho', 'prioridade_desbloqueio_empenho', 'valor_empenho', 'id_plano_acao']
-def documento_habil_especial ['id_dh', 'id_minuta_documento_habil', 'numero_documento_habil', 'situacao_dh', 'descricao_situacao_dh', 'tipo_documento_dh', 'ug_emitente_dh', 'descricao_ug_emitente_dh', 'data_vencimento_dh', 'data_emissao_dh', 'ug_pagadora_dh', 'descricao_ug_pagadora_dh', 'variacao_patrimonial_diminuta_dh', 'passivo_transferencia_constitucional_legal_dh', 'centro_custo_empenho', 'codigo_siorg_empenho', 'mes_referencia_empenho', 'ano_referencia_empenho', 'ug_beneficiada_dh', 'descricao_ug_beneficiada_dh', 'valor_dh', 'valor_rateio_dh', 'id_empenho']
-def ordem_pagamento_ordem_bancaria_especial ['id_op_ob', 'data_emissao_op', 'numero_ordem_pagamento', 'vinculacao_op', 'situacao_op', 'descricao_situacao_op', 'data_situacao_op', 'data_emissao_ob', 'numero_ordem_bancaria', 'numero_ordem_lancamento', 'data_assinatura_ordenador_despesa_ob', 'data_assinatura_gestor_financeiro_ob', 'id_dh']
-def historico_pagamento_especial ['id_historico_op_ob', 'data_hora_historico_op', 'historico_situacao_op', 'descricao_historico_situacao_op', 'id_op_ob']
-def relatorio_gestao_especial ['id_relatorio_gestao', 'situacao_relatorio_gestao', 'parecer_relatorio_gestao', 'id_plano_acao']
-def relatorio_gestao_novo_especial ['id_relatorio_gestao_novo', 'data_e_hora_relatorio_gestao_novo', 'tipo_relatorio_gestao_novo', 'valor_executado_relatorio_gestao_novo', 'valor_pendente_relatorio_gestao_novo', 'situacao_relatorio_gestao_novo', 'id_plano_acao']
-def meta_especial ['id_executor', 'id_meta', 'sequencial_meta', 'nome_meta', 'desc_meta', 'un_medida_meta', 'qt_uniade_meta', 'vl_custeio_emenda_especial_meta', 'vl_investimento_emenda_especial_meta', 'vl_custeio_recursos_proprios_meta', 'vl_investimento_recursos_proprios_meta', 'vl_custeio_rendimento_meta', 'vl_investimento_rendimento_meta', 'vl_custeio_doacao_meta', 'vl_investimento_doacao_meta', 'qt_meses_meta']
-def executor_especial ['id_plano_acao', 'id_executor', 'cnpj_executor', 'nome_executor', 'objeto_executor', 'vl_custeio_executor', 'vl_investimento_executor', 'ind_recursos_gerenciados_conta_especifica_executor', 'codigo_banco_executor', 'nome_banco_executor', 'numero_agencia_executor', 'dv_agencia_executor', 'nome_agencia_executor', 'numero_conta_executor', 'dv_conta_executor', 'codigo_situacao_dado_bancario_executor', 'descricao_situacao_dado_bancario_executor']
-def plano_trabalho_especial ['id_plano_trabalho', 'situacao_plano_trabalho', 'ind_orcamento_proprio_plano_trabalho', 'data_inicio_execucao_plano_trabalho', 'data_fim_execucao_plano_trabalho', 'prazo_execucao_meses_plano_trabalho', 'id_plano_acao', 'classificacao_orcamentaria_pt', 'ind_justificativa_prorrogacao_atraso_pt', 'ind_justificativa_prorrogacao_paralizacao_pt', 'justificativa_prorrogacao_pt']
-def finalidade_especial ['id_executor', 'cd_area_politica_publica_tipo_pt', 'area_politica_publica_tipo_pt', 'cd_area_politica_publica_pt', 'area_politica_publica_pt']
-def plano_trabalho_analise_especial ['id_plano_trabalho_analise', 'codigo_siorg_orgao_analise_pt', 'nome_orgao_analise_pt', 'situacao_planejamento_pt', 'situacao_parecer_analise_pt', 'texto_parecer_analise_pt', 'situacao_analise_pt', 'data_analise_pt', 'valor_reprovado_analise_pt', 'id_plano_trabalho']
-def orgao_analise_pendente_especial ['id_analise_pendente', 'id_orgao_analise_pendente_pt', 'nome_orgao_analise_pendente_pt', 'id_plano_trabalho']
+Traceback (most recent call last):
+  File "/home/runner/work/radar-politico/radar-politico/scripts/sonda/sonda_emendas.py", line 19, in <module>
+    pa = tudo("plano_acao_especial", passo=5000)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/radar-politico/radar-politico/scripts/sonda/sonda_emendas.py", line 13, in tudo
+    d = get(f"{B}{tab}?select={select}&limit={passo}&offset={off}&order=1")
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/radar-politico/radar-politico/scripts/sonda/sonda_emendas.py", line 7, in get
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/urllib/request.py", line 215, in urlopen
+    return opener.open(url, data, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/urllib/request.py", line 521, in open
+    response = meth(req, response)
+               ^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/urllib/request.py", line 630, in http_response
+    response = self.parent.error(
+               ^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/urllib/request.py", line 559, in error
+    return self._call_chain(*args)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/urllib/request.py", line 492, in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/urllib/request.py", line 639, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 400: Bad Request
