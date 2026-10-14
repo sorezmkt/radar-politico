@@ -1,264 +1,40 @@
-emendas: 200 application/x-zip-compressed 32490844
-  arquivo: EmendasParlamentares.csv 47402115
-  arquivo: EmendasParlamentares_Convenios.csv 26022323
-  arquivo: EmendasParlamentares_PorFavorecido.csv 182652083
-
-===== EmendasParlamentares.csv linhas: 94663
-colunas: ['Código da Emenda', 'Ano da Emenda', 'Tipo de Emenda', 'Código do Autor da Emenda', 'Nome do Autor da Emenda', 'Número da emenda', 'Localidade de aplicação do recurso', 'Código Município IBGE', 'Município', 'Código UF IBGE', 'UF', 'Região', 'Código Função', 'Nome Função', 'Código Subfunção', 'Nome Subfunção', 'Código Programa', 'Nome Programa', 'Código Ação', 'Nome Ação', 'Código Plano Orçamentário', 'Nome Plano Orçamentário', 'Valor Empenhado', 'Valor Liquidado', 'Valor Pago', 'Valor Restos A Pagar Inscritos', 'Valor Restos A Pagar Cancelados', 'Valor Restos A Pagar Pagos']
-{"Código da Emenda": "Sem informação", "Ano da Emenda": "2014", "Tipo de Emenda": "Emenda Individual - Transferências com Finalidade Definida", "Código do Autor da Emenda": "S/I", "Nome do Autor da Emenda": "Sem informação", "Número da emenda": "S/I", "Localidade de aplicação do recurso": "SANTO ANTÔNIO DE PÁDUA - RJ", "Código Município IBGE": "3304706", "Município": "SANTO ANTÔNIO DE PÁDUA", "Código UF IBGE": "3300000", "UF": "RIO DE JANEIRO", "Região": "Sudeste", "Código Função": "21", "Nome Função": "Organização agrária", "Código Subfunção": "127", "Nome Subfunção": "Ordenamento territorial", "Código Programa": "2029", "Nome Programa": "DESENVOLVIMENTO REGIONAL E TERRITORIAL", "Código Ação": "152M", "Nome Ação": "AQUISICAO DE MAQUINAS E EQUIPAMENTOS PARA ADEQUACAO DE INFRAESTRUTURA PRODUTIVA MUNICIPAL", "Código Plano Orçamentário": "0000", "Nome Plano Orçamentário": "AQUISICAO DE MAQUINAS E EQUIPAMENTOS PARA ADEQUACAO DE INFRAESTRUTURA PRODUTIVA MUNICIPAL - DESPESAS DIVERSAS", "Valor Empenhado": "1300000,00", "Valor Liquidado": "0,00", "Valor Pago": "0,00", "Valor Restos A Pagar Inscritos": "0,00", "Valor Restos A Pagar Cancelados": "0,00", "Valor Restos A Pagar Pagos": "1300000,00"}
-{"Código da Emenda": "Sem informação", "Ano da Emenda": "2014", "Tipo de Emenda": "Emenda Individual - Transferências com Finalidade Definida", "Código do Autor da Emenda": "S/I", "Nome do Autor da Emenda": "Sem informação", "Número da emenda": "S/I", "Localidade de aplicação do recurso": "ITAMBÉ - BA", "Código Município IBGE": "2915809", "Município": "ITAMBÉ", "Código UF IBGE": "2900000", "UF": "BAHIA", "Região": "Nordeste", "Código Função": "15", "Nome Função": "Urbanismo", "Código Subfunção": "451", "Nome Subfunção": "infra-estrutura urbana", "Código Programa": "2054", "Nome Programa": "PLANEJAMENTO URBANO", "Código Ação": "1D73", "Nome Ação": "APOIO A POLITICA NACIONAL DE DESENVOLVIMENTO URBANO VOLTADO A IMPLANTACAO E QUALIFICACAO VIARIA", "Código Plano Orçamentário": "0000", "Nome Plano Orçamentário": "APOIO A POLITICA NACIONAL DE DESENVOLVIMENTO URBANO - DESPESAS DIVERSAS", "Valor Empenhado": "394200,00", "Valor Liquidado": "0,00", "Valor Pago": "0,00", "Valor Restos A Pagar Inscritos": "0,00", "Valor Restos A Pagar Cancelados": "394200,00", "Valor Restos A Pagar Pagos": "0,00"}
-{"Código da Emenda": "Sem informação", "Ano da Emenda": "2014", "Tipo de Emenda": "Emenda Individual - Transferências com Finalidade Definida", "Código do Autor da Emenda": "S/I", "Nome do Autor da Emenda": "Sem informação", "Número da emenda": "S/I", "Localidade de aplicação do recurso": "SANTA MARIA DAS BARREIRAS - PA", "Código Município IBGE": "1506583", "Município": "SANTA MARIA DAS BARREIRAS", "Código UF IBGE": "1500000", "UF": "PARÁ", "Região": "Norte", "Código Função": "20", "Nome Função": "Agricultura", "Código Subfunção": "608", "Nome Subfunção": "Promoção da produção agropecuária", "Código Programa": "2014", "Nome Programa": "AGROPECUARIA SUSTENTAVEL, ABASTECIMENTO E COMERCIALIZACAO", "Código Ação": "20ZV", "Nome Ação": "FOMENTO AO SETOR AGROPECUARIO", "Código Plano Orçamentário": "0000", "Nome Plano Orçamentário": "FOMENTO AO SETOR AGROPECUARIO - DESPESAS DIVERSAS", "Valor Empenhado": "162500,03", "Valor Liquidado": "0,00", "Valor Pago": "0,00", "Valor Restos A Pagar Inscritos": "0,00", "Valor Restos A Pagar Cancelados": "0,03", "Valor Restos A Pagar Pagos": "162500,00"}
-  [Código da Emenda] 76796 valores distintos, ex: ['Sem informação', '202030410010', '202027190005', '202029190009', '202330610003']
-  [Ano da Emenda] 13 valores: [('2014', 11155), ('2017', 9633), ('2020', 8621), ('2019', 8476), ('2016', 8051), ('2018', 7230), ('2024', 6990), ('2021', 6595), ('2025', 6310), ('2023', 6110), ('2022', 6108), ('2026', 5670), ('2015', 3714)]
-  [Tipo de Emenda] 5 valores: [('Emenda Individual - Transferências com Finalidade Definida', 79885), ('Emenda Individual - Transferências Especiais', 5108), ('Emenda de Relator', 3892), ('Emenda de Bancada', 3588), ('Emenda de Comissão', 2190)]
-  [Código do Autor da Emenda] 1574 valores distintos, ex: ['S/I', '-99', '8100', '1775', '2616']
-  [Nome do Autor da Emenda] 1614 valores distintos, ex: ['Sem informação', 'RELATOR GERAL', 'JANDIRA FEGHALI', 'GLAUBER BRAGA', 'LIDICE DA MATA']
-  [Número da emenda] 341 valores distintos, ex: ['S/I', '0001', '0002', '0003', '0004']
-  [Localidade de aplicação do recurso] 5459 valores distintos, ex: ['MÚLTIPLO', 'Nacional', 'SÃO PAULO (UF)', 'RIO DE JANEIRO (UF)', 'MINAS GERAIS (UF)']
-  [Código Município IBGE] 5425 valores distintos, ex: ['Sem informação', '3304557', '3550308', '2507507', '1200401']
-  [Município] 5162 valores distintos, ex: ['Sem informação', 'Múltiplo', 'RIO DE JANEIRO', 'SÃO PAULO', 'JOÃO PESSOA']
-  [Código UF IBGE] 29 valores: [('3500000', 11137), ('3100000', 8736), ('3300000', 7462), ('2900000', 6055), ('-1', 5681), ('4300000', 5610), ('4100000', 5336), ('2600000', 4047), ('2300000', 3522), ('5200000', 3319), ('4200000', 3113), ('2500000', 2778), ('1500000', 2555), ('2100000', 2416), ('2400000', 2154), ('3200000', 2079), ('2200000', 1934), ('5000000', 1680), ('1700000', 1665), ('1200000', 1646), ('5100000', 1511), ('2800000', 1507), ('1300000', 1429), ('2700000', 1425), ('1600000', 1370), ('5300000', 1277), ('1100000', 1258), ('1400000', 1187), ('-14', 774)]
-  [UF] 29 valores: [('SÃO PAULO', 11137), ('MINAS GERAIS', 8736), ('RIO DE JANEIRO', 7462), ('BAHIA', 6055), ('Sem informação', 5681), ('RIO GRANDE DO SUL', 5610), ('PARANÁ', 5336), ('PERNAMBUCO', 4047), ('CEARÁ', 3522), ('GOIÁS', 3319), ('SANTA CATARINA', 3113), ('PARAÍBA', 2778), ('PARÁ', 2555), ('MARANHÃO', 2416), ('RIO GRANDE DO NORTE', 2154), ('ESPÍRITO SANTO', 2079), ('PIAUÍ', 1934), ('MATO GROSSO DO SUL', 1680), ('TOCANTINS', 1665), ('ACRE', 1646), ('MATO GROSSO', 1511), ('SERGIPE', 1507), ('AMAZONAS', 1429), ('ALAGOAS', 1425), ('AMAPÁ', 1370), ('DISTRITO FEDERAL', 1277), ('RONDÔNIA', 1258), ('RORAIMA', 1187), ('Múltiplo', 774)]
-  [Região] 8 valores: [('Sudeste', 29450), ('Nordeste', 25913), ('Sul', 14158), ('Norte', 11178), ('Centro-Oeste', 7887), ('Nacional', 5356), ('Múltiplo', 652), ('Exterior', 69)]
-  [Código Função] 27 valores: [('10', 39184), ('15', 8848), ('12', 8563), ('28', 5305), ('20', 5129), ('27', 4720), ('08', 4239), ('05', 3167), ('14', 2991), ('06', 2633), ('23', 2588), ('13', 2502), ('21', 1182), ('19', 850), ('18', 798), ('26', 464), ('11', 439), ('MU', 355), ('24', 167), ('22', 134), ('04', 111), ('17', 92), ('07', 80), ('16', 48), ('09', 41), ('03', 25), ('25', 8)]
-  [Nome Função] 27 valores: [('Saúde', 39184), ('Urbanismo', 8848), ('Educação', 8563), ('Encargos especiais', 5305), ('Agricultura', 5129), ('Desporto e lazer', 4720), ('Assistência social', 4239), ('Defesa nacional', 3167), ('Direitos da cidadania', 2991), ('Segurança pública', 2633), ('Comércio e serviços', 2588), ('Cultura', 2502), ('Organização agrária', 1182), ('Ciência e Tecnologia', 850), ('Gestão ambiental', 798), ('Transporte', 464), ('Trabalho', 439), ('Múltiplo', 355), ('Comunicações', 167), ('Indústria', 134), ('Administração', 111), ('Saneamento', 92), ('Relações exteriores', 80), ('Habitação', 48), ('Previdência social', 41), ('Essencial à justiça', 25), ('Energia', 8)]
-  [Código Subfunção] 85 valores distintos, ex: ['302', '301', '451', '122', '244']
-  [Nome Subfunção] 85 valores distintos, ex: ['Assistência hospitalar e ambulatorial', 'Atenção básica', 'infra-estrutura urbana', 'Administração geral', 'Assistência comunitária']
-  [Código Programa] 221 valores distintos, ex: ['2015', '2054', '5018', '0903', '5019']
-  [Nome Programa] 190 valores distintos, ex: ['FORTALECIMENTO DO SISTEMA UNICO DE SAUDE (SUS)', 'ATENCAO ESPECIALIZADA A SAUDE', 'ATENCAO PRIMARIA A SAUDE', 'PLANEJAMENTO URBANO', 'OPERACOES ESPECIAIS: TRANSFERENCIAS CONSTITUCIONAIS E AS DECORRENTES DE LEGISLACAO ESPECIFICA']
-  [Código Ação] 806 valores distintos, ex: ['8581', '8535', '2E89', '2E90', '1D73']
-  [Nome Ação] 793 valores distintos, ex: ['ESTRUTURACAO DA REDE DE SERVICOS DE ATENCAO PRIMARIA A SAUDE', 'ESTRUTURACAO DE UNIDADES DE ATENCAO ESPECIALIZADA EM SAUDE', 'INCREMENTO TEMPORARIO AO CUSTEIO DOS SERVICOS DE ATENCAO PRIMARIA A SAUDE PARA CUMPRIMENTO DE METAS', 'APOIO A POLITICA NACIONAL DE DESENVOLVIMENTO URBANO VOLTADO A IMPLANTACAO E QUALIFICACAO VIARIA', 'INCREMENTO TEMPORARIO AO CUSTEIO DOS SERVICOS DE ASSISTENCIA HOSPITALAR E AMBULATORIAL PARA CUMPRIMENTO DE METAS']
-  [Código Plano Orçamentário] 60 valores distintos, ex: ['0000', 'EIND', 'EREL', 'ECOM', 'EBAN']
-  [Nome Plano Orçamentário] 903 valores distintos, ex: ['EMENDA INDIVIDUAL', 'ESTRUTURACAO DE UNIDADES DE ATENCAO ESPECIALIZADA EM SAUDE - DESPESAS DIVERSAS', 'TRANSFERENCIAS ESPECIAIS - DESPESAS DIVERSAS', 'ESTRUTURACAO DA REDE DE SERVICOS DE ATENCAO BASICA DE SAUDE - DESPESAS DIVERSAS', 'EMENDA DE RELATOR']
-  [Valor Empenhado] 38705 valores distintos, ex: ['500000,00', '200000,00', '100000,00', '300000,00', '1000000,00']
-  [Valor Liquidado] 24517 valores distintos, ex: ['0,00', '200000,00', '500000,00', '100000,00', '1000000,00']
-  [Valor Pago] 23654 valores distintos, ex: ['0,00', '200000,00', '500000,00', '100000,00', '1000000,00']
-  [Valor Restos A Pagar Inscritos] 19748 valores distintos, ex: ['0,00', '200000,00', '500000,00', '300000,00', '100000,00']
-  [Valor Restos A Pagar Cancelados] 12651 valores distintos, ex: ['0,00', '250000,00', '100000,00', '500000,00', '243750,00']
-  [Valor Restos A Pagar Pagos] 33255 valores distintos, ex: ['0,00', '100000,00', '200000,00', '500000,00', '300000,00']
-   2014 {'Valor Empenhado': 6.09, 'Valor Liquidado': 0.18, 'Valor Pago': 0.13, 'Valor Restos A Pagar Inscritos': 0.09, 'Valor Restos A Pagar Cancelados': 1.4, 'Valor Restos A Pagar Pagos': 4.51} bi
-   2015 {'Valor Empenhado': 3.38, 'Valor Liquidado': 0.04, 'Valor Pago': 0.02, 'Valor Restos A Pagar Inscritos': 0.08, 'Valor Restos A Pagar Cancelados': 0.57, 'Valor Restos A Pagar Pagos': 2.75} bi
-   2016 {'Valor Empenhado': 25.92, 'Valor Liquidado': 16.3, 'Valor Pago': 16.22, 'Valor Restos A Pagar Inscritos': 0.41, 'Valor Restos A Pagar Cancelados': 1.64, 'Valor Restos A Pagar Pagos': 7.68} bi
-   2017 {'Valor Empenhado': 17.53, 'Valor Liquidado': 5.47, 'Valor Pago': 5.35, 'Valor Restos A Pagar Inscritos': 0.57, 'Valor Restos A Pagar Cancelados': 1.8, 'Valor Restos A Pagar Pagos': 9.91} bi
-   2018 {'Valor Empenhado': 12.01, 'Valor Liquidado': 5.57, 'Valor Pago': 5.47, 'Valor Restos A Pagar Inscritos': 0.27, 'Valor Restos A Pagar Cancelados': 1.08, 'Valor Restos A Pagar Pagos': 5.25} bi
-   2019 {'Valor Empenhado': 13.86, 'Valor Liquidado': 6.09, 'Valor Pago': 6.04, 'Valor Restos A Pagar Inscritos': 8.54, 'Valor Restos A Pagar Cancelados': 0.94, 'Valor Restos A Pagar Pagos': 6.34} bi
-   2020 {'Valor Empenhado': 37.54, 'Valor Liquidado': 18.22, 'Valor Pago': 17.63, 'Valor Restos A Pagar Inscritos': 23.09, 'Valor Restos A Pagar Cancelados': 3.38, 'Valor Restos A Pagar Pagos': 15.59} bi
-   2021 {'Valor Empenhado': 33.4, 'Valor Liquidado': 16.01, 'Valor Pago': 15.9, 'Valor Restos A Pagar Inscritos': 39.32, 'Valor Restos A Pagar Cancelados': 1.99, 'Valor Restos A Pagar Pagos': 13.11} bi
-   2022 {'Valor Empenhado': 25.46, 'Valor Liquidado': 17.23, 'Valor Pago': 17.03, 'Valor Restos A Pagar Inscritos': 9.45, 'Valor Restos A Pagar Cancelados': 0.58, 'Valor Restos A Pagar Pagos': 6.88} bi
-   2023 {'Valor Empenhado': 35.38, 'Valor Liquidado': 22.05, 'Valor Pago': 21.91, 'Valor Restos A Pagar Inscritos': 4.36, 'Valor Restos A Pagar Cancelados': 0.44, 'Valor Restos A Pagar Pagos': 8.72} bi
-   2024 {'Valor Empenhado': 44.81, 'Valor Liquidado': 31.51, 'Valor Pago': 31.4, 'Valor Restos A Pagar Inscritos': 17.94, 'Valor Restos A Pagar Cancelados': 0.21, 'Valor Restos A Pagar Pagos': 8.85} bi
-   2025 {'Valor Empenhado': 47.08, 'Valor Liquidado': 31.74, 'Valor Pago': 31.54, 'Valor Restos A Pagar Inscritos': 9.34, 'Valor Restos A Pagar Cancelados': 0.01, 'Valor Restos A Pagar Pagos': 6.18} bi
-   2026 {'Valor Empenhado': 40.17, 'Valor Liquidado': 26.18, 'Valor Pago': 25.91, 'Valor Restos A Pagar Inscritos': 0.0, 'Valor Restos A Pagar Cancelados': 0.0, 'Valor Restos A Pagar Pagos': 0.0} bi
-
-===== EmendasParlamentares_Convenios.csv linhas: 85343
-colunas: ['Código da Emenda', 'Código Função', 'Nome Função', 'Código Subfunção', 'Nome Subfunção', 'Localidade do gasto', 'Tipo de Emenda', 'Data Publicação Convênio', 'Convenente', 'Objeto Convênio', 'Número Convênio', 'Valor Convênio']
-{"Código da Emenda": "201510480009", "Código Função": "10", "Nome Função": "Saúde", "Código Subfunção": "302", "Nome Subfunção": "Assistência hospitalar e ambulatorial", "Localidade do gasto": "SÃO PAULO (UF)", "Tipo de Emenda": "Emenda Individual - Transferências com Finalidade Definida", "Data Publicação Convênio": "06/01/2016", "Convenente": "FUNDACAO OSWALDO RAMOS", "Objeto Convênio": "AQUISICAO DE EQUIPAMENTO E MATERIAL PERMANENTE PARA UNIDADE DE ATENCAO ESPECIALIZADA EM SAUDE", "Número Convênio": "825378", "Valor Convênio": "1450000,00"}
-{"Código da Emenda": "201510480010", "Código Função": "10", "Nome Função": "Saúde", "Código Subfunção": "302", "Nome Subfunção": "Assistência hospitalar e ambulatorial", "Localidade do gasto": "SÃO PAULO (UF)", "Tipo de Emenda": "Emenda Individual - Transferências com Finalidade Definida", "Data Publicação Convênio": "16/12/2015", "Convenente": "CASA DE SAUDE SANTA MARCELINA", "Objeto Convênio": "AQUISICAO DE EQUIPAMENTO E MATERIAL PERMANENTE PARA UNIDADE DE ATENCAO ESPECIALIZADA EM SAUDE", "Número Convênio": "821060", "Valor Convênio": "1000000,00"}
-{"Código da Emenda": "201510480013", "Código Função": "10", "Nome Função": "Saúde", "Código Subfunção": "302", "Nome Subfunção": "Assistência hospitalar e ambulatorial", "Localidade do gasto": "SÃO PAULO (UF)", "Tipo de Emenda": "Emenda Individual - Transferências com Finalidade Definida", "Data Publicação Convênio": "08/01/2016", "Convenente": "IRMANDADE DA SANTA CASA DE MISERICORDIA DE SAO PAULO", "Objeto Convênio": "AQUISICAO DE EQUIPAMENTO E MATERIAL PERMANENTE PARA UNIDADE DE ATENCAO ESPECIALIZADA EM SAUDE", "Número Convênio": "823893", "Valor Convênio": "919200,00"}
-  [Código da Emenda] 24127 valores distintos, ex: ['Sem informação', '202181000740', '202360110002', '202360110003', '202081001520']
-  [Código Função] 23 valores: [('15', 25740), ('10', 15411), ('20', 12124), ('27', 9086), ('23', 4314), ('13', 3867), ('05', 3094), ('14', 2838), ('08', 2188), ('06', 1711), ('12', 1368), ('21', 1346), ('19', 744), ('11', 438), ('18', 427), ('17', 296), ('22', 152), ('24', 73), ('26', 55), ('04', 44), ('16', 24), ('28', 2), ('03', 1)]
-  [Nome Função] 23 valores: [('Urbanismo', 25740), ('Saúde', 15411), ('Agricultura', 12124), ('Desporto e lazer', 9086), ('Comércio e serviços', 4314), ('Cultura', 3867), ('Defesa nacional', 3094), ('Direitos da cidadania', 2838), ('Assistência social', 2188), ('Segurança pública', 1711), ('Educação', 1368), ('Organização agrária', 1346), ('Ciência e Tecnologia', 744), ('Trabalho', 438), ('Gestão ambiental', 427), ('Saneamento', 296), ('Indústria', 152), ('Comunicações', 73), ('Transporte', 55), ('Administração', 44), ('Habitação', 24), ('Encargos especiais', 2), ('Essencial à justiça', 1)]
-  [Código Subfunção] 61 valores distintos, ex: ['451', '302', '608', '244', '812']
-  [Nome Subfunção] 61 valores distintos, ex: ['infra-estrutura urbana', 'Assistência hospitalar e ambulatorial', 'Promoção da produção agropecuária', 'Assistência comunitária', 'Desporto comunitário']
-  [Localidade do gasto] 5527 valores distintos, ex: ['SÃO PAULO (UF)', 'Nacional', 'MINAS GERAIS (UF)', 'RIO GRANDE DO SUL (UF)', 'PARANÁ (UF)']
-  [Tipo de Emenda] 4 valores: [('Emenda Individual - Transferências com Finalidade Definida', 66569), ('Emenda de Relator', 9950), ('Emenda de Comissão', 5446), ('Emenda de Bancada', 3378)]
-  [Data Publicação Convênio] 2528 valores distintos, ex: ['20/01/2020', '16/01/2018', '18/01/2021', '08/01/2018', '14/01/2025']
-  [Convenente] 12176 valores distintos, ex: ['FUNDO MUNICIPAL DE SAUDE', 'SECRETARIA DE ESTADO DA SEGURANCA PUBLICA', 'MUNICIPIO DE RIO BRANCO', 'FUNDACAO UNIVERSITARIA JOSE BONIFACIO', 'MUNICIPIO DE MACAPA']
-  [Objeto Convênio] 54756 valores distintos, ex: ['AQUISICAO DE EQUIPAMENTO E MATERIAL PERMANENTE PARA UNIDADE DE ATENCAO ESPECIALIZADA EM SAUDE', 'AQUISICAO DE EQUIPAMENTO E MATERIAL PERMANENTE', 'REFORMA DE UNIDADE DE ATENCAO ESPECIALIZADA EM SAUDE', 'AQUISICAO DE EQUIPAMENTO E MATERIAL PERMANENTE PARA ATENCAO ESPECIALIZADA EM SAUDE', 'AMPLIACAO DE UNIDADE DE ATENCAO ESPECIALIZADA EM SAUDE']
-  [Número Convênio] 81629 valores distintos, ex: ['878781', '1AAQKR', '960458', '962276', '821090']
-  [Valor Convênio] 16336 valores distintos, ex: ['100000,00', '200000,00', '245850,00', '300000,00', '250000,00']
-
-===== EmendasParlamentares_PorFavorecido.csv linhas: 827457
-colunas: ['Código da Emenda', 'Código do Autor da Emenda', 'Nome do Autor da Emenda', 'Número da emenda', 'Tipo de Emenda', 'Ano/Mês', 'Código do Favorecido', 'Favorecido', 'Natureza Jurídica', 'Tipo Favorecido', 'UF Favorecido', 'Município Favorecido', 'Valor Recebido']
-{"Código da Emenda": "202641440013", "Código do Autor da Emenda": "4144", "Nome do Autor da Emenda": "ALESSANDRO VIEIRA", "Número da emenda": "0013", "Tipo de Emenda": "Emenda Individual - Transferências com Finalidade Definida", "Ano/Mês": "202610", "Código do Favorecido": "61331581000139", "Favorecido": "2WE CORPORATIVOS LTDA", "Natureza Jurídica": "Sociedade Empresária Limitada", "Tipo Favorecido": "Pessoa Jurídica", "UF Favorecido": "DF", "Município Favorecido": "BRASÍLIA", "Valor Recebido": "3862,00"}
-{"Código da Emenda": "202617750015", "Código do Autor da Emenda": "1775", "Nome do Autor da Emenda": "JANDIRA FEGHALI", "Número da emenda": "0015", "Tipo de Emenda": "Emenda Individual - Transferências com Finalidade Definida", "Ano/Mês": "202610", "Código do Favorecido": "61331581000139", "Favorecido": "2WE CORPORATIVOS LTDA", "Natureza Jurídica": "Sociedade Empresária Limitada", "Tipo Favorecido": "Pessoa Jurídica", "UF Favorecido": "DF", "Município Favorecido": "BRASÍLIA", "Valor Recebido": "397,00"}
-{"Código da Emenda": "202571240009", "Código do Autor da Emenda": "7124", "Nome do Autor da Emenda": "BANCADA DE RORAIMA", "Número da emenda": "0009", "Tipo de Emenda": "Emenda de Bancada", "Ano/Mês": "202610", "Código do Favorecido": "38583143000146", "Favorecido": "3M SOLUTIONS LTDA", "Natureza Jurídica": "Sociedade Empresária Limitada", "Tipo Favorecido": "Pessoa Jurídica", "UF Favorecido": "AM", "Município Favorecido": "MANAUS", "Valor Recebido": "60900,00"}
-  [Código da Emenda] 70418 valores distintos, ex: ['Sem informação', '202081000244', '202081001576', '202081000199', '202471230008']
-  [Código do Autor da Emenda] 1568 valores distintos, ex: ['8100', 'S/I', '7123', '-99', '4086']
-  [Nome do Autor da Emenda] 1605 valores distintos, ex: ['RELATOR GERAL', 'Sem informação', 'BANCADA DE RONDONIA', 'SORAYA THRONICKE', 'COM. DA SAUDE']
-  [Número da emenda] 337 valores distintos, ex: ['0001', 'S/I', '0002', '0004', '0003']
-  [Tipo de Emenda] 5 valores: [('Emenda Individual - Transferências com Finalidade Definida', 415761), ('Emenda de Relator', 207282), ('Emenda de Bancada', 108339), ('Emenda Individual - Transferências Especiais', 52147), ('Emenda de Comissão', 43928)]
-  [Ano/Mês] 149 valores distintos, ex: ['202012', '202605', '202412', '202011', '202010']
-  [Código do Favorecido] 115587 valores distintos, ex: ['00000000000191', '00360305000104', '-8', '02385669000174', '03506307000157']
-  [Favorecido] 110892 valores distintos, ex: ['BANCO DO BRASIL SA', 'FUNDO MUNICIPAL DE SAUDE', 'CAIXA ECONOMICA FEDERAL', 'SEM INFORMACAO', 'FUNDO MUNICIPAL DE ASSISTENCIA SOCIAL']
-  [Natureza Jurídica] 52 valores distintos, ex: ['Sociedade Empresária Limitada', 'Sem informação', 'Município', 'Fundo Público da Administração Direta Municipal', 'Sociedade de Economia Mista']
-  [Tipo Favorecido] 7 valores: [('Pessoa Jurídica', 637277), ('Pessoa Fisica', 181237), ('Sem informação', 3687), ('Unidade Gestora', 2794), ('Inscrição Genérica', 1339), ('Inválido', 881), ('Inscrição Genéric', 242)]
-  [UF Favorecido] 29 valores: [('DF', 121659), ('SP', 84206), ('MG', 73348), ('RS', 51403), ('BA', 50897), ('PR', 42410), ('PE', 41601), ('RJ', 40545), ('SC', 30967), ('RO', 27747), ('PB', 25903), ('GO', 25626), ('RN', 22957), ('CE', 21907), ('MS', 20866), ('PI', 20039), ('PA', 15478), ('ES', 15155), ('AM', 12640), ('AL', 12248), ('SE', 12110), ('MA', 12006), ('TO', 10584), ('MT', 9217), ('AC', 7055), ('', 6096), ('RR', 4689), ('AP', 4625), ('-1', 3473)]
-  [Município Favorecido] 5300 valores distintos, ex: ['BRASÍLIA', 'RIO DE JANEIRO', 'SÃO PAULO', 'BELO HORIZONTE', 'SALVADOR']
-  [Valor Recebido] 349966 valores distintos, ex: ['100000,00', '200000,00', '300000,00', '500000,00', '200,00']
-   201406 {'Valor Recebido': 0.0} bi
-   201407 {'Valor Recebido': 0.0} bi
-   201408 {'Valor Recebido': 0.0} bi
-   201409 {'Valor Recebido': 0.0} bi
-   201410 {'Valor Recebido': 0.01} bi
-   201411 {'Valor Recebido': 0.02} bi
-   201412 {'Valor Recebido': 0.1} bi
-   201501 {'Valor Recebido': 0.03} bi
-   201502 {'Valor Recebido': 0.03} bi
-   201503 {'Valor Recebido': 0.02} bi
-   201504 {'Valor Recebido': 0.01} bi
-   201505 {'Valor Recebido': 0.05} bi
-   201506 {'Valor Recebido': 0.05} bi
-   201507 {'Valor Recebido': 0.17} bi
-   201508 {'Valor Recebido': 0.32} bi
-   201509 {'Valor Recebido': 0.3} bi
-   201510 {'Valor Recebido': 0.37} bi
-   201511 {'Valor Recebido': 0.53} bi
-   201512 {'Valor Recebido': 0.47} bi
-   201601 {'Valor Recebido': 0.02} bi
-   201602 {'Valor Recebido': 0.02} bi
-   201603 {'Valor Recebido': 0.3} bi
-   201604 {'Valor Recebido': 0.22} bi
-   201605 {'Valor Recebido': 0.18} bi
-   201606 {'Valor Recebido': 0.79} bi
-   201607 {'Valor Recebido': 0.23} bi
-   201608 {'Valor Recebido': 0.43} bi
-   201609 {'Valor Recebido': 2.55} bi
-   201610 {'Valor Recebido': 2.67} bi
-   201611 {'Valor Recebido': 3.08} bi
-   201612 {'Valor Recebido': 5.67} bi
-   201701 {'Valor Recebido': 0.15} bi
-   201702 {'Valor Recebido': 0.23} bi
-   201703 {'Valor Recebido': 0.71} bi
-   201704 {'Valor Recebido': 0.18} bi
-   201705 {'Valor Recebido': 0.73} bi
-   201706 {'Valor Recebido': 0.75} bi
-   201707 {'Valor Recebido': 0.56} bi
-   201708 {'Valor Recebido': 1.24} bi
-   201709 {'Valor Recebido': 0.83} bi
-   201710 {'Valor Recebido': 0.85} bi
-   201711 {'Valor Recebido': 1.16} bi
-   201712 {'Valor Recebido': 2.75} bi
-   201801 {'Valor Recebido': 0.27} bi
-   201802 {'Valor Recebido': 0.45} bi
-   201803 {'Valor Recebido': 2.29} bi
-   201804 {'Valor Recebido': 0.5} bi
-   201805 {'Valor Recebido': 0.63} bi
-   201806 {'Valor Recebido': 3.74} bi
-   201807 {'Valor Recebido': 0.57} bi
-   201808 {'Valor Recebido': 0.34} bi
-   201809 {'Valor Recebido': 0.56} bi
-   201810 {'Valor Recebido': 0.78} bi
-   201811 {'Valor Recebido': 1.17} bi
-   201812 {'Valor Recebido': 1.55} bi
-   201901 {'Valor Recebido': 0.16} bi
-   201902 {'Valor Recebido': 0.18} bi
-   201903 {'Valor Recebido': 0.5} bi
-   201904 {'Valor Recebido': 0.54} bi
-   201905 {'Valor Recebido': 0.72} bi
-   201906 {'Valor Recebido': 0.38} bi
-   201907 {'Valor Recebido': 1.97} bi
-   201908 {'Valor Recebido': 1.51} bi
-   201909 {'Valor Recebido': 1.26} bi
-   201910 {'Valor Recebido': 1.19} bi
-   201911 {'Valor Recebido': 0.9} bi
-   201912 {'Valor Recebido': 2.38} bi
-   202001 {'Valor Recebido': 0.52} bi
-   202002 {'Valor Recebido': 0.66} bi
-   202003 {'Valor Recebido': 1.37} bi
-   202004 {'Valor Recebido': 4.12} bi
-   202005 {'Valor Recebido': 2.93} bi
-   202006 {'Valor Recebido': 3.27} bi
-   202007 {'Valor Recebido': 1.53} bi
-   202008 {'Valor Recebido': 1.93} bi
-   202009 {'Valor Recebido': 1.29} bi
-   202010 {'Valor Recebido': 0.94} bi
-   202011 {'Valor Recebido': 1.39} bi
-   202012 {'Valor Recebido': 3.75} bi
-   202101 {'Valor Recebido': 0.58} bi
-   202102 {'Valor Recebido': 0.26} bi
-   202103 {'Valor Recebido': 0.39} bi
-   202104 {'Valor Recebido': 0.46} bi
-   202105 {'Valor Recebido': 0.27} bi
-   202106 {'Valor Recebido': 2.74} bi
-   202107 {'Valor Recebido': 2.91} bi
-   202108 {'Valor Recebido': 4.14} bi
-   202109 {'Valor Recebido': 3.49} bi
-   202110 {'Valor Recebido': 4.05} bi
-   202111 {'Valor Recebido': 1.4} bi
-   202112 {'Valor Recebido': 4.47} bi
-   202201 {'Valor Recebido': 0.16} bi
-   202202 {'Valor Recebido': 1.09} bi
-   202203 {'Valor Recebido': 1.91} bi
-   202204 {'Valor Recebido': 1.25} bi
-   202205 {'Valor Recebido': 0.77} bi
-   202206 {'Valor Recebido': 15.14} bi
-   202207 {'Valor Recebido': 3.53} bi
-   202208 {'Valor Recebido': 0.45} bi
-   202209 {'Valor Recebido': 1.02} bi
-   202210 {'Valor Recebido': 0.49} bi
-   202211 {'Valor Recebido': 0.43} bi
-   202212 {'Valor Recebido': 1.69} bi
-   202301 {'Valor Recebido': 0.07} bi
-   202302 {'Valor Recebido': 0.1} bi
-   202303 {'Valor Recebido': 2.13} bi
-   202304 {'Valor Recebido': 1.29} bi
-   202305 {'Valor Recebido': 1.48} bi
-   202306 {'Valor Recebido': 3.9} bi
-   202307 {'Valor Recebido': 2.08} bi
-   202308 {'Valor Recebido': 6.83} bi
-   202309 {'Valor Recebido': 2.26} bi
-   202310 {'Valor Recebido': 5.09} bi
-   202311 {'Valor Recebido': 2.69} bi
-   202312 {'Valor Recebido': 4.93} bi
-   202401 {'Valor Recebido': 0.12} bi
-   202402 {'Valor Recebido': 0.2} bi
-   202403 {'Valor Recebido': 1.76} bi
-   202404 {'Valor Recebido': 1.07} bi
-   202405 {'Valor Recebido': 9.35} bi
-   202406 {'Valor Recebido': 7.82} bi
-   202407 {'Valor Recebido': 8.85} bi
-   202408 {'Valor Recebido': 0.06} bi
-   202409 {'Valor Recebido': 0.36} bi
-   202410 {'Valor Recebido': 0.17} bi
-   202411 {'Valor Recebido': 0.31} bi
-   202412 {'Valor Recebido': 9.17} bi
-   202501 {'Valor Recebido': 0.49} bi
-   202502 {'Valor Recebido': 1.6} bi
-   202503 {'Valor Recebido': 1.29} bi
-   202504 {'Valor Recebido': 0.91} bi
-   202505 {'Valor Recebido': 1.03} bi
-   202506 {'Valor Recebido': 2.86} bi
-   202507 {'Valor Recebido': 3.91} bi
-   202508 {'Valor Recebido': 3.55} bi
-   202509 {'Valor Recebido': 6.03} bi
-   202510 {'Valor Recebido': 9.36} bi
-   202511 {'Valor Recebido': 4.15} bi
-   202512 {'Valor Recebido': 8.32} bi
-   202601 {'Valor Recebido': 1.09} bi
-   202602 {'Valor Recebido': 2.43} bi
-   202603 {'Valor Recebido': 1.69} bi
-   202604 {'Valor Recebido': 1.38} bi
-   202605 {'Valor Recebido': 16.14} bi
-   202606 {'Valor Recebido': 9.09} bi
-   202607 {'Valor Recebido': 2.17} bi
-   202608 {'Valor Recebido': 0.6} bi
-   202609 {'Valor Recebido': 0.46} bi
-   202610 {'Valor Recebido': 0.16} bi
-
- https://api.transferegov.gestao.gov.br/transferenciasespeciais/plano_acao_especial?limit=2 200 application/json; charset=utf-8 [{"id_plano_acao":3221,"codigo_plano_acao":"0903-003221","ano_plano_acao":2020,"modalidade_plano_acao":"Especial","situacao_plano_acao":"CIENTE","cnpj_beneficiario_plano_acao":"04218211000156","nome_beneficiario_plano_acao":"MUNICIPIO DE PAU D:ARCO DO PIAUI","uf_beneficiario_plano_acao":"PI","codigo_banco_plano_acao":"001","codigo_situacao_dado_bancario_plano_acao":4,"nome_banco_plano_acao":"Banco do Brasil","numero_agencia_plano_acao":1428,"dv_agencia_plano_acao":"1","numero_conta_plano_acao":34782,"dv_conta_plano_acao":"5","nome_parlamentar_emenda_plano_acao":"Iracema Portella","ano_emenda_parlamentar_plano_acao":"2020","codigo_parlamentar_emenda_plano_acao":"2707","sequencial_emenda_parlamentar_plano_acao":6,"numero_emenda_parlamentar_plano_acao":"202027070006","codigo_emenda_parlamentar_formatado_plano_acao":"202027070006-Iracema Portella","codigo_descricao_areas_politicas_publicas_plano_acao":"10-Saúde / 302-Assistência Hospitalar e Ambulatorial , 15-Urbanismo / 451-Infraestrutura Urbana","descricao_programacao_orcamentaria_plano_acao":null,"motivo_impedimento_plano_acao":null,"valor_custeio_plano_acao":30000.00000000,"valor_investimento_plano_acao":80000.00000000,"id_programa":3}, 
- {"id_plano_acao":3206,"codigo_plano_acao":"0903-003206","ano_plano_acao":2020,"modalidade_plano_acao":"Especial","situacao_plano_acao":"CIENTE","cnpj_beneficiario_plano_acao":"01613360000121","nome_beneficiario_plano_acao":"MUNICIPIO DE DOUTOR RICARDO","uf_beneficiario_plano_acao":"RS","co
-
- https://api.transferegov.gestao.gov.br/transferenciasespeciais/ 200 application/json; charset=utf-8 {
-    "swagger": "2.0",
-    "info": {
-        "description": "A modalidade de transfer\u00eancia especial foi concebida por meio da edi\u00e7\u00e3o da Emenda Constitucional n\u00ba 105, de 12 de dezembro de 2019 (EC n\u00ba 105, de 2019), a qual criou uma nova modalidade de transfer\u00eancia, exclusivamente para o repasse de recursos das emendas parlamentares individuais a Estados, Distrito Federal ou Munic\u00edpios. A Emenda Constitucional n\u00ba 105, de 12 de dezembro de 2019, incluiu na Constitui\u00e7\u00e3o Federal o <a href=\"https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm#art166a\">art. 166-A</a>.\n\nA API oferece diversos operadores para filtrar e ordenar dados, conforme descrito na <a href=\"https://postgrest.org/en/v11/api.html#operators\"> documenta\u00e7\u00e3o oficial do PostgREST</a>. \u00c9 necess\u00e1rio especificar o operador correspondente no input do campo na requisi\u00e7\u00e3o. Por exemplo: Para um valor igual a 10, digita-se <i>eq.10</i>\n",
-        "title": "API de dados abertos do m\u00f3dulo de Transfer\u00eancias Especiais do Transferegov",
-        "version": "11.2.0"
-    },
-    "host": "api.transferegov.gestao.gov.br",
-    "basePath": "/transferenciasespeciais/",
-    "schemes": [
-        "https"
-    ],
-    "consumes": [
-        "application/json",
-        "application/vnd.pgrst.object+json;nulls=stripped",
-        "application/vnd.pgrst.object+json",
-        "text/csv"
-    ],
-    "produces": [
-        "application/json",
-  
-
- https://dadosabertos.camara.leg.br/api/v2/deputados?itens=2 200 application/json {"dados":[{"id":204379,"uri":"https://dadosabertos.camara.leg.br/api/v2/deputados/204379","nome":"Acácio Favacho","siglaPartido":"MDB","uriPartido":"https://dadosabertos.camara.leg.br/api/v2/partidos/36899","siglaUf":"AP","idLegislatura":57,"urlFoto":"https://www.camara.leg.br/internet/deputado/bandep/204379.jpg","email":"dep.acaciofavacho@camara.leg.br"},{"id":220714,"uri":"https://dadosabertos.camara.leg.br/api/v2/deputados/220714","nome":"Adail Filho","siglaPartido":"MDB","uriPartido":"https://dadosabertos.camara.leg.br/api/v2/partidos/36899","siglaUf":"AM","idLegislatura":57,"urlFoto":"https://www.camara.leg.br/internet/deputado/bandep/220714.jpg","email":"dep.adailfilho@camara.leg.br"}],"links":[{"rel":"self","href":"https://dadosabertos.camara.leg.br/api/v2/deputados?itens=2"},{"rel":"next","href":"https://dadosabertos.camara.leg.br/api/v2/deputados?pagina=2&itens=2"},{"rel":"first","href":"https://dadosabertos.camara.leg.br/api/v2/deputados?pagina=1&itens=2"},{"rel":"last","href":"https://dadosabertos.camara.leg.br/api/v2/deputados?pagina=257&itens=2"}]}
+deputados 513
+senadores 81
+autores individuais 2023+ 890
+deputados casados por nome: 501 ambíguos na Câmara: [] também senador: []
+sem emenda individual 2023+: ['Dr Flávio', 'Gilmar Machado', 'Inácio Arruda', 'Itamar Paim', 'José Carlos Araujo', 'Leonardo Gadelha', 'Marina Silva', 'Missionário José Olimpio', 'Paulo Soares', 'Priscila Costa', 'Sônia Guajajara', 'Yury Bruno']
+autores com 2 códigos: [('ALAN RICK', Counter({'4394': 49, '3036': 22})), ('ATILA LIRA', Counter({'4309': 16, '1935': 5})), ('BETO FARO', Counter({'4266': 40, '2152': 2})), ('EFRAIM FILHO', Counter({'4270': 51, '2449': 12})), ('LAERCIO OLIVEIRA', Counter({'4274': 41, '2608': 9})), ('TEREZA CRISTINA', Counter({'4279': 62, '3769': 11}))]
+autores que não são deputado nem senador atual: 314 ['ABILIO SANTANA', 'ABOU ANNI', 'ACIR GURGACZ', 'AELTON FREITAS', 'ALCIDES RODRIGUES', 'ALE SILVA', 'ALESSANDRO MOLON', 'ALEX SANTANA', 'ALEXANDRE FROTA', 'ALEXANDRE PADILHA', 'ALEXANDRE SILVEIRA', 'ALEXIS FONTEYNE', 'ALINE SLEUTJES', 'ALVARO DIAS', 'ANDRE DE PAULA', 'ANGELA AMIN', 'AROLDO MARTINS', 'AUREA CAROLINA', 'BETO ROSADO', 'BILAC PINTO', 'BIRA DO PINDARE', 'BOSCO COSTA', 'BOSCO SARAIVA', 'BOZZELLA', 'BRUNA FURLAN', 'CACA LEAO', 'CAMILO CAPIBERIBE', 'CAPITAO DERRITE', 'CAPITAO FABIO ABREU', 'CAPITAO WAGNER', 'CARLA ZAMBELLI', 'CARLOS BEZERRA', 'CARMEN ZANOTTO', 'CASSIO ANDRADE', 'CELINA LEAO', 'CELIO MOURA', 'CELSO MALDANER', 'CHARLLES EVANGELISTA', 'CHICO D ANGELO', 'CHIQUINHO BRAZAO', 'CHRISTIANE DE SOUZA YARED', 'CHRISTINO AUREO', 'CLARISSA GAROTINHO', 'CORONEL ARMANDO', 'CORONEL TADEU', 'CRISTIANO VALE', 'DANIEL COELHO', 'DANIEL SILVEIRA', 'DANILO CABRAL', 'DARCI DE MATOS', 'DARIO BERGER', 'DAVID MIRANDA', 'DELEGADO ANTONIO FURTADO', 'DELEGADO PABLO', 'DELEGADO WALDIR', 'DENIS BEZERRA', 'DR LEONARDO', 'DRA SORAYA MANATO', 'DRA VANDA MILANI', 'DULCE MIRANDA']
+PF por tipo/natureza: [(('Emenda de Relator', 'Sem informação'), 104784), (('Emenda Individual - Transferências com Finalidade Definida', 'Sem informação'), 36747), (('Emenda de Bancada', 'Sem informação'), 27462), (('Emenda de Comissão', 'Sem informação'), 12236), (('Emenda Individual - Transferências com Finalidade Definida', ''), 6), (('Emenda de Bancada', ''), 2)]
+PF exemplos: [('ADAO CABRAL DAS NEVES', '2581,00', 'MERLONG SOLANO'), ('ADINALSON RODRIGUES DO NORTE', '1369,46', 'FRED COSTA'), ('ADRIELLE STEFANE ALVES STERING', '2200,00', 'BANCADA DE RONDONIA'), ('ADSON TENORIO FRANCA', '654,92', 'ANDRE ABDON'), ('AILLA ODORIZZI DA COSTA TEIXEIRA', '400,00', 'BANCADA DE RONDONIA'), ('ALBERI NORONHA', '950,28', 'BOHN GASS'), ('ALDERLENE DA SILVA COSTA', '4400,00', 'BANCADA DE RONDONIA'), ('ALEX DOUGLAS MARTINS DEMIER', '330,19', 'IGOR TIMO'), ('ALINE EVANGELISTA DE ANDRADE MENDES', '3115,00', 'BANCADA DE RONDONIA'), ('ALMERINDA DE SOUSA PINHEIRO', '3674,62', 'BANCADA DE GOIAS')]
+natureza 2023+ (mi): [('Fundo Público da Administração Direta Municipal', 45464), ('Município', 39956), ('Sociedade de Economia Mista', 33982), ('Sociedade Empresária Limitada', 8254), ('Fundo Público da Administração Direta Estadual ou do Distrito Federal', 6819), ('Associação Privada', 5714), ('Estado ou Distrito Federal', 2806), ('Fundação Privada', 2343), ('Órgão Público do Poder Executivo Estadual ou do Distrito Federal', 2319), ('Empresa Pública', 998), ('Sociedade Anônima Fechada', 447), ('Autarquia Estadual ou do Distrito Federal', 447), ('Sem informação', 250), ('Consórcio Público de Direito Público (Associação Pública)', 240), ('Cooperativa', 156), ('Sociedade Anônima Aberta', 100), ('Fundação Pública de Direito Público Estadual ou do Distrito Federal', 97), ('Serviço Social Autônomo', 72), ('Empresário (Individual)', 68), ('Órgão Público do Poder Executivo Municipal', 54), ('Organização Internacional', 48), ('Entidade Sindical', 38), ('Estabelecimento, no Brasil, de Sociedade Estrangeira', 31), ('Organização Social (OS)', 30), ('Consórcio de Sociedades', 24), ('Sociedade Simples Limitada', 23), ('Órgão Público Autônomo Estadual ou do Distrito Federal', 19), ('Órgão Público do Poder Judiciário Estadual', 15), ('Autarquia Municipal', 9), ('Organização Religiosa', 8), ('Fundação Pública de Direito Público Municipal', 7), ('Sociedade Simples Pura', 3), ('Fundação Pública de Direito Privado Municipal', 3), ('', 2), ('Consórcio Público de Direito Privado', 0), ('Empresa Simples de Inovação - Inova Simples', 0), ('Serviço Notarial e Registral (Cartório)', 0), ('Produtor Rural (Pessoa Física)', 0), ('Sociedade Empresária em Nome Coletivo', 0)]
+emendas pix linhas 5108 códigos 5108
+plano_acao total: None
+endpoint /programa_especial []
+endpoint /plano_acao_especial []
+endpoint /empenho_especial []
+endpoint /documento_habil_especial []
+endpoint /ordem_pagamento_ordem_bancaria_especial []
+endpoint /historico_pagamento_especial []
+endpoint /relatorio_gestao_especial []
+endpoint /relatorio_gestao_novo_especial []
+endpoint /meta_especial []
+endpoint /executor_especial []
+endpoint /plano_trabalho_especial []
+endpoint /finalidade_especial []
+endpoint /plano_trabalho_analise_especial []
+endpoint /orgao_analise_pendente_especial []
+def programa_especial ['id_programa', 'ano_programa', 'modalidade_programa', 'codigo_programa', 'id_orgao_superior_programa', 'sigla_orgao_superior_programa', 'nome_orgao_superior_programa', 'id_orgao_programa', 'sigla_orgao_programa', 'nome_orgao_programa', 'id_unidade_gestora_programa', 'documentos_origem_programa', 'id_unidade_orcamentaria_responsavel_programa', 'data_inicio_ciencia_programa', 'data_fim_ciencia_programa', 'valor_necessidade_financeira_programa', 'valor_total_disponibilizado_programa', 'valor_impedido_programa', 'valor_a_disponibilizar_programa', 'valor_documentos_habeis_gerados_programa', 'valor_obs_geradas_programa', 'valor_disponibilidade_atual_programa']
+def plano_acao_especial ['id_plano_acao', 'codigo_plano_acao', 'ano_plano_acao', 'modalidade_plano_acao', 'situacao_plano_acao', 'cnpj_beneficiario_plano_acao', 'nome_beneficiario_plano_acao', 'uf_beneficiario_plano_acao', 'codigo_banco_plano_acao', 'codigo_situacao_dado_bancario_plano_acao', 'nome_banco_plano_acao', 'numero_agencia_plano_acao', 'dv_agencia_plano_acao', 'numero_conta_plano_acao', 'dv_conta_plano_acao', 'nome_parlamentar_emenda_plano_acao', 'ano_emenda_parlamentar_plano_acao', 'codigo_parlamentar_emenda_plano_acao', 'sequencial_emenda_parlamentar_plano_acao', 'numero_emenda_parlamentar_plano_acao', 'codigo_emenda_parlamentar_formatado_plano_acao', 'codigo_descricao_areas_politicas_publicas_plano_acao', 'descricao_programacao_orcamentaria_plano_acao', 'motivo_impedimento_plano_acao', 'valor_custeio_plano_acao', 'valor_investimento_plano_acao', 'id_programa']
+def empenho_especial ['id_empenho', 'id_minuta_empenho', 'numero_empenho', 'situacao_empenho', 'descricao_situacao_empenho', 'tipo_documento_empenho', 'descricao_tipo_documento_empenho', 'status_processamento_empenho', 'ug_responsavel_empenho', 'ug_emitente_empenho', 'descricao_ug_emitente_empenho', 'fonte_recurso_empenho', 'plano_interno_empenho', 'ptres_empenho', 'grupo_natureza_despesa_empenho', 'natureza_despesa_empenho', 'subitem_empenho', 'categoria_despesa_empenho', 'modalidade_despesa_empenho', 'cnpj_beneficiario_empenho', 'nome_beneficiario_empenho', 'uf_beneficiario_empenho', 'numero_ro_empenho', 'data_emissao_empenho', 'prioridade_desbloqueio_empenho', 'valor_empenho', 'id_plano_acao']
+def documento_habil_especial ['id_dh', 'id_minuta_documento_habil', 'numero_documento_habil', 'situacao_dh', 'descricao_situacao_dh', 'tipo_documento_dh', 'ug_emitente_dh', 'descricao_ug_emitente_dh', 'data_vencimento_dh', 'data_emissao_dh', 'ug_pagadora_dh', 'descricao_ug_pagadora_dh', 'variacao_patrimonial_diminuta_dh', 'passivo_transferencia_constitucional_legal_dh', 'centro_custo_empenho', 'codigo_siorg_empenho', 'mes_referencia_empenho', 'ano_referencia_empenho', 'ug_beneficiada_dh', 'descricao_ug_beneficiada_dh', 'valor_dh', 'valor_rateio_dh', 'id_empenho']
+def ordem_pagamento_ordem_bancaria_especial ['id_op_ob', 'data_emissao_op', 'numero_ordem_pagamento', 'vinculacao_op', 'situacao_op', 'descricao_situacao_op', 'data_situacao_op', 'data_emissao_ob', 'numero_ordem_bancaria', 'numero_ordem_lancamento', 'data_assinatura_ordenador_despesa_ob', 'data_assinatura_gestor_financeiro_ob', 'id_dh']
+def historico_pagamento_especial ['id_historico_op_ob', 'data_hora_historico_op', 'historico_situacao_op', 'descricao_historico_situacao_op', 'id_op_ob']
+def relatorio_gestao_especial ['id_relatorio_gestao', 'situacao_relatorio_gestao', 'parecer_relatorio_gestao', 'id_plano_acao']
+def relatorio_gestao_novo_especial ['id_relatorio_gestao_novo', 'data_e_hora_relatorio_gestao_novo', 'tipo_relatorio_gestao_novo', 'valor_executado_relatorio_gestao_novo', 'valor_pendente_relatorio_gestao_novo', 'situacao_relatorio_gestao_novo', 'id_plano_acao']
+def meta_especial ['id_executor', 'id_meta', 'sequencial_meta', 'nome_meta', 'desc_meta', 'un_medida_meta', 'qt_uniade_meta', 'vl_custeio_emenda_especial_meta', 'vl_investimento_emenda_especial_meta', 'vl_custeio_recursos_proprios_meta', 'vl_investimento_recursos_proprios_meta', 'vl_custeio_rendimento_meta', 'vl_investimento_rendimento_meta', 'vl_custeio_doacao_meta', 'vl_investimento_doacao_meta', 'qt_meses_meta']
+def executor_especial ['id_plano_acao', 'id_executor', 'cnpj_executor', 'nome_executor', 'objeto_executor', 'vl_custeio_executor', 'vl_investimento_executor', 'ind_recursos_gerenciados_conta_especifica_executor', 'codigo_banco_executor', 'nome_banco_executor', 'numero_agencia_executor', 'dv_agencia_executor', 'nome_agencia_executor', 'numero_conta_executor', 'dv_conta_executor', 'codigo_situacao_dado_bancario_executor', 'descricao_situacao_dado_bancario_executor']
+def plano_trabalho_especial ['id_plano_trabalho', 'situacao_plano_trabalho', 'ind_orcamento_proprio_plano_trabalho', 'data_inicio_execucao_plano_trabalho', 'data_fim_execucao_plano_trabalho', 'prazo_execucao_meses_plano_trabalho', 'id_plano_acao', 'classificacao_orcamentaria_pt', 'ind_justificativa_prorrogacao_atraso_pt', 'ind_justificativa_prorrogacao_paralizacao_pt', 'justificativa_prorrogacao_pt']
+def finalidade_especial ['id_executor', 'cd_area_politica_publica_tipo_pt', 'area_politica_publica_tipo_pt', 'cd_area_politica_publica_pt', 'area_politica_publica_pt']
+def plano_trabalho_analise_especial ['id_plano_trabalho_analise', 'codigo_siorg_orgao_analise_pt', 'nome_orgao_analise_pt', 'situacao_planejamento_pt', 'situacao_parecer_analise_pt', 'texto_parecer_analise_pt', 'situacao_analise_pt', 'data_analise_pt', 'valor_reprovado_analise_pt', 'id_plano_trabalho']
+def orgao_analise_pendente_especial ['id_analise_pendente', 'id_orgao_analise_pendente_pt', 'nome_orgao_analise_pendente_pt', 'id_plano_trabalho']
