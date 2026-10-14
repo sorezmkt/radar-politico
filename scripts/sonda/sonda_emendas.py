@@ -22,6 +22,8 @@ for info in z.infolist():
 for info in z.infolist():
     txt = z.read(info.filename).decode("latin-1")
     rows = list(csv.DictReader(io.StringIO(txt), delimiter=";"))
+    import os; os.makedirs("scripts/sonda/amostras", exist_ok=True)
+    open("scripts/sonda/amostras/" + info.filename.replace("/", "_"), "w").write("\n".join(txt.splitlines()[:400]))
     print("\n=====", info.filename, "linhas:", len(rows))
     print("colunas:", list(rows[0].keys()))
     for r in rows[:3]:
