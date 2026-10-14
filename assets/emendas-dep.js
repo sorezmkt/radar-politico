@@ -19,7 +19,8 @@
   const destino = e => {
     const l = (e.local || '').trim();
     if (l && !/^(múltiplo|nacional|sem informação)$/i.test(l)) return titulo(l);
-    if (e.fav && e.fav[0]) return titulo(e.fav[0].nome);
+    const f = (e.fav || []).find(x => x.grupo !== 'banco' && x.grupo !== 'pf');
+    if (f) return titulo(f.nome);
     if (e.conv && e.conv[0]) return titulo(e.conv[0].convenente);
     return titulo(e.acao) || 'Destino não informado';
   };
