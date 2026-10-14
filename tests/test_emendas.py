@@ -103,8 +103,9 @@ class Pix(unittest.TestCase):
     def test_dentro_da_margem_nao_e_atraso(self):
         self.assertEqual(be.situacao_plano_pix(self.plano("2026-06-01"), self.HOJE)[0], "andamento")
 
-    def test_plano_recente_sem_plano_de_trabalho(self):
+    def test_plano_sem_plano_de_trabalho(self):
         self.assertEqual(be.situacao_plano_pix(self.plano(trabalho=False), self.HOJE)[0], "sem_plano")
+        self.assertEqual(be.situacao_plano_pix(self.plano(trabalho=False, ano=2025), self.HOJE)[0], "andamento")  # ainda no prazo
         self.assertEqual(be.situacao_plano_pix(self.plano(trabalho=False, ano=2021), self.HOJE)[0], "andamento")
 
     def test_regra_pix(self):

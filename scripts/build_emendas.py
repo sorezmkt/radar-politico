@@ -362,7 +362,7 @@ def situacao_plano_pix(p, hoje=HOJE):
     Situação documental de um plano de ação de emenda Pix:
       "ok"          relatório final (ou relatório do sistema antigo) disponibilizado
       "atrasado"    a execução terminou há mais de 180 dias e não há relatório final disponibilizado
-      "sem_plano"   plano de ação de 2024 em diante sem plano de trabalho cadastrado
+      "sem_plano"   plano de ação de 2024 em diante, com mais de um ano, sem plano de trabalho cadastrado
       "andamento"   ainda dentro do prazo, ou sem prazo informado
     """
     rels = p.get("relatorios") or []
@@ -375,7 +375,7 @@ def situacao_plano_pix(p, hoje=HOJE):
         if (hoje - fim).days > MARGEM_RELATORIO:
             return "atrasado", fim
         return "andamento", fim
-    if not trabalhos and (p.get("ano_plano_acao") or 0) >= 2024:
+    if not trabalhos and 2024 <= (p.get("ano_plano_acao") or 0) <= hoje.year - 2:
         return "sem_plano", None
     return "andamento", None
 
