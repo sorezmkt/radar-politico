@@ -49,7 +49,7 @@ jobs:
         if: github.ref_name == 'main'
         run: |
           mkdir -p _site
-          cp -r index.html deputado.html partidos.html partido.html assets data .nojekyll _site/
+          cp -r *.html assets data .nojekyll _site/
 
       - uses: actions/upload-pages-artifact@v3
         if: github.ref_name == 'main'

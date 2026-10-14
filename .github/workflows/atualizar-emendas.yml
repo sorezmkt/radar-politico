@@ -1,0 +1,70 @@
+name: Atualizar emendas e publicar
+
+on:
+  schedule:
+    - cron: "23 11 * * *"   # todo dia às 08:23 (horário de Brasília); o Portal da Transparência atualiza as emendas diariamente
+  workflow_dispatch:
+  push:
+    branches: [emendas]   # temporário: roda com dados reais no ramo de desenvolvimento
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: radar-politico
+  cancel-in-progress: false
+
+jobs:
+  dados:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Testar as regras de alerta
+        run: python -m unittest discover -s tests
+
+      - name: Baixar emendas do Portal da Transparência e do Transferegov
+        run: python scripts/build_emendas.py
+
+      - name: Salvar dados no repositório
+        if: always()
+        run: |
+          git config user.name "radar-bot"
+          git config user.email "radar-bot@users.noreply.github.com"
+          git add data/emendas || true
+          if git diff --cached --quiet; then
+            echo "Sem mudanças nos dados."
+          else
+            git commit -m "Atualiza emendas $(date -u +%F)"
+            git pull --rebase -X theirs origin "${GITHUB_REF_NAME}" || true
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
+
+      - name: Preparar site
+        if: github.ref_name == 'main'
+        run: |
+          mkdir -p _site
+          cp -r *.html assets data .nojekyll _site/
+
+      - uses: actions/upload-pages-artifact@v3
+        if: github.ref_name == 'main'
+        with:
+          path: _site
+
+  publicar:
+    needs: dados
+    if: github.ref_name == 'main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
