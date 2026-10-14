@@ -1,0 +1,16 @@
+name: Sondar arquivos do TSE (temporário)
+on:
+  workflow_dispatch:
+  push:
+    branches: [partidos]
+    paths: [scripts/sondar_tse.py, .github/workflows/sondar-tse.yml]
+jobs:
+  sondar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: python scripts/sondar_tse.py
+      - run: python scripts/sondar_tse.py prestacao_contas_anual_partidaria_notafiscal_2024.zip
