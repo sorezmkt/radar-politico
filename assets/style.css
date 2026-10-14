@@ -1,19 +1,20 @@
 /* Radar Político — boletim cívico: busca no topo, ficha do deputado em cartões empilhados (2 colunas no desktop) */
 :root{
-  --bg:#EEF1F6; --surface:#FFFFFF; --ink:#14213A; --muted:#5B6680; --line:#D8DEE8;
-  --accent:#1F3FA8; --accent-soft:#E3E9FB;
-  --good:#1D8A57; --warn:#B9800C; --bad:#C23E2C; --nd:#8A93A8;
-  --good-soft:#E2F3EA; --warn-soft:#FBF0D9; --bad-soft:#FBE5E1; --nd-soft:#ECEFF4;
+  /* Paleta: azul #0e2e6c (livre), verde #009e3b (números bons), vermelho #e14949 (números ruins), amarelo #ffdf00 (só detalhes) */
+  --bg:#EEF1F7; --surface:#FFFFFF; --ink:#0B1F49; --muted:#56627E; --line:#D6DCE8;
+  --accent:#0e2e6c; --accent-soft:#E2E8F4; --yellow:#ffdf00;
+  --good:#009e3b; --warn:#8A6E00; --bad:#e14949; --nd:#8A93A8;
+  --good-soft:#E0F4E7; --warn-soft:#FFF8CC; --bad-soft:#FCE6E6; --nd-soft:#ECEFF4;
   --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark){ :root{
-  --bg:#0D1320; --surface:#151D2E; --ink:#E6EBF4; --muted:#93A0BA; --line:#26314A;
-  --accent:#86A2FF; --accent-soft:#1E2A4A;
-  --good:#3CC383; --warn:#E2A93B; --bad:#F06A57; --nd:#7D879E;
-  --good-soft:#15301F; --warn-soft:#33280F; --bad-soft:#3A1A16; --nd-soft:#1C2436; color-scheme:dark }}
+  --bg:#08142E; --surface:#0F1F42; --ink:#E6EBF4; --muted:#9AA6C2; --line:#22345E;
+  --accent:#8FA9E6; --accent-soft:#1A2B55; --yellow:#ffdf00;
+  --good:#2BC067; --warn:#ffdf00; --bad:#EF6B6B; --nd:#7D879E;
+  --good-soft:#0F3322; --warn-soft:#332C05; --bad-soft:#3A1A1C; --nd-soft:#1A2646; color-scheme:dark }}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;padding-inline:16px;padding-block:0 48px}
@@ -404,3 +405,6 @@ details.dsec[hidden]{display:none}
 details.dsec.method>p,details.dsec.method>ol{margin:0 16px 12px;padding:0}
 details.dsec.method>ol{padding-left:20px}
 @media (max-width:380px){.duas .nv{font-size:29px}}
+
+/* Detalhe amarelo da paleta (uso pontual) */
+header.top{border-bottom:3px solid var(--yellow);padding-bottom:12px}
