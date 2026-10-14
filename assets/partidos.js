@@ -27,7 +27,7 @@
   }
 
   function render() {
-    const ano = ANO, el = IDX.eleitorais.includes(+ano);
+    const ano = ANO, el = IDX.eleitorais.includes(+ano), parc = (IDX.parciais || []).includes(+ano);
     $('anoT').textContent = ano;
     document.querySelectorAll('#anos button').forEach(b => b.setAttribute('aria-pressed', b.dataset.a === String(ano)));
     document.querySelectorAll('#ordem button').forEach(b => b.setAttribute('aria-pressed', b.dataset.o === ORD));
@@ -35,7 +35,7 @@
     const ativos = ps.filter(p => !p.anos[ano].sem_movimento);
     const soma = k => ps.reduce((s, p) => s + (p.anos[ano][k] || 0), 0);
     const ref = (IDX.referencias || {})[ano];
-    $('anoSub').textContent = `${ativos.length} diretórios nacionais com movimento${el ? ' · ano de eleição' : ''}${ref ? ` · arquivo do TSE gerado em ${ref}` : ''}`;
+    $('anoSub').textContent = `${parc ? 'Parcial: só o que os partidos já enviaram ao TSE · ' : ''}${ativos.length} diretórios nacionais com movimento${el ? ' · ano de eleição' : ''}${ref ? ` · arquivo do TSE gerado em ${ref}` : ''}`;
     const pub = soma('publico'), rec = soma('receita');
     $('totais').innerHTML = [
       ['Receberam', curto(rec), 'em dinheiro no ano'],
@@ -78,8 +78,9 @@
     $('upd').textContent = d ? `Dados atualizados em ${d.split('-').reverse().join('/')} às ${h}` : '';
     const anos = IDX.anos.map(String);
     const pedido = new URLSearchParams(location.search).get('ano') || lerg('rp-ano');
-    ANO = anos.includes(pedido) ? pedido : anos[anos.length - 1];
-    $('anos').innerHTML = anos.map(a => `<button type="button" data-a="${a}">${a}</button>`).join('');
+    const fechados = anos.filter(a => !(IDX.parciais || []).includes(+a));
+    ANO = anos.includes(pedido) ? pedido : (fechados[fechados.length - 1] || anos[anos.length - 1]);
+    $('anos').innerHTML = anos.map(a => `<button type="button" data-a="${a}">${a}${(IDX.parciais || []).includes(+a) ? ' (parcial)' : ''}</button>`).join('');
     if (IDX.ipca && IDX.ipca.ate) $('ipcaRef').textContent = `até ${IDX.ipca.ate}`;
     const nomes = { duplicidade: 'Possíveis pagamentos duplicados', fora_padrao: 'Valores fora do padrão', concentracao: 'Concentração de pagamentos', temporal: 'Padrões no tempo', documental: 'Inconsistências documentais', cnpj: 'Situação dos fornecedores na Receita' };
     $('regras').innerHTML = Object.entries(IDX.regras || {}).map(([k, t]) => `<li><b>${nomes[k] || k}.</b> ${esc(t)}</li>`).join('');

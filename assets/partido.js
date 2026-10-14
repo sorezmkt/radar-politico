@@ -37,7 +37,7 @@
     const ordem = { bad: 0, warn: 1, nd: 2, good: 3 };
     return [...a.alertas].sort((x, y) => ordem[x.status] - ordem[y.status]).map(al => {
       const dados = (al.dados || []).map(g => `<div class="grp"><span class="label">${esc(g.grupo)}</span>${g.registros ? `<div class="regs">${g.registros.map(registro).join('')}</div>` : ''}${g.linhas ? `<ul>${g.linhas.map(l => `<li>${esc(l)}</li>`).join('')}</ul>` : ''}</div>`).join('');
-      return `<details class="al ${al.status}"${al.status === 'bad' ? ' open' : ''}><summary><div class="alh"><b>${esc(al.titulo)}</b><span class="tag v-${al.status}">${TX[al.status]}</span></div><p>${esc(al.encontrado)}</p></summary>
+      return `<details class="al ${al.status}"><summary><div class="alh"><b>${esc(al.titulo)}</b><span class="tag v-${al.status}">${TX[al.status]}</span></div><p>${esc(al.encontrado)}</p></summary>
         <div class="albody">
           <div><h4>Regra aplicada</h4><p>${esc(al.regra)}</p></div>
           ${dados ? `<div><h4>Dados que sustentam a observação</h4><div class="stack" style="gap:10px">${dados}</div></div>` : ''}
@@ -97,8 +97,8 @@
     $('av').textContent = P.sg;
     $('nome').textContent = P.nome;
     $('meta').textContent = `Diretório nacional · ${P.sg}${P.cnpj ? ' · CNPJ ' + P.cnpj : ''}`;
-    $('facts').innerHTML = `${a.eleitoral ? '<span class="chip">Ano de eleição</span>' : ''}<a class="chip" href="https://divulgaspca.tse.jus.br/" target="_blank" rel="noopener">Consultar no DivulgaSPCA ↗</a><a class="chip" href="https://dadosabertos.tse.jus.br/dataset/prestacao-de-contas-partidarias-${ANO}" target="_blank" rel="noopener">Arquivo do TSE de ${ANO} ↗</a>`;
-    $('anos').innerHTML = anos.map(x => `<button type="button" data-a="${x}" aria-pressed="${x === String(ANO)}">${x}</button>`).join('');
+    $('facts').innerHTML = `${a.parcial ? '<span class="chip" style="color:var(--warn);border-color:var(--warn)">Ano parcial</span>' : ''}${a.eleitoral ? '<span class="chip">Ano de eleição</span>' : ''}<a class="chip" href="https://divulgaspca.tse.jus.br/" target="_blank" rel="noopener">Consultar no DivulgaSPCA ↗</a><a class="chip" href="https://dadosabertos.tse.jus.br/dataset/prestacao-de-contas-partidarias-${ANO}" target="_blank" rel="noopener">Arquivo do TSE de ${ANO} ↗</a>`;
+    $('anos').innerHTML = anos.map(x => `<button type="button" data-a="${x}" aria-pressed="${x === String(ANO)}">${x}${P.anos[x].parcial ? ' (parcial)' : ''}</button>`).join('');
     $('voltar').href = `partidos.html?ano=${ANO}`;
 
     const [rc, rl, rn] = a.sem_movimento ? ['nd', 'Sem movimento', 0] : (RISCO[a.risco.nivel] || RISCO.baixo);
@@ -115,7 +115,7 @@
       ['Repassou', curto(Tr.total), `${curto(Tr.candidatos)} a candidatos`],
       ['Gastou', curto(Gs.total), `${Gs.n.toLocaleString('pt-BR')} lançamentos`],
     ].map(([l, v, s]) => `<div class="tot"><span class="label">${l}</span><span class="v num">${v}</span><small>${s}</small></div>`).join('');
-    $('numsNote').textContent = 'Recebido e gasto no mesmo ano não precisam fechar: o partido pode usar saldo de anos anteriores ou guardar parte do dinheiro.';
+    $('numsNote').textContent = (a.parcial ? `Ano parcial: só o que o partido já enviou ao TSE. A conta completa de ${ANO} vence em 30/06/${+ANO + 1}. ` : '') + 'Recebido e gasto no mesmo ano não precisam fechar: o partido pode usar saldo de anos anteriores ou guardar parte do dinheiro.';
 
     $('alerts').innerHTML = alertas(a);
 
@@ -171,7 +171,8 @@
       return;
     }
     const anos = Object.keys(P.anos).sort();
-    ANO = anos.includes(String(ano)) ? String(ano) : anos[anos.length - 1];
+    const fechados = anos.filter(x => !P.anos[x].parcial);
+    ANO = anos.includes(String(ano)) ? String(ano) : (fechados[fechados.length - 1] || anos[anos.length - 1]);
     $('perfil').hidden = false; $('loading').hidden = true;
     render();
     const url = `partido.html?p=${slug}&ano=${ANO}`;
