@@ -441,6 +441,8 @@ def consultar_cnpjs(cnpjs, primeiros=None):
     limite_idade = (HOJE - dt.timedelta(days=60)).isoformat()
     novos = [c for c in sorted(cnpjs) if c not in cache or cache[c].get("ts", "") < limite_idade or precisa_reconsultar(cache[c])
              or (precisa_detalhe(cache[c]) and aberta_ha_pouco(cache[c], (primeiros or {}).get(c)))]
+    # empresas recém-abertas primeiro: são as que mudam um alerta se a consulta não couber no tempo desta execução
+    novos.sort(key=lambda c: (not (c in cache and aberta_ha_pouco(cache[c], (primeiros or {}).get(c))), c))
     log(f"CNPJ: {len(cnpjs)} necessários, {len(novos)} a consultar")
     inicio, feitos = time.time(), 0
     for c in novos[:LIMITE_CNPJ_NOVOS]:
@@ -450,7 +452,7 @@ def consultar_cnpjs(cnpjs, primeiros=None):
         info = None
         for url in (f"https://brasilapi.com.br/api/cnpj/v1/{c}", f"https://minhareceita.org/{c}"):
             try:
-                j = json.loads(baixar(url, tentativas=2, timeout=30))
+                j = json.loads(baixar(url, tentativas=1, timeout=20))  # a outra API é a segunda tentativa
                 info = {
                     "situacao": norm(j.get("descricao_situacao_cadastral") or ""),
                     "abertura": j.get("data_inicio_atividade") or "",
