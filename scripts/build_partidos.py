@@ -34,6 +34,8 @@ import urllib.request
 import zipfile
 from collections import Counter, defaultdict
 
+from comum import precisa_reconsultar, pontuar, situacao_cnpj
+
 csv.field_size_limit(10_000_000)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -267,8 +269,16 @@ def categoria(ds):
 
 
 # gastos que não são compras de bens ou serviços (ficam fora das regras de fornecedor)
+# Despesas judiciais entram aqui porque costumam ser depósitos, bloqueios ou condenações pagos por ordem da Justiça
+# (muitas vezes ao Banco do Brasil ou à Caixa, que guardam os depósitos judiciais), e não compras escolhidas pelo partido.
+# Elas continuam no total de gastos e aparecem à parte na página.
 NAO_FORNECEDOR = ("PESSOAL", "TRIBUTOS", "DESPESAS FINANCEIRAS", "FUNDAÇÃO DE PESQUISA", "RECOLHIMENTOS AO ERÁRIO",
-                  "DEPÓSITOS RESTITUÍVEIS", "TRANSFERÊNCIAS", "ASSUNÇÃO", "OBRIGAÇÕES DIVERSAS", "ADIANTAMENTOS")
+                  "DEPÓSITOS RESTITUÍVEIS", "DESPESAS JUDICIAIS", "TRANSFERÊNCIAS", "ASSUNÇÃO", "OBRIGAÇÕES DIVERSAS", "ADIANTAMENTOS")
+JUDICIAIS = ("DESPESAS JUDICIAIS", "DEPÓSITOS RESTITUÍVEIS")
+# gastos que não seguem o ritmo normal do partido (ordem judicial, devolução por julgamento): ficam fora dos testes de padrão no tempo
+EXTRAORDINARIOS = JUDICIAIS + ("RECOLHIMENTOS AO ERÁRIO",)
+# categorias da página que não entram no teste de salto entre anos (dependem de julgamentos, impostos ou do banco, não de escolhas de gasto)
+SEM_SALTO = {"Devoluções ao Tesouro e multas", "Despesas judiciais", "Tributos", "Tarifas bancárias e juros"}
 # categorias que naturalmente se repetem com o mesmo valor (folha, contas mensais, aluguel)
 REPETEM = NAO_FORNECEDOR + ("ALUGUÉIS", "TELECOMUNICAÇÕES", "ENERGIA", "ÁGUA", "SEGUROS", "ASSINATURAS",
                             "SERVIÇOS DE LIMPEZA", "SEGURANÇA E VIGILÂNCIA")
@@ -421,7 +431,7 @@ def consultar_cnpjs(cnpjs):
     except (FileNotFoundError, ValueError):
         cache = {}
     limite_idade = (HOJE - dt.timedelta(days=60)).isoformat()
-    novos = [c for c in sorted(cnpjs) if c not in cache or cache[c].get("ts", "") < limite_idade]
+    novos = [c for c in sorted(cnpjs) if c not in cache or cache[c].get("ts", "") < limite_idade or precisa_reconsultar(cache[c])]
     log(f"CNPJ: {len(cnpjs)} necessários, {len(novos)} a consultar")
     inicio, feitos = time.time(), 0
     for c in novos[:LIMITE_CNPJ_NOVOS]:
@@ -435,6 +445,7 @@ def consultar_cnpjs(cnpjs):
                 info = {
                     "situacao": norm(j.get("descricao_situacao_cadastral") or ""),
                     "abertura": j.get("data_inicio_atividade") or "",
+                    "data_situacao": j.get("data_situacao_cadastral") or "",
                     "razao": j.get("razao_social") or "",
                     "ts": HOJE.isoformat(),
                 }
@@ -500,6 +511,8 @@ def resumo_ano(sg, ano, D, R, A):
     por_fonte = defaultdict(float)
     cats = defaultdict(lambda: [0.0, defaultdict(float)])
     mensal = [0.0] * 12
+    mensal_rec = [0.0] * 12  # sem gastos extraordinários (ordem judicial, devoluções)
+    judiciais = 0.0
     finalid = defaultdict(float)
     for r in G:
         v = valor_despesa(r)
@@ -508,13 +521,18 @@ def resumo_ano(sg, ano, D, R, A):
         c = cats[categoria(ds)]
         c[0] += v
         c[1][titulo(base_gasto(ds))] += v
+        extra = ds.upper().startswith(EXTRAORDINARIOS)
+        if ds.upper().startswith(JUDICIAIS):
+            judiciais += v
         d = data_br(r.get("DT_PAGAMENTO"))
         if d and d.year == ano:
             mensal[d.month - 1] += v
+            if not extra:
+                mensal_rec[d.month - 1] += v
         finalid[finalidade(ds)] += v
 
     # fornecedores (somente compras de bens e serviços)
-    forn = defaultdict(lambda: {"valor": 0.0, "n": 0, "cats": Counter(), "nome": "", "doc": "", "primeiro": None})
+    forn = defaultdict(lambda: {"valor": 0.0, "n": 0, "cats": Counter(), "nome": "", "doc": "", "primeiro": None, "ultimo": None})
     for r in G:
         ds = limpo(r.get("DS_GASTO"))
         if not compra(ds, r):
@@ -531,6 +549,8 @@ def resumo_ano(sg, ano, D, R, A):
         d = data_br(r.get("DT_PAGAMENTO"))
         if d and (f["primeiro"] is None or d < f["primeiro"]):
             f["primeiro"] = d
+        if d and (f["ultimo"] is None or d > f["ultimo"]):
+            f["ultimo"] = d
     total_compras = sum(f["valor"] for f in forn.values())
 
     # transferências (para candidatos e outras direções do partido)
@@ -591,6 +611,8 @@ def resumo_ano(sg, ano, D, R, A):
             "categorias": [{"nome": n, "valor": r2(c[0]), "itens": [{"nome": s, "valor": r2(v)} for s, v in sorted(c[1].items(), key=lambda x: -x[1])[:6]]}
                            for n, c in sorted(cats.items(), key=lambda x: -x[1][0])],
             "mensal": [r2(v) for v in mensal],
+            "mensal_recorrente": [r2(v) for v in mensal_rec],
+            "judiciais": r2(judiciais),
             "finalidade": {k: r2(v) for k, v in finalid.items()},
             "compras": r2(total_compras),
             "n": len(G),
@@ -621,8 +643,12 @@ def alerta(id_, titulo_, st, encontrado, regra, verificar, conclusao, dados=None
             "verificar": verificar, "conclusao": conclusao, "dados": dados or [], "valor": r2(valor) if valor else None}
 
 
+def chave_forn(r):
+    return re.sub(r"\D", "", r.get("NR_CPF_CNPJ_FORNECEDOR", "")) or norm(r.get("NM_FORNECEDOR"))
+
+
 def regra_duplicidade(G, A):
-    """Alerta 1. O mesmo documento pago mais vezes do que o valor dele, ou pagamentos iguais ao mesmo fornecedor no mesmo dia."""
+    """Alerta 1. O mesmo documento pago mais vezes do que o valor dele. Pagamentos iguais no mesmo dia só ficam listados."""
     por_sq = defaultdict(list)
     for r in G:
         por_sq[limpo(r.get("SQ_DESPESA")) or id(r)].append(r)
@@ -661,44 +687,59 @@ def regra_duplicidade(G, A):
                 bloco.append(d)
                 continue
             if len(bloco) > 1:
-                excesso = sum(x["pago"] for x in bloco) - bloco[0]["vdoc"]
+                pago = sum(x["pago"] for x in bloco)
+                excesso = pago - bloco[0]["vdoc"]
                 if excesso >= 0.5 * bloco[0]["vdoc"]:
-                    fortes.append((excesso, bloco))
+                    fortes.append((excesso, pago, bloco))
             bloco = [d] if d is not None else []
-    vistos = {d["sq"] for _, b in fortes for d in b}
+    vistos = {d["sq"] for _, _, b in fortes for d in b}
     fracos = []
     for g in fracos_k.values():
         g = [d for d in g if d["sq"] not in vistos]
         if len(g) > 1:
             fracos.append((sum(d["pago"] for d in g[1:]), g))
     fortes.sort(key=lambda x: -x[0]); fracos.sort(key=lambda x: -x[0])
-    exc_f = sum(e for e, _ in fortes)
+    exc_f = sum(e for e, _, _ in fortes)
     exc_w = sum(e for e, _ in fracos)
-    if exc_f < 10000 and exc_w < 100000:
-        txt = "Nenhum documento pago mais de uma vez." if not fortes else f"{len(fortes)} {'documento pago' if len(fortes) == 1 else 'documentos pagos'} de novo em valor pequeno ({brl_curto(exc_f)}), abaixo do limite do alerta."
-        if fracos:
-            txt += f" Há {len(fracos)} {'caso menor' if len(fracos) == 1 else 'casos menores'} de pagamentos de mesmo valor ao mesmo fornecedor no mesmo dia ({brl_curto(exc_w)}), abaixo do limite do alerta."
-        dados = [{"grupo": "Mesmo documento, pago de novo", "registros": [registro(d["r"], A, d["pago"]) for d in b[:4]]} for _, b in fortes[:3]]
-        dados += [{"grupo": "Mesmo valor, mesmo dia", "registros": [registro(d["r"], A, d["pago"]) for d in g[:4]]} for _, g in fracos[:3]]
-        return alerta("duplicidade", "Possíveis pagamentos duplicados", "good", txt, REGRA_DUP, "", "Nenhuma possível duplicidade relevante encontrada.", dados)
-    dados = [{"grupo": "Mesmo documento, pago de novo", "registros": [registro(d["r"], A, d["pago"]) for d in b[:4]]} for _, b in fortes[:6]]
-    dados += [{"grupo": "Mesmo valor, mesmo dia", "registros": [registro(d["r"], A, d["pago"]) for d in g[:4]]} for _, g in fracos[:max(2, 8 - len(dados))]]
+
+    def grupo_forte(excesso, pago, b):
+        return {"grupo": f"Mesmo documento, pago de novo: documento de {brl(b[0]['vdoc'])}, {len(b)} pagamentos somando {brl(pago)}, possível excedente de {brl(excesso)}",
+                "registros": [registro(d["r"], A, d["pago"]) for d in b[:4]]}
+
+    def grupo_fraco(g):
+        return {"grupo": "Mesmo valor, mesmo dia, documentos diferentes (só para conferência, não acende o alerta)",
+                "registros": [registro(d["r"], A, d["pago"]) for d in g[:4]]}
+
+    obs_fracos = ""
+    if fracos:
+        obs_fracos = (f" {len(fracos)} {'caso' if len(fracos) == 1 else 'casos'} de pagamentos de mesmo valor ao mesmo fornecedor no mesmo dia, com documentos diferentes ou sem número "
+                      f"({brl_curto(exc_w)}), ficam listados para conferência; sozinhos eles não indicam duplicidade.")
+    if exc_f < 10000:
+        txt = "Nenhum documento pago mais de uma vez." if not fortes else f"{len(fortes)} {'documento pago' if len(fortes) == 1 else 'documentos pagos'} de novo em valor pequeno ({brl_curto(exc_f)} além do valor do documento), abaixo do limite do alerta."
+        dados = [grupo_forte(*x) for x in fortes[:3]] + [grupo_fraco(g) for _, g in fracos[:3]]
+        return alerta("duplicidade", "Possíveis pagamentos duplicados", "good", txt + obs_fracos, REGRA_DUP, "", "Nenhuma possível duplicidade relevante encontrada.", dados)
+    dados = [grupo_forte(*x) for x in fortes[:6]] + [grupo_fraco(g) for _, g in fracos[:2]]
     st = "bad" if exc_f >= 50000 else "warn"
-    partes = []
-    if fortes:
-        partes.append(f"{len(fortes)} {'documento foi pago' if len(fortes) == 1 else 'documentos foram pagos'} mais de uma vez em poucos dias, com o mesmo fornecedor, número e valor, somando {brl_curto(exc_f)} além do valor do documento")
-    if fracos and exc_w >= 100000 or (fortes and fracos):
-        partes.append(f"{len(fracos)} {'caso' if len(fracos) == 1 else 'casos'} de pagamentos de mesmo valor ao mesmo fornecedor no mesmo dia, com números de documento diferentes ou genéricos ({brl_curto(exc_w)})")
-    return alerta("duplicidade", "Possíveis pagamentos duplicados", st, "; ".join(partes) + ".", REGRA_DUP,
-                  "Se os lançamentos são a mesma obrigação registrada duas vezes, parcelas de um mesmo contrato ou serviços diferentes que custam o mesmo valor.",
-                  "Há possível duplicidade a verificar. Os registros disponíveis não permitem concluir que houve pagamento indevido.",
-                  dados, exc_f + exc_w)
+    chaves = defaultdict(float)
+    for e, _, b in fortes:
+        chaves[chave_forn(b[0]["r"])] += e
+    a = alerta("duplicidade", "Possíveis pagamentos duplicados", st,
+               f"{len(fortes)} {'documento foi pago' if len(fortes) == 1 else 'documentos foram pagos'} mais de uma vez em poucos dias, com o mesmo fornecedor, número e valor. "
+               f"O possível excedente, contando só o que passou do valor de cada documento, é de {brl_curto(exc_f)}." + obs_fracos,
+               REGRA_DUP,
+               "Se houve estorno ou devolução do valor pago a mais, se os lançamentos são parcelas de um mesmo contrato registradas com o mesmo número ou se são a mesma obrigação lançada duas vezes.",
+               "Há possível duplicidade a verificar. Os dados abertos não mostram estornos, então não permitem concluir que houve pagamento indevido.",
+               dados, exc_f)
+    a["_chaves"] = dict(chaves)
+    return a
 
 
 REGRA_DUP = ("Olha as compras de bens e serviços de fornecedores privados. Documento pago de novo: o mesmo fornecedor, número de documento e valor aparecem em lançamentos com até 10 dias de distância, "
-             "e a soma paga passa em pelo menos 50% o valor do documento (quando não passa, é só o mesmo documento dividido entre fontes de recurso). "
-             "Pagamentos iguais no mesmo dia: mesmo fornecedor, data e valor, a partir de R$ 5 mil, fora viagens. Folha, tributos, tarifas, aluguel e contas mensais ficam de fora porque se repetem por natureza. "
-             "Fica amarelo quando os documentos pagos de novo somam R$ 10 mil ou quando os pagamentos iguais no mesmo dia somam R$ 100 mil, e vermelho quando os documentos pagos de novo somam R$ 50 mil.")
+             "e a soma paga passa em pelo menos 50% o valor do documento (quando não passa, é só o mesmo documento dividido entre fontes de recurso ou em parcelas). "
+             "O possível excedente é a soma paga menos o valor do documento: três pagamentos de R$ 45 mil para um documento de R$ 45 mil dão R$ 90 mil de excedente, não R$ 135 mil. "
+             "Folha, tributos, tarifas, despesas judiciais, aluguel e contas mensais ficam de fora porque se repetem por natureza. "
+             "Pagamentos de mesmo valor ao mesmo fornecedor no mesmo dia, com documentos diferentes, aparecem só para conferência. "
+             "Fica amarelo quando o excedente soma R$ 10 mil e vermelho quando soma R$ 50 mil.")
 
 
 def regra_fora_padrao(G, A, ref, fator):
@@ -721,36 +762,58 @@ def regra_fora_padrao(G, A, ref, fator):
             continue
         vr = v * fator
         if vr >= 100000 and vr > st["p995"] and vr > 30 * st["mediana"]:
-            achados.append((vr / st["mediana"], r, v, st))
-    if not achados:
-        return alerta("fora_padrao", "Valores fora do padrão", "good",
-                      "Nenhum documento muito acima do que os partidos costumam pagar na mesma categoria.", REGRA_FP, "",
-                      "Nenhum valor fora do padrão.")
-    achados.sort(key=lambda x: -x[2])
-    total = sum(v for _, _, v, _ in achados)
-    dados = []
-    for vezes, r, v, st in achados[:8]:
-        reg = registro(r, A, v)
-        reg["comparacao"] = f"{vezes:.0f} vezes a mediana de {brl(st['mediana'])} paga pelos partidos nesta categoria ({st['n']} documentos comparados)"
-        dados.append({"grupo": titulo(base_gasto(limpo(r.get('DS_GASTO')))), "registros": [reg]})
-    st = "bad" if len(achados) >= 5 and total >= 5_000_000 else "warn"
-    return alerta("fora_padrao", "Valores fora do padrão", st,
-                  f"{len(achados)} {'documento custa' if len(achados) == 1 else 'documentos custam'} bem mais do que o normal para a categoria, somando {brl_curto(total)}.",
-                  REGRA_FP,
-                  "Se o serviço tem tamanho, duração ou quantidade que justifiquem o valor (um contrato anual, um evento nacional, uma campanha inteira) e se há outros orçamentos ou referências de preço.",
-                  "Valores altos não significam irregularidade. Indicam onde a comparação com contratos parecidos vale a pena.",
-                  dados, total)
+            generica = limpo(r.get("DS_GASTO")).upper().startswith(GENERICAS)
+            achados.append((vr / st["mediana"], r, v, st, generica))
+    validos = [x for x in achados if not x[4]]
+    if not validos:
+        txt = "Nenhum documento muito acima do que os partidos costumam pagar na mesma categoria."
+        dados = []
+        if achados:
+            txt += f" {len(achados)} {'documento de categoria genérica ficou' if len(achados) == 1 else 'documentos de categoria genérica ficaram'} acima da referência, mas a comparação não é confiável (veja abaixo)."
+            dados = [{"grupo": "Categoria genérica: valor alto sem referência de preço confiável", "registros": [_reg_fp(x, A) for x in achados[:4]]}]
+        return alerta("fora_padrao", "Valores fora do padrão", "good", txt, REGRA_FP, "", "Nenhum valor fora do padrão em categoria comparável.", dados)
+    validos.sort(key=lambda x: -x[2])
+    total = sum(x[2] for x in validos)
+    dados = [{"grupo": titulo(base_gasto(limpo(x[1].get('DS_GASTO')))), "registros": [_reg_fp(x, A)]} for x in validos[:8]]
+    genericos = [x for x in achados if x[4]]
+    if genericos:
+        dados.append({"grupo": "Categoria genérica: valor alto sem referência de preço confiável (não conta para o alerta)", "registros": [_reg_fp(x, A) for x in genericos[:3]]})
+    st = "bad" if len(validos) >= 5 and total >= 5_000_000 else "warn"
+    chaves = defaultdict(float)
+    for x in validos:
+        chaves[chave_forn(x[1])] += x[2]
+    a = alerta("fora_padrao", "Valores fora do padrão", st,
+               f"{len(validos)} {'documento custa' if len(validos) == 1 else 'documentos custam'} bem mais do que os partidos costumam pagar na mesma categoria, somando {brl_curto(total)}.",
+               REGRA_FP,
+               "Se o serviço tem tamanho, duração ou quantidade que justifiquem o valor (um contrato anual, um evento nacional, uma campanha inteira) e se há outros orçamentos ou referências de preço.",
+               "Valor atípico em relação à referência, não indício de irregularidade por si só. Indica onde a comparação com contratos parecidos vale a pena.",
+               dados, total)
+    a["_chaves"] = dict(chaves)
+    return a
+
+
+def _reg_fp(x, A):
+    vezes, r, v, st, generica = x
+    reg = registro(r, A, v)
+    reg["comparacao"] = (f"{vezes:.0f} vezes a mediana de {brl(st['mediana'])} paga pelos partidos nesta categoria ({st['n']} documentos comparados, "
+                         f"valores corrigidos pela inflação)")
+    return reg
 
 
 REGRA_FP = ("Para cada tipo de compra, junta os documentos de todos os diretórios nacionais em todos os anos, corrigidos pela inflação, e calcula a mediana e o valor que só 0,5% dos documentos ultrapassa. "
-            "Entra no alerta o documento de R$ 100 mil ou mais que passa desse limite e custa mais de 30 vezes a mediana. Só tipos de gasto com pelo menos 50 documentos são comparados, e pagamentos a órgãos públicos ficam de fora. "
+            "Entra no alerta o documento de R$ 100 mil ou mais que passa desse limite e custa mais de 30 vezes a mediana. Só tipos de gasto com pelo menos 50 documentos são comparados. "
+            "Pagamentos a órgãos públicos e despesas judiciais ficam de fora, e documentos de categorias genéricas (como \"outras despesas\") aparecem só para conferência, porque misturam coisas diferentes e não têm preço de referência confiável. "
             "Fica vermelho quando há 5 documentos ou mais e eles somam R$ 5 milhões no ano.")
 
 
-def regra_concentracao(forn, total_compras, refs_ano, forn_ant):
+def regra_concentracao(forn, total_compras, refs_ano, forn_ant, judiciais=0.0):
     """Alerta 3. Quanto o maior fornecedor e os cinco maiores representam nas compras do partido."""
+    nota_jud = ""
+    if judiciais >= 100000:
+        nota_jud = (f" {brl_curto(judiciais)} em despesas judiciais ficaram fora deste cálculo, porque costumam ser depósitos, bloqueios ou condenações "
+                    "pagos por ordem da Justiça, e não compras.")
     if total_compras <= 0 or not forn:
-        return alerta("concentracao", "Concentração de pagamentos", "nd", "Sem compras de bens e serviços no ano.", REGRA_CONC, "", "Sem dados para avaliar.")
+        return alerta("concentracao", "Concentração de pagamentos", "nd", "Sem compras de bens e serviços no ano." + nota_jud, REGRA_CONC, "", "Sem dados para avaliar.")
     ords = sorted(forn.values(), key=lambda f: -f["valor"])
     top1 = ords[0]["valor"] / total_compras
     top5 = sum(f["valor"] for f in ords[:5]) / total_compras
@@ -758,69 +821,85 @@ def regra_concentracao(forn, total_compras, refs_ano, forn_ant):
     st = "bad" if pr >= .9 else "warn" if pr >= .75 else "good"
     dados = [{"grupo": "Maiores fornecedores", "registros": [
         {"fornecedor": f["nome"] or "Não informado", "doc": fmt_doc(f["doc"]), "valor": r2(f["valor"]),
-         "descricao": f"{pc(f['valor'] / total_compras)} das compras · {f['n']} lançamentos", "url": ""} for f in ords[:5]]}]
+         "descricao": f"{pc(f['valor'] / total_compras)} das compras · {f['n']} lançamentos · {f['cats'].most_common(1)[0][0]}", "url": ""} for f in ords[:5]]}]
     extra = ""
     k0 = ords[0]["doc"]
     if forn_ant is not None and k0 and k0 not in forn_ant and top1 >= .3:
-        extra = f" O maior fornecedor do ano não recebeu nada do diretório nacional no ano anterior."
+        extra = " O maior fornecedor do ano não recebeu nada do diretório nacional no ano anterior."
         if st == "good":
             st = "warn"
-    return alerta("concentracao", "Concentração de pagamentos", st,
-                  f"O maior fornecedor, {ords[0]['nome'] or 'não informado'}, recebeu {pc(top1)} das compras de bens e serviços, e os cinco maiores receberam {pc(top5)}. "
-                  f"A concentração no maior fornecedor é maior que a de {pc(pr, 0)} dos diretórios nacionais no mesmo ano.{extra}",
-                  REGRA_CONC,
-                  "Se os contratos principais passaram por cotação ou concorrência e se o fornecedor tem estrutura compatível com o volume recebido.",
-                  "Concentração alta pode ser normal (um escritório de advocacia que cuida de todo o partido, por exemplo). Mostra onde está a maior parte do dinheiro.",
-                  dados, ords[0]["valor"])
+    a = alerta("concentracao", "Concentração de pagamentos", st,
+               f"O maior fornecedor, {ords[0]['nome'] or 'não informado'}, recebeu {pc(top1)} das compras de bens e serviços, e os cinco maiores receberam {pc(top5)}. "
+               f"A concentração no maior fornecedor é maior que a de {pc(pr, 0)} dos diretórios nacionais no mesmo ano.{extra}{nota_jud}",
+               REGRA_CONC,
+               "Se os contratos principais passaram por cotação ou concorrência e se o fornecedor tem estrutura compatível com o volume recebido.",
+               "Concentração alta indica dependência de um fornecedor, não favorecimento. Pode ser normal (um escritório de advocacia que cuida de todo o partido, por exemplo).",
+               dados, ords[0]["valor"])
+    if st != "good":
+        a["_chaves"] = {ords[0]["doc"] or norm(ords[0]["nome"]): ords[0]["valor"]}
+    return a
 
 
-REGRA_CONC = ("Considera só compras de bens e serviços de fornecedores privados (fora pessoal, tributos, tarifas, repasse à fundação, devoluções, órgãos públicos e o próprio partido). Calcula a fatia do maior fornecedor e compara com todos os diretórios nacionais do mesmo ano: "
+REGRA_CONC = ("Considera só compras de bens e serviços de fornecedores privados: ficam fora pessoal, tributos, tarifas, repasse à fundação, devoluções, despesas judiciais, órgãos públicos e o próprio partido. "
+              "Calcula a fatia do maior fornecedor e compara com todos os diretórios nacionais do mesmo ano, com os mesmos critérios: "
               "fica amarelo quem está acima de 75% deles e vermelho quem está acima de 90%. Também fica amarelo quando o maior fornecedor, com 30% ou mais das compras, não recebia nada no ano anterior.")
 
 
-def regra_temporal(ano, resumo, historico, fator_ano, fatores):
+def regra_temporal(ano, resumo, historico, fator_ano, fatores, parcial=False):
     """Alerta 4. Mês com gasto muito acima do normal e categorias que saltaram em relação ao próprio histórico."""
-    mensal = resumo["gastos"]["mensal"]
+    mensal = resumo["gastos"]["mensal_recorrente"]
     ativos = [v for v in mensal if v > 0]
-    achados, dados = [], []
+    achados, avisos = [], []
     if len(ativos) >= 6:
         med = statistics.median(ativos)
         for i, v in enumerate(mensal):
             eleitoral = ano in ANOS_ELEITORAIS and 7 <= i + 1 <= 10
             if v > 3 * med and v - med >= 500_000 and not eleitoral:
                 achados.append(f"{MESES[i]}: {brl_curto(v)}, {dec(v / med)} vezes o mês típico do ano ({brl_curto(med)})")
+    else:
+        avisos.append("Menos de 6 meses com gastos registrados: o teste do mês atípico não foi aplicado.")
     # mesmo tipo de ano (eleitoral x não eleitoral) para a comparação ser justa
-    comparavel = [a for a in historico if a < ano and (a in ANOS_ELEITORAIS) == (ano in ANOS_ELEITORAIS)]
-    saltos = []
-    if comparavel:
+    comparavel = [a for a in historico if a < ano and (a in ANOS_ELEITORAIS) == (ano in ANOS_ELEITORAIS) and not historico[a].get("parcial")]
+    if parcial:
+        avisos.append("Ano parcial: a comparação com anos anteriores não foi feita, porque o ano ainda não tem todos os lançamentos.")
+    elif comparavel:
         a0 = max(comparavel)
         ant = {c["nome"]: c["valor"] * fatores.get(a0, 1) for c in historico[a0]["gastos"]["categorias"]}
+        saltos = []
         for c in resumo["gastos"]["categorias"]:
+            if c["nome"] in SEM_SALTO:
+                continue
             atual = c["valor"] * fator_ano
             antes = ant.get(c["nome"], 0)
             if atual - antes >= 1_000_000 and (antes == 0 or atual / antes >= 2.5):
                 saltos.append((atual - antes, c["nome"], antes, atual))
         saltos.sort(reverse=True)
         for d_, nome, antes, atual in saltos[:5]:
-            achados.append(f"{nome}: de {brl_curto(antes)} em {a0} para {brl_curto(atual)} em {ano}" + (f" ({dec(atual / antes)} vezes)" if antes else " (não havia gasto)"))
+            achados.append(f"{nome}: de {brl_curto(antes)} em {a0} para {brl_curto(atual)} em {ano}, em valores de hoje" + (f" ({dec(atual / antes)} vezes)" if antes else " (não havia gasto)"))
+        avisos.append(f"Série curta: os dados começam em {min(historico)}, então {ano} só pôde ser comparado com {a0}.")
+    else:
+        avisos.append("Ainda não há ano anterior do mesmo tipo (eleitoral ou não) para comparar categorias.")
     if not achados:
-        txt = "Nenhum mês muito acima do normal e nenhuma categoria que tenha saltado em relação ao ano comparável anterior."
-        if not comparavel:
-            txt = "Nenhum mês muito acima do normal. Ainda não há ano anterior do mesmo tipo (eleitoral ou não) para comparar categorias."
-        return alerta("temporal", "Padrões no tempo", "good", txt, REGRA_TEMP, "", "Nenhum padrão atípico encontrado.")
+        return alerta("temporal", "Padrões no tempo", "good",
+                      "Nenhum mês muito acima do normal e nenhuma categoria com aumento expressivo. " + " ".join(avisos), REGRA_TEMP, "", "Nenhum padrão atípico encontrado.",
+                      [{"grupo": "Limites desta comparação", "linhas": avisos}] if avisos else [])
     st = "bad" if len(achados) >= 3 else "warn"
     dados = [{"grupo": "O que mudou", "linhas": achados}]
+    if avisos:
+        dados.append({"grupo": "Limites desta comparação", "linhas": avisos})
     return alerta("temporal", "Padrões no tempo", st,
-                  f"{len(achados)} {'mudança chamou' if len(achados) == 1 else 'mudanças chamaram'} atenção na comparação com o próprio histórico do partido.",
+                  f"{len(achados)} {'aumento expressivo' if len(achados) == 1 else 'aumentos expressivos'} na comparação com o próprio histórico do partido.",
                   REGRA_TEMP,
-                  "O motivo do aumento: mudança de sede, novo contrato, congresso nacional, troca de gestão ou fusão com outro partido.",
-                  "Mudanças grandes têm muitas explicações legítimas. A comparação aponta onde perguntar.",
+                  "O motivo do aumento: mudança de sede, novo contrato, congresso nacional, troca de gestão, fusão com outro partido ou mudança na forma de classificar o gasto.",
+                  "Aumento expressivo não é sinal de irregularidade por si só. Mudanças grandes têm muitas explicações legítimas; a comparação aponta onde perguntar.",
                   dados)
 
 
-REGRA_TEMP = ("Dois testes. Mês atípico: um mês com gasto mais de 3 vezes a mediana dos meses do ano e pelo menos R$ 500 mil acima dela; os meses de julho a outubro dos anos de eleição não entram, porque o gasto sobe por natureza. "
-              "Salto de categoria: uma categoria que cresceu R$ 1 milhão ou mais e ficou 2,5 vezes maior que no último ano do mesmo tipo (ano de eleição com ano de eleição), com valores corrigidos pela inflação. "
-              "Fica vermelho a partir de 3 mudanças.")
+REGRA_TEMP = ("Dois testes, sem contar despesas judiciais e devoluções ao Tesouro, que dependem de decisões da Justiça e não do ritmo de gastos do partido. "
+              "Mês atípico: um mês com gasto mais de 3 vezes a mediana dos meses do ano e pelo menos R$ 500 mil acima dela; os meses de julho a outubro dos anos de eleição não entram, porque o gasto sobe por natureza. "
+              "Aumento por categoria: uma categoria que cresceu R$ 1 milhão ou mais e ficou 2,5 vezes maior que no último ano completo do mesmo tipo (ano de eleição com ano de eleição), com valores corrigidos pela inflação. "
+              "Tributos e tarifas bancárias não entram nessa comparação, e o ano em curso não é comparado porque ainda está incompleto. "
+              "Fica vermelho a partir de 3 aumentos.")
 
 
 def regra_documental(G, A, ref_doc, parcial=False):
@@ -830,20 +909,21 @@ def regra_documental(G, A, ref_doc, parcial=False):
         return alerta("documental", "Inconsistências documentais", "nd", "Sem gastos no ano.", REGRA_DOC, "", "Sem dados para avaliar."), {}
     sem_num, sem_comp, generico, sem_forn = [], [], [], []
     usa_comp = A["tem_nf"] and not parcial  # no ano em curso o arquivo de comprovantes chega atrasado
-    base = 0.0
+    base, n_base = 0.0, 0
     for r in G:
-        ds = limpo(r.get("DS_GASTO")).upper()
-        if ds.startswith(("DESPESAS FINANCEIRAS", "TRIBUTOS", "PESSOAL", "RECOLHIMENTOS")) or not compra("", r):
-            continue  # tarifas, impostos, folha, órgãos públicos e o próprio partido costumam não ter nota fiscal
+        ds = limpo(r.get("DS_GASTO"))
+        if not compra(ds, r):
+            continue  # folha, tributos, tarifas, despesas judiciais, órgãos públicos e o próprio partido costumam não ter nota fiscal
         v = valor_despesa(r)
         base += v
+        n_base += 1
         tem_comp = bool(link_doc(r, A)) if usa_comp else False
         nd = limpo(r.get("NR_DOCUMENTO"))
         if (not nd or DOC_GENERICO.match(nd)) and not tem_comp:
             sem_num.append((v, r))
         if usa_comp and not tem_comp:
             sem_comp.append((v, r))
-        if ds.startswith(GENERICAS):
+        if ds.upper().startswith(GENERICAS):
             generico.append((v, r))
         if not re.sub(r"\D", "", r.get("NR_CPF_CNPJ_FORNECEDOR", "")):
             sem_forn.append((v, r))
@@ -857,9 +937,10 @@ def regra_documental(G, A, ref_doc, parcial=False):
     }
     linhas, piores = [], []
     nomes = {"sem_numero": "sem número de documento (ou com número genérico, como S/N) e sem comprovante publicado",
-             "sem_comprovante": "sem comprovante publicado pelo TSE",
+             "sem_comprovante": "sem comprovante localizado no arquivo público do TSE",
              "generico": "com descrição genérica (outras despesas gerais)",
              "sem_fornecedor": "sem CPF ou CNPJ do fornecedor"}
+    exemplos = {"sem_numero": sem_num, "sem_comprovante": sem_comp, "generico": generico, "sem_fornecedor": sem_forn}
     nivel = 0
     for k, v in ind.items():
         if v is None:
@@ -867,77 +948,100 @@ def regra_documental(G, A, ref_doc, parcial=False):
         refs = ref_doc.get(k, [])
         pr = pct_rank(v, refs) if refs else 0
         s = 2 if (pr >= .9 and v >= .10) else 1 if (pr >= .75 and v >= .03) else 0
+        xs = exemplos[k]
+        nota = ""
+        # um único lançamento grande não leva o indicador ao vermelho sozinho
+        if s == 2 and xs and max(x for x, _ in xs) > 0.5 * soma(xs):
+            s, nota = 1, " (um único lançamento responde por mais da metade desse valor)"
         nivel = max(nivel, s)
-        linhas.append(f"{pc(v)} do valor gasto {nomes[k]}" + (f", mais que {pc(pr, 0)} dos diretórios nacionais" if s else ""))
+        linhas.append(f"{pc(v)} do valor gasto ({len(xs)} de {n_base} lançamentos, {pc(len(xs) / n_base if n_base else 0)}) {nomes[k]}"
+                      + (f", mais que {pc(pr, 0)} dos diretórios nacionais" if s else "") + nota)
         if s:
             piores.append(k)
     st = ["good", "warn", "bad"][nivel]
-    exemplos = {"sem_numero": sem_num, "sem_comprovante": sem_comp, "generico": generico, "sem_fornecedor": sem_forn}
     dados = [{"grupo": "Indicadores do ano", "linhas": linhas}]
     for k in piores[:2]:
         xs = sorted(exemplos[k], key=lambda x: -x[0])[:5]
         dados.append({"grupo": "Maiores lançamentos " + nomes[k], "registros": [registro(r, A, v) for v, r in xs]})
     if not usa_comp:
-        linhas.append("O arquivo de comprovantes do TSE ainda não está completo para este ano, então esse indicador não foi calculado.")
+        linhas.append("O arquivo de comprovantes do TSE ainda não está completo para este ano, então o indicador de comprovante não foi calculado.")
     return alerta("documental", "Inconsistências documentais", st,
-                  "Os lançamentos com documentação incompleta ficaram " + ("acima do padrão dos outros partidos." if nivel else "dentro do padrão dos outros partidos."),
+                  "Os lançamentos com documentação incompleta nos dados abertos ficaram " + ("acima do padrão dos outros partidos." if nivel else "dentro do padrão dos outros partidos."),
                   REGRA_DOC,
-                  "Se os documentos existem no processo de prestação de contas (podem ter sido anexados de outra forma) e o que foi comprado nos lançamentos genéricos.",
-                  "Documentação incompleta nos dados abertos não prova que o documento não existe. A Justiça Eleitoral pode ter acesso a peças que não estão nos arquivos públicos.",
+                  "Se os documentos existem no processo de prestação de contas (podem ter sido anexados de outra forma ou ainda não publicados) e o que foi comprado nos lançamentos genéricos.",
+                  "Documento não localizado nos dados abertos não significa que ele não existe nem que deixou de ser entregue. A Justiça Eleitoral pode ter acesso a peças que não estão nos arquivos públicos.",
                   dados), ind
 
 
-REGRA_DOC = ("Fora tarifas bancárias, tributos, folha, devoluções e pagamentos a órgãos públicos, mede a fatia do valor gasto em lançamentos sem comprovante no arquivo de notas fiscais do TSE, sem número de documento e sem comprovante, "
-             "com descrição genérica ou sem CPF/CNPJ do fornecedor. No ano em curso o indicador de comprovante não é calculado, porque o arquivo do TSE chega atrasado. Cada indicador é comparado com todos os diretórios nacionais do mesmo ano: amarelo acima de 75% deles (e pelo menos 3% do valor), vermelho acima de 90% (e pelo menos 10%).")
+REGRA_DOC = ("Considera só compras de bens e serviços (ficam fora tarifas, tributos, folha, devoluções, despesas judiciais e pagamentos a órgãos públicos, que em geral não têm nota fiscal). "
+             "Mede a fatia do valor em lançamentos sem comprovante localizado no arquivo de notas fiscais do TSE, sem número de documento e sem comprovante, com descrição genérica ou sem CPF/CNPJ do fornecedor, "
+             "e mostra também quantos lançamentos são. No ano em curso o indicador de comprovante não é calculado, porque o arquivo do TSE chega atrasado. "
+             "Cada indicador é comparado com todos os diretórios nacionais do mesmo ano: amarelo acima de 75% deles (e pelo menos 3% do valor), vermelho acima de 90% (e pelo menos 10%). "
+             "Quando um único lançamento responde por mais da metade do valor, o indicador fica no máximo amarelo.")
 
 
 def regra_cnpj(forn, cache, ano):
-    """Sinal extra (o mesmo usado com os deputados): fornecedor com CNPJ inativo ou aberto pouco antes do primeiro pagamento."""
-    achados = []
+    """Alerta 6 (o mesmo critério usado com os deputados): situação do fornecedor na Receita na época dos pagamentos."""
+    achados, depois = [], []
     for f in sorted(forn.values(), key=lambda f: -f["valor"])[:40]:
         c = f["doc"]
         if len(c) != 14 or c not in cache or f["valor"] < 10000:
             continue
         info = cache[c]
-        flags = []
-        sit = info.get("situacao", "")
-        if sit and sit not in ("ATIVA", "ATIVO") and f["valor"] >= 100000:
-            flags.append(f"CNPJ {sit.lower()} na Receita hoje")
+        flags, grave = [], False
+        tipo, txt = situacao_cnpj(info, f["ultimo"])
+        if tipo == "antes":
+            flags.append(txt)
+            grave = f["valor"] >= 100000
+        elif tipo == "sem_data" and f["valor"] >= 100000:
+            flags.append(txt)
+        elif tipo == "depois":
+            depois.append((f, txt))
         ab = info.get("abertura", "")
         try:
             abd = dt.date.fromisoformat(ab[:10])
-            if f["primeiro"] and 0 <= (f["primeiro"] - abd).days < 180:
-                flags.append(f"empresa aberta {(f['primeiro'] - abd).days} dias antes do primeiro pagamento")
+            if f["primeiro"]:
+                dias = (f["primeiro"] - abd).days
+                if dias < 0:
+                    flags.append("pagamento registrado antes da data de abertura da empresa (pode ser erro de data no lançamento)")
+                elif dias < 180:
+                    flags.append(f"empresa aberta {dias} dias antes do primeiro pagamento")
         except ValueError:
             pass
         if flags:
-            achados.append((f, flags))
+            achados.append((f, flags, grave))
+    dados_depois = [{"grupo": "Encerraram depois dos pagamentos (não conta para o alerta)", "registros": [
+        {"fornecedor": f["nome"], "doc": fmt_doc(f["doc"]), "valor": r2(f["valor"]), "descricao": t, "url": ""} for f, t in depois[:5]]}] if depois else []
     if not achados:
         return alerta("cnpj", "Situação dos fornecedores na Receita", "good",
-                      "Os maiores fornecedores com CNPJ estão ativos e nenhum foi aberto pouco antes de começar a receber.", REGRA_CNPJ, "",
-                      "Nenhum sinal na situação cadastral.")
-    total = sum(f["valor"] for f, _ in achados)
-    st = "bad" if any(f["valor"] >= 100000 and any("dias antes" in x for x in fl) for f, fl in achados) else "warn"
+                      "Nenhum dos maiores fornecedores com CNPJ estava baixado ou inapto quando recebeu, e nenhum foi aberto pouco antes de começar a receber.", REGRA_CNPJ, "",
+                      "Nenhum sinal na situação cadastral.", dados_depois)
+    total = sum(f["valor"] for f, _, _ in achados)
+    st = "bad" if any(g for _, _, g in achados) else "warn"
     dados = [{"grupo": "Fornecedores", "registros": [
-        {"fornecedor": f["nome"], "doc": fmt_doc(f["doc"]), "valor": r2(f["valor"]), "descricao": "; ".join(fl).capitalize(), "url": ""} for f, fl in achados[:8]]}]
-    return alerta("cnpj", "Situação dos fornecedores na Receita", st,
-                  f"{len(achados)} dos maiores fornecedores {'tem' if len(achados) == 1 else 'têm'} algum sinal na situação cadastral, somando {brl_curto(total)} recebidos.",
-                  REGRA_CNPJ,
-                  "Quando a empresa encerrou as atividades (pode ter sido depois dos pagamentos) e se a empresa recém-aberta já tinha estrutura para entregar o serviço.",
-                  "Sinal cadastral não é prova de irregularidade. Empresas fecham depois de prestar serviços e empresas novas podem ser legítimas.",
-                  dados, total)
+        {"fornecedor": f["nome"], "doc": fmt_doc(f["doc"]), "valor": r2(f["valor"]), "descricao": "; ".join(fl)[:1].upper() + "; ".join(fl)[1:], "url": ""} for f, fl, _ in achados[:8]]}] + dados_depois
+    a = alerta("cnpj", "Situação dos fornecedores na Receita", st,
+               f"{len(achados)} dos maiores fornecedores {'tem' if len(achados) == 1 else 'têm'} algum sinal na situação cadastral, somando {brl_curto(total)} recebidos.",
+               REGRA_CNPJ,
+               "Se o serviço foi de fato entregue, se a empresa recém-aberta já tinha estrutura para entregá-lo e se a atividade registrada na Receita combina com o que foi contratado.",
+               "Sinal cadastral não é prova de irregularidade. Empresas novas podem ser legítimas; uma empresa baixada que continua recebendo merece conferência.",
+               dados, total)
+    a["_chaves"] = {f["doc"]: f["valor"] for f, _, _ in achados}
+    return a
 
 
-REGRA_CNPJ = ("Consulta na Receita Federal, via BrasilAPI e Minha Receita, os 40 maiores fornecedores com CNPJ que receberam R$ 10 mil ou mais no ano. Sinaliza CNPJ que não está ativo hoje (para quem recebeu R$ 100 mil ou mais) e empresa aberta menos de 180 dias antes do primeiro pagamento do partido. "
-              "Fica vermelho quando uma empresa recém-aberta recebeu R$ 100 mil ou mais.")
+REGRA_CNPJ = ("Consulta na Receita Federal, via BrasilAPI e Minha Receita, os 40 maiores fornecedores com CNPJ que receberam R$ 10 mil ou mais no ano. "
+              "Sinaliza CNPJ que já estava baixado, inapto ou suspenso antes do último pagamento (a data da situação vem da Receita; quando ela não informa a data, só entra quem recebeu R$ 100 mil ou mais) "
+              "e empresa aberta menos de 180 dias antes do primeiro pagamento. Empresa que encerrou depois dos pagamentos aparece só para conferência. "
+              "Fica vermelho quando uma empresa já baixada ou inapta recebeu R$ 100 mil ou mais; empresa recém-aberta sozinha fica no máximo amarelo.")
 
 
 MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
 
 
 def nivel_risco(alertas):
-    pontos = sum(2 if a["status"] == "bad" else 1 if a["status"] == "warn" else 0 for a in alertas)
-    return pontos, ("alto" if pontos >= 6 else "moderado" if pontos >= 3 else "baixo")
+    pontos, fatores = pontuar(alertas)
+    return pontos, ("alto" if pontos >= 6 else "moderado" if pontos >= 3 else "baixo"), fatores
 
 
 # ---------------------------------------------------------------- principal
@@ -992,7 +1096,7 @@ def main():
                 if v > 0:
                     valores[base_gasto(ds)].append(v * f)
     ref_preco = {k: {"mediana": statistics.median(v), "p995": percentil(v, .995), "n": len(v)} for k, v in valores.items() if len(v) >= 50}
-    log(f"Referência de preços: {len(ref_preco)} tipos de gasto com 30+ documentos")
+    log(f"Referência de preços: {len(ref_preco)} tipos de gasto com 50+ documentos")
 
     # resumo de cada partido e ano
     resumos = defaultdict(dict)
@@ -1051,21 +1155,23 @@ def main():
                 alertas = [
                     regra_duplicidade(G, A),
                     regra_fora_padrao(G, A, ref_preco, fatores.get(ano, 1)),
-                    regra_concentracao(forn, rs["gastos"]["compras"], ref_conc[ano], forn_ant),
-                    regra_temporal(ano, rs, {a: resumos[sg][a] for a in resumos[sg] if a < ano}, fatores.get(ano, 1), fatores),
+                    regra_concentracao(forn, rs["gastos"]["compras"], ref_conc[ano], forn_ant, rs["gastos"]["judiciais"]),
+                    regra_temporal(ano, rs, {a: resumos[sg][a] for a in resumos[sg] if a < ano}, fatores.get(ano, 1), fatores, dt.date(ano + 1, 6, 30) >= HOJE),
                     regra_documental(G, A, ref_doc[ano], dt.date(ano + 1, 6, 30) >= HOJE)[0],
                     regra_cnpj(forn, cache_cnpj, ano),
                 ]
-            pontos, nivel = nivel_risco(alertas)
+            pontos, nivel, fatores_risco = nivel_risco(alertas)
             tot_compras = rs["gastos"]["compras"] or 1
             fornecedores = []
             for f in sorted(forn.values(), key=lambda f: -f["valor"])[:15]:
                 flags = []
                 info = cache_cnpj.get(f["doc"]) if len(f["doc"]) == 14 else None
                 if info:
-                    sit = info.get("situacao", "")
-                    if sit and sit not in ("ATIVA", "ATIVO"):
-                        flags.append(f"CNPJ {sit.lower()}")
+                    tipo, _ = situacao_cnpj(info, f["ultimo"])
+                    if tipo == "antes":
+                        flags.append(f"CNPJ {info['situacao'].lower()} antes do último pagamento")
+                    elif tipo == "sem_data":
+                        flags.append(f"CNPJ {info['situacao'].lower()} hoje")
                     try:
                         abd = dt.date.fromisoformat(info.get("abertura", "")[:10])
                         if f["primeiro"] and 0 <= (f["primeiro"] - abd).days < 180:
@@ -1076,7 +1182,7 @@ def main():
                                      "pct": round(f["valor"] / tot_compras * 100, 1), "categoria": f["cats"].most_common(1)[0][0], "n": f["n"], "flags": flags})
             rs["fornecedores"] = fornecedores
             rs["alertas"] = alertas
-            rs["risco"] = {"pontos": pontos, "nivel": nivel}
+            rs["risco"] = {"pontos": pontos, "nivel": nivel, "fatores": fatores_risco}
             rs["referencia"] = A["geracao"]
             rs["comprovantes"] = A["tem_nf"]
             rs["eleitoral"] = ano in ANOS_ELEITORAIS

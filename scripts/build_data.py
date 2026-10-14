@@ -29,6 +29,8 @@ import urllib.request
 import zipfile
 from collections import Counter, defaultdict
 
+from comum import precisa_reconsultar, pontuar, situacao_cnpj
+
 csv.field_size_limit(10_000_000)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -279,12 +281,14 @@ def carregar_cota(deps):
             f = d["forn"].get(chave)
             if f is None:
                 f = d["forn"][chave] = {"doc": doc, "nome": nome, "valor": 0.0, "cats": Counter(),
-                                        "primeiro": None, "redondos": Counter()}
+                                        "primeiro": None, "ultimo": None, "redondos": Counter()}
             f["valor"] += v
             f["cats"][cat] += v
             de = data_iso(col(r, "datEmissao"))
             if de and (f["primeiro"] is None or de < f["primeiro"]):
                 f["primeiro"] = de
+            if de and (f["ultimo"] is None or de > f["ultimo"]):
+                f["ultimo"] = de
             vd = num(col(r, "vlrDocumento"))
             if cat in VALOR_REDONDO and vd >= 1000 and abs(vd - round(vd)) < 0.005 and int(round(vd)) % 100 == 0:
                 f["redondos"][int(round(vd))] += 1
@@ -434,7 +438,7 @@ def consultar_cnpjs(cnpjs):
     except (FileNotFoundError, ValueError):
         cache = {}
     limite_idade = (HOJE - dt.timedelta(days=60)).isoformat()
-    novos = [c for c in sorted(cnpjs) if c not in cache or cache[c].get("ts", "") < limite_idade]
+    novos = [c for c in sorted(cnpjs) if c not in cache or cache[c].get("ts", "") < limite_idade or precisa_reconsultar(cache[c])]
     log(f"CNPJ: {len(cnpjs)} necessários, {len(novos)} a consultar")
     inicio, feitos = time.time(), 0
     for c in novos[:LIMITE_CNPJ_NOVOS]:
@@ -448,6 +452,7 @@ def consultar_cnpjs(cnpjs):
                 info = {
                     "situacao": norm(j.get("descricao_situacao_cadastral") or ""),
                     "abertura": j.get("data_inicio_atividade") or "",
+                    "data_situacao": j.get("data_situacao_cadastral") or "",
                     "razao": j.get("razao_social") or "",
                     "ts": HOJE.isoformat(),
                 }
@@ -584,6 +589,7 @@ def main():
                 "categoria": f["cats"].most_common(1)[0][0],
                 "flags": [],
             }
+            item["_chave"] = chave
             if info:
                 item["situacao"] = info.get("situacao", "")
                 abertura = data_iso(info.get("abertura"))
@@ -596,8 +602,13 @@ def main():
                             item["flags"].append("aberta depois do 1º pagamento")
                         elif meses < 6:
                             item["flags"].append(f"aberta {round(meses)} meses antes do 1º pagamento")
-                if item["situacao"] and item["situacao"] not in ("ATIVA", "NAO ENCONTRADO"):
-                    item["flags"].append(f"CNPJ com situação {item['situacao'].lower()}")
+                # a situação de hoje só conta se já valia quando o deputado ainda pagava o fornecedor
+                tipo, txt = situacao_cnpj(info, f["ultimo"])
+                if tipo in ("antes", "sem_data"):
+                    item["flags"].append(f"CNPJ {item['situacao'].lower()} " + ("antes do último pagamento" if tipo == "antes" else "hoje"))
+                    item["_cnpj"] = (tipo, txt)
+                elif tipo == "depois":
+                    item["_cnpj"] = (tipo, txt)
             if conc_base >= 20000 and 100 * conc_por_forn[chave] / conc_base >= lim["conc_bad"]:
                 item["flags"].append("concentração")
             if sum(n for n in f["redondos"].values() if n >= 3) >= lim["red_warn"]:
@@ -613,7 +624,8 @@ def main():
             st = "bad" if share >= lim["conc_bad"] else "warn" if share >= lim["conc_warn"] else "good"
             comp = {"bad": "Acima de 90% dos deputados.", "warn": "Acima de 75% dos deputados.", "good": "Dentro do padrão da Câmara."}[st]
             checks.append({"id": "concentracao", "titulo": "Concentração em um fornecedor", "status": st,
-                           "texto": f"{share:.0f}% dos gastos com divulgação, consultorias, combustível, veículos e outros serviços foram para {nome_top}. {comp}"})
+                           "texto": f"{share:.0f}% dos gastos com divulgação, consultorias, combustível, veículos e outros serviços foram para {nome_top}. {comp}",
+                           "_chaves": {chave_top: conc_por_forn[chave_top]} if st != "good" else None})
         else:
             checks.append({"id": "concentracao", "titulo": "Concentração em um fornecedor", "status": "nd",
                            "texto": "Gastos insuficientes nas categorias analisadas para avaliar."})
@@ -621,18 +633,24 @@ def main():
         verificados = [f for f in fornecedores if f.get("cnpj") and "situacao" in f]
         if verificados:
             novas = [f for f in verificados if any(x.startswith("aberta") for x in f["flags"]) and f["pct"] >= 2]
-            irreg = [f for f in verificados if any(x.startswith("CNPJ") for x in f["flags"])]
-            checks.append({"id": "recem_aberta", "titulo": "Empresa recém-aberta", "status": "bad" if novas else "good",
+            irreg = [f for f in verificados if f.get("_cnpj", ("",))[0] in ("antes", "sem_data")]
+            depois = [f for f in verificados if f.get("_cnpj", ("",))[0] == "depois"]
+            # empresa recém-aberta sozinha merece conferência, mas não é indício forte: fica no máximo amarelo
+            checks.append({"id": "recem_aberta", "titulo": "Empresa recém-aberta", "status": "warn" if novas else "good",
+                           "_chaves": {f["_chave"]: f["valor"] for f in novas},
                            "texto": ("; ".join(
                                f"{f['nome']} recebeu antes da data de abertura registrada na Receita" if f.get("meses_ate_pagamento", 0) < 0
                                else f"{f['nome']} começou a receber {round(f.get('meses_ate_pagamento', 0))} meses depois de abrir"
                                for f in novas) + ".")
                            if novas else f"Nenhum dos {len(verificados)} maiores fornecedores verificados foi aberto menos de 6 meses antes do primeiro pagamento."})
-            checks.append({"id": "cnpj_irregular", "titulo": "CNPJ irregular na Receita", "status": "bad" if irreg else "good",
-                           "texto": ("; ".join(f"{f['nome']} está com situação {f['situacao'].lower()}" for f in irreg) + ".")
-                           if irreg else f"Os {len(verificados)} maiores fornecedores verificados estão com CNPJ ativo."})
+            st_cnpj = "bad" if any(f["_cnpj"][0] == "antes" for f in irreg) else "warn" if irreg else "good"
+            txt_dep = (" " + "; ".join(f"{f['nome']}: {f['_cnpj'][1]}" for f in depois) + " (não conta como sinal).") if depois else ""
+            checks.append({"id": "cnpj_irregular", "titulo": "Situação do CNPJ na Receita", "status": st_cnpj,
+                           "_chaves": {f["_chave"]: f["valor"] for f in irreg},
+                           "texto": ("; ".join(f"{f['nome']}: {f['_cnpj'][1]}" for f in irreg) + "." + txt_dep)
+                           if irreg else f"Nenhum dos {len(verificados)} maiores fornecedores verificados estava baixado, inapto ou suspenso quando recebeu.{txt_dep}"})
         else:
-            for cid, tit in (("recem_aberta", "Empresa recém-aberta"), ("cnpj_irregular", "CNPJ irregular na Receita")):
+            for cid, tit in (("recem_aberta", "Empresa recém-aberta"), ("cnpj_irregular", "Situação do CNPJ na Receita")):
                 checks.append({"id": cid, "titulo": tit, "status": "nd", "texto": "Fornecedores ainda não verificados na Receita."})
 
         st = "bad" if redondos >= lim["red_bad"] else "warn" if redondos >= lim["red_warn"] else "good"
@@ -644,7 +662,11 @@ def main():
                        "texto": "Cruzamento com as doações declaradas ao TSE em desenvolvimento."})
         checks.append({"id": "agenda", "titulo": "Gasto incompatível com a agenda", "status": "breve",
                        "texto": "Cruzamento entre local das notas e presença em Brasília em desenvolvimento."})
-        pts = sum(2 if x["status"] == "bad" else 1 if x["status"] == "warn" else 0 for x in checks)
+        # o mesmo fornecedor em vários sinais conta uma vez só (vale o mais grave)
+        pts, fatores = pontuar(checks, chave_txt="texto")
+        for f in fornecedores:
+            f.pop("_chave", None)
+            f.pop("_cnpj", None)
         nivel = "alto" if pts >= 4 else "moderado" if pts >= 2 else "baixo"
 
         # proposições
@@ -678,7 +700,7 @@ def main():
                       "lista": [{**p, "url": f"https://www.camara.leg.br/propostas-legislativas/{p['id']}"} for p in destaque]},
             "scores": {k: (round(v) if v is not None else None) for k, v in s.items()},
             "nota": nota,
-            "risco": {"pontos": pts, "nivel": nivel, "checks": checks},
+            "risco": {"pontos": pts, "nivel": nivel, "checks": checks, "fatores": fatores},
         }
         salvar(os.path.join(DEP_DIR, f"{did}.json"), ficha)
         indice.append({"id": d["id"], "nome": d["nome"], "partido": d["partido"], "uf": d["uf"],

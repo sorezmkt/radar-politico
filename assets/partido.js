@@ -12,7 +12,7 @@
   };
   const pc = (a, b) => b ? Math.round(a / b * 100) + '%' : '–';
   const RISCO = { baixo: ['good', 'Atenção baixa', 1], moderado: ['warn', 'Atenção moderada', 2], alto: ['bad', 'Atenção alta', 3] };
-  const TX = { good: 'Nada encontrado', warn: 'Atenção', bad: 'Ponto de atenção', nd: 'Sem dados' };
+  const TX = { good: 'Nada encontrado', warn: 'Atenção', bad: 'Prioridade de verificação', nd: 'Sem dados' };
 
   let IDX = null, P = null, ANO = null;
 
@@ -37,7 +37,7 @@
     const ordem = { bad: 0, warn: 1, nd: 2, good: 3 };
     return [...a.alertas].sort((x, y) => ordem[x.status] - ordem[y.status]).map(al => {
       const dados = (al.dados || []).map(g => `<div class="grp"><span class="label">${esc(g.grupo)}</span>${g.registros ? `<div class="regs">${g.registros.map(registro).join('')}</div>` : ''}${g.linhas ? `<ul>${g.linhas.map(l => `<li>${esc(l)}</li>`).join('')}</ul>` : ''}</div>`).join('');
-      return `<details class="al ${al.status}"><summary><div class="alh"><b>${esc(al.titulo)}</b><span class="tag v-${al.status}">${TX[al.status]}</span></div><p>${esc(al.encontrado)}</p></summary>
+      return `<details class="al ${al.status}"><summary><div class="alh"><b>${esc(al.titulo)}</b><span class="tag v-${al.status}">${TX[al.status]}</span></div><p>${esc(al.encontrado)}</p>${al.relacionado ? '<small class="rel">Mesmos fornecedores de outro alerta: não soma pontos</small>' : ''}</summary>
         <div class="albody">
           <div><h4>Regra aplicada</h4><p>${esc(al.regra)}</p></div>
           ${dados ? `<div><h4>Dados que sustentam a observação</h4><div class="stack" style="gap:10px">${dados}</div></div>` : ''}
@@ -106,7 +106,8 @@
     $('riskLvl').textContent = rl; $('riskLvl').style.color = `var(--${rc})`;
     document.querySelectorAll('#riskMeter i').forEach((el, j) => el.style.background = j < rn ? `var(--${rc})` : 'var(--line)');
     const nAl = a.alertas.filter(x => x.status === 'warn' || x.status === 'bad').length;
-    $('riskTxt').textContent = a.sem_movimento ? 'Sem contas para analisar.' : `${a.risco.pontos} ${a.risco.pontos === 1 ? 'ponto' : 'pontos'} · ${nAl} de ${a.alertas.length} regras com algo a verificar`;
+    const fat = (a.risco.fatores || []).map(f => `${f.titulo.toLowerCase()} (${f.pontos})`).join(', ');
+    $('riskTxt').textContent = a.sem_movimento ? 'Sem contas para analisar.' : `${a.risco.pontos} ${a.risco.pontos === 1 ? 'ponto' : 'pontos'} · ${nAl} de ${a.alertas.length} regras com algo a verificar${fat ? '. Pontos vindos de: ' + fat : ''}`;
 
     const R = a.receitas, Gs = a.gastos, Tr = a.transferencias;
     $('nums').innerHTML = [

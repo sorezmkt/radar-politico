@@ -98,10 +98,10 @@
     $('alerts').innerHTML = alertas(d);
 
     const [rc, rl, rn] = RISCO[d.risco.nivel] || RISCO.baixo;
-    $('riskpill').className = 'riskpill v-' + rc; $('riskpill').textContent = `${rl} de irregularidade`;
+    $('riskpill').className = 'riskpill v-' + rc; $('riskpill').textContent = rl;
     $('riskLvl').textContent = `${rl} · ${d.risco.pontos} ${d.risco.pontos === 1 ? 'ponto' : 'pontos'}`; $('riskLvl').style.color = `var(--${rc})`;
     document.querySelectorAll('#riskMeter i').forEach((el, j) => el.style.background = j < rn ? `var(--${rc})` : 'var(--line)');
-    const tx = { good: 'OK', warn: 'Atenção', bad: 'Risco', nd: 'Sem dados', breve: 'Em breve' };
+    const tx = { good: 'OK', warn: 'Atenção', bad: 'Prioridade de verificação', nd: 'Sem dados', breve: 'Em breve' };
     const dotc = { good: 'good', warn: 'warn', bad: 'bad', nd: 'nd', breve: 'nd' };
     $('checks').innerHTML = d.risco.checks.map(c => `<div class="check"><span class="dot" style="background:var(--${dotc[c.status]})"></span><div><div class="ct"><b>${esc(c.titulo)}</b><span class="tag v-${c.status}">${tx[c.status]}</span></div><p>${esc(c.texto)}</p></div></div>`).join('');
     const maxf = Math.max(1, ...d.fornecedores.map(f => f.pct));

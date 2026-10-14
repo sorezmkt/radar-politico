@@ -25,6 +25,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Testar as regras de alerta
+        run: python -m unittest discover -s tests
+
       - name: Baixar contas partidárias do TSE e aplicar as regras de alerta
         run: python scripts/build_partidos.py
 
