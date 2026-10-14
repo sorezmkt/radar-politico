@@ -453,9 +453,9 @@ def regra_pix(emendas_dep, pix, media=None):
         partes.append(f"{sem_plano} {'plano' if sem_plano == 1 else 'planos'} de ação sem plano de trabalho cadastrado ({fmt(valor_sem_plano)})")
     pago_pix = sum(pago_total(e) for e in alvo)
     parte = valor_atras / pago_pix * 100 if pago_pix else 0
-    if parte >= 30 and valor_atras >= 3_000_000:
+    if parte >= 40 and valor_atras >= 5_000_000:
         st = "bad"
-    elif (parte >= 15 and valor_atras >= 1_000_000) or valor_sem_plano >= 1_000_000:
+    elif (parte >= 25 and valor_atras >= 2_000_000) or valor_sem_plano >= 1_000_000:
         st = "warn"
     else:
         st = "good"
