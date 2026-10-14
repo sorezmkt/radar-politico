@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Emendas do deputado · Radar Político</title>
+<meta name="description" content="Para onde vai o dinheiro das emendas parlamentares: quanto cada deputado destinou, quanto já foi pago, quem recebeu e quais pontos merecem conferência. Dados oficiais do Portal da Transparência e do Transferegov.">
+<meta property="og:title" content="Emendas · Radar Político">
+<meta property="og:description" content="Emendas parlamentares: valores reservados e pagos, destinos, favorecidos e alertas, com dados oficiais.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'%3E%3Ccircle cx='17' cy='17' r='15' fill='none' stroke='%230e2e6c' stroke-width='3'/%3E%3Cpath d='M17 17 L28 9' stroke='%230e2e6c' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='17' cy='17' r='3' fill='%230e2e6c'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/partidos.css">
+<link rel="stylesheet" href="assets/emendas.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="emendas.html">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="15" fill="none" stroke="var(--accent)" stroke-width="2.5"/><circle cx="17" cy="17" r="8" fill="none" stroke="var(--accent)" stroke-width="2" opacity=".55"/><path d="M17 17 L28 9" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/><circle cx="17" cy="17" r="2.6" fill="var(--accent)"/></svg>
+      <h1>Radar Político <span class="sub">Emendas</span></h1>
+    </a>
+    <nav class="secoes" aria-label="Seções do site"><a href="./">Deputados</a><a href="partidos.html">Partidos</a><a href="emendas.html" aria-current="page">Emendas</a></nav>
+    <span class="upd" id="upd"></span>
+  </header>
+
+  <a class="back" href="emendas.html">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    Todas as emendas
+  </a>
+
+  <div class="card empty" id="loading">Carregando dados…</div>
+
+  <div id="perfil" hidden class="stack">
+    <section class="card">
+      <div class="pficha">
+        <div class="who">
+          <div class="avatar" id="av"></div>
+          <div style="min-width:0">
+            <span class="label">Emendas individuais de 2020 até hoje</span>
+            <h2 id="nome"></h2>
+            <div class="meta" id="meta"></div>
+            <div class="facts" id="facts"></div>
+          </div>
+        </div>
+        <div class="riskbox">
+          <span class="label">Sinais para verificar</span>
+          <span class="risklvl" id="riskLvl"></span>
+          <div class="riskmeter" id="riskMeter" aria-hidden="true"><i></i><i></i><i></i></div>
+          <p id="riskTxt"></p>
+        </div>
+      </div>
+      <div class="totais" id="totais"></div>
+    </section>
+
+    <section class="card">
+      <div class="label">Ano a ano</div>
+      <div class="vlist" id="anos"></div>
+      <div class="legend"><span><i style="background:var(--accent)"></i>Pago</span><span><i style="background:var(--accent-soft)"></i>Reservado</span></div>
+    </section>
+
+    <section class="card">
+      <div class="label">Sinais para verificar</div>
+      <div class="alist" id="checks"></div>
+      <p class="disclaimer">Estes sinais são cruzamentos automáticos de dados públicos e apontam onde vale olhar com mais atenção. Não são prova nem acusação de irregularidade. Quem executa o dinheiro é a prefeitura, o estado ou a entidade que recebeu. Para denunciar, procure a CGU pelo Fala.BR ou o Ministério Público.</p>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <div class="label">Quem recebeu o dinheiro pago</div>
+        <div class="vlist" id="grupos"></div>
+      </section>
+      <section class="card">
+        <div class="label">Maiores favorecidos</div>
+        <div class="regs" id="favs"></div>
+      </section>
+      <section class="card">
+        <div class="label">Cidades de destino</div>
+        <div class="regs" id="munis"></div>
+      </section>
+      <section class="card">
+        <div class="label">Áreas</div>
+        <div class="vlist" id="areas"></div>
+      </section>
+    </div>
+
+    <section class="card">
+      <div class="listhead">
+        <div>
+          <h2 class="lt">As emendas</h2>
+          <p class="meta">Toque numa emenda para ver destino, favorecidos e o link no Portal da Transparência.</p>
+        </div>
+        <div class="tabs" id="filtro" role="group" aria-label="Filtrar"></div>
+      </div>
+      <div class="alist" id="emendas"></div>
+    </section>
+  </div>
+
+  <section class="card more-card">
+    <p class="meta">Os sinais seguem uma metodologia pública, igual para todos os deputados.</p>
+    <div class="facts"><a class="chip" href="emendas.html#metodo">Como calculamos</a><a class="chip" id="linkDep" href="./">Ficha do deputado</a></div>
+  </section>
+
+  <footer>Radar Político · projeto independente, sem vínculo com partidos, com o Congresso ou com o governo.</footer>
+</div>
+<script src="assets/emendas-dep.js"></script>
+</body>
+</html>

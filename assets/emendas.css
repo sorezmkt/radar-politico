@@ -1,0 +1,19 @@
+/* Radar Político — páginas de emendas. Usa style.css e partidos.css e só acrescenta o que é novo aqui. */
+.bar.duo{background:transparent}
+.bar.duo>i{display:block;height:100%;border-radius:99px;background:var(--accent-soft);overflow:hidden}
+.bar.duo>i>b{display:block;height:100%;background:var(--accent);border-radius:99px}
+details.gloss>summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:14px}
+details.gloss ul{margin:10px 0 0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;gap:4px}
+details.gloss p{margin:8px 0 0;font-size:13px;color:var(--muted)}
+.tot.bad{border-color:var(--bad);background:var(--bad-soft)}
+.tot.warn{border-color:var(--warn);background:var(--warn-soft)}
+.mais{align-self:center;font:inherit;font-size:14px;font-weight:600;padding:8px 18px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--accent);cursor:pointer}
+.mais:hover{border-color:var(--accent)}
+.fechar{font:inherit;font-size:22px;line-height:1;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer}
+.reg .rh b a{color:inherit;text-decoration:none}
+.reg .rh b a:hover{color:var(--accent);text-decoration:underline}
+details.al.em{border-left-color:var(--accent-soft)}
+details.al.em>summary .bar{height:5px;margin-top:4px}
+details.al.em .albody ul{list-style:disc}
+.mini{font-size:11.5px;font-weight:600;padding:1px 7px;border-radius:99px}
+.method ol li{color:var(--muted)}

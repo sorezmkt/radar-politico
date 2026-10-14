@@ -384,7 +384,7 @@ def fmt(v):
     return ("R$ {:,.2f}".format(v or 0)).replace(",", "X").replace(".", ",").replace("X", ".")
 
 
-def regra_pix(emendas_dep, pix):
+def regra_pix(emendas_dep, pix, media=None):
     """Emendas Pix com prestação de contas não localizada no Transferegov depois do fim do prazo de execução."""
     alvo = [e for e in emendas_dep if e["tipo"] == "pix" and pago_total(e) > 0]
     base = {"id": "pix", "titulo": "Prestação de contas das emendas Pix"}
@@ -424,9 +424,17 @@ def regra_pix(emendas_dep, pix):
         partes.append(f"{atras} {'plano' if atras == 1 else 'planos'} com prazo de execução vencido há mais de 6 meses sem relatório final de prestação de contas ({fmt(valor_atras)})")
     if sem_plano:
         partes.append(f"{sem_plano} {'plano' if sem_plano == 1 else 'planos'} de ação sem plano de trabalho cadastrado")
-    grave = atras >= 3 or valor_atras >= 500_000
-    return {**base, "status": "bad" if grave else "warn",
-            "texto": "No Transferegov aparecem " + " e ".join(partes) + ". A prestação de contas é de responsabilidade da prefeitura ou do estado que recebeu; "
+    pago_pix = sum(pago_total(e) for e in alvo)
+    parte = valor_atras / pago_pix * 100 if pago_pix else 0
+    if parte >= 30 and valor_atras >= 3_000_000:
+        st = "bad"
+    elif (parte >= 15 and valor_atras >= 1_000_000) or sem_plano:
+        st = "warn"
+    else:
+        st = "good"
+    proporcao = f" O valor com prazo vencido equivale a {parte:.0f}% das emendas Pix já pagas deste deputado" + (f" (no país todo, {media:.0f}%)." if media is not None else ".") if atras else ""
+    return {**base, "status": st,
+            "texto": "No Transferegov aparecem " + " e ".join(partes) + "." + proporcao + " A prestação de contas é de responsabilidade da prefeitura ou do estado que recebeu; "
                      "o relatório pode ter sido entregue por outro meio, por isso cada caso precisa ser conferido.",
             "registros": regs[:30]}
 
@@ -445,7 +453,7 @@ def regra_entidades(favs):
         return {**base, "status": "good", "texto": "Nenhum pagamento das emendas foi feito diretamente a entidades privadas sem fins lucrativos.", "registros": []}
     txt = (f"{fmt(v)} ({pct:.0f}% do que foi pago) foram para {len(ent)} {'entidade privada' if len(ent) == 1 else 'entidades privadas'} sem fins lucrativos. "
            "Esse caminho exige conferência mais cuidadosa porque quem executa não é um órgão público e a fiscalização depende da prestação de contas da própria entidade.")
-    st = "warn" if (pct >= 20 and v >= 1_000_000) or ent[0]["valor"] >= 3_000_000 else "good"
+    st = "warn" if (pct >= 25 and v >= 5_000_000) or ent[0]["valor"] >= 10_000_000 else "good"
     return {**base, "status": st, "texto": txt, "registros": regs}
 
 
@@ -456,13 +464,17 @@ def regra_empresas(favs):
     if not emp:
         return {**base, "status": "good", "texto": "Nenhum pagamento das emendas foi feito diretamente a empresas privadas.", "registros": []}
     v = sum(f["valor"] for f in emp)
-    grandes = [f for f in emp if f["valor"] >= 1_000_000]
+    total = sum(f["valor"] for f in favs.values()) or 1
+    grandes = [f for f in emp if f["valor"] >= 3_000_000]
     regs = [{"nome": f["nome"], "doc": f["doc"], "natureza": f["natureza"], "municipio": f["municipio"], "uf": f["uf"], "valor": r2(f["valor"])} for f in emp[:15]]
     txt = (f"{fmt(v)} foram pagos diretamente a {len(emp)} {'empresa' if len(emp) == 1 else 'empresas'}, em geral por compras feitas pelo próprio governo federal "
            "com o dinheiro da emenda.")
     if grandes:
-        txt += f" {len(grandes)} {'recebeu' if len(grandes) == 1 else 'receberam'} R$ 1 milhão ou mais, o que vale conferir no contrato correspondente."
-    return {**base, "status": "warn" if grandes else "good", "texto": txt, "registros": regs}
+        txt += f" {len(grandes)} {'recebeu' if len(grandes) == 1 else 'receberam'} R$ 3 milhões ou mais, o que vale conferir no contrato correspondente."
+    st = "warn" if grandes or v / total >= 0.15 else "good"
+    if v / total >= 0.15:
+        txt += f" As empresas ficaram com {v / total * 100:.0f}% de tudo o que foi pago, bem acima do comum entre os deputados."
+    return {**base, "status": st, "texto": txt, "registros": regs}
 
 
 def regra_fora_estado(emendas_dep, uf_dep):
@@ -561,6 +573,22 @@ def main():
     for e in ems.values():
         e["local"] = e["locais"].most_common(1)[0][0] if e["locais"] else ""
 
+    # ---------------- emendas Pix: quadro nacional da prestação de contas
+    quadro_pix = None
+    if pix is not None:
+        sit, val = Counter(), Counter()
+        for cod, planos in pix.items():
+            e = ems.get(cod)
+            if not e or pago_total(e) <= 0:
+                continue
+            for p in planos:
+                s_, _ = situacao_plano_pix(p)
+                sit[s_] += 1
+                val[s_] += (p.get("valor_custeio_plano_acao") or 0) + (p.get("valor_investimento_plano_acao") or 0)
+        quadro_pix = {k: {"n": sit[k], "valor": r2(val[k])} for k in ("ok", "andamento", "atrasado", "sem_plano")}
+    tot_pix = sum(x["valor"] for x in quadro_pix.values()) if quadro_pix else 0
+    media_pix = quadro_pix["atrasado"]["valor"] / tot_pix * 100 if tot_pix else None
+
     # ---------------- por deputado
     por_dep = defaultdict(list)
     for cod, did in ligados.items():
@@ -574,7 +602,7 @@ def main():
                 g = favs.setdefault(doc, {"doc": doc, "nome": f["nome"], "natureza": f["natureza"], "grupo": f["grupo"],
                                           "uf": f["uf"], "municipio": f["municipio"], "valor": 0.0})
                 g["valor"] += f["valor"]
-        checks = [regra_pix(mine, pix), regra_entidades(favs), regra_empresas(favs), regra_fora_estado(mine, d.get("uf")), regra_inconsistencia(mine)]
+        checks = [regra_pix(mine, pix, media_pix), regra_entidades(favs), regra_empresas(favs), regra_fora_estado(mine, d.get("uf")), regra_inconsistencia(mine)]
         anos = {str(a): soma(mine, lambda e, a=a: e["ano"] == a) for a in ANOS}
         tipos = {t: soma(mine, lambda e, t=t: e["tipo"] == t) for t in INDIVIDUAIS}
         grupos = Counter()
@@ -658,19 +686,8 @@ def main():
             "entidades": [{"doc": doc, "nome": nomes_ent[doc][0], "grupo": nomes_ent[doc][1], "municipio": nomes_ent[doc][2], "uf": nomes_ent[doc][3], "valor": r2(v)}
                           for doc, v in ents.most_common(15)],
         }
-    # Emendas Pix: quadro nacional da prestação de contas
-    if pix is not None:
-        sit = Counter()
-        val = Counter()
-        for cod, planos in pix.items():
-            e = ems.get(cod)
-            if not e or pago_total(e) <= 0:
-                continue
-            for p in planos:
-                s, _ = situacao_plano_pix(p)
-                sit[s] += 1
-                val[s] += (p.get("valor_custeio_plano_acao") or 0) + (p.get("valor_investimento_plano_acao") or 0)
-        resumo["pix"] = {k: {"n": sit[k], "valor": r2(val[k])} for k in ("ok", "andamento", "atrasado", "sem_plano")}
+    if quadro_pix:
+        resumo["pix"] = quadro_pix
     resumo["sinais"] = sorted(({"id": x["id"], "nome": x["nome"], "partido": x["partido"], "uf": x["uf"], "pontos": x["pontos"], "bad": x["bad"], "warn": x["warn"], "emp": x["emp"]}
                                for x in lista if x["pontos"] > 0), key=lambda x: (-x["pontos"], -x["emp"]))[:40]
     resumo["grupos_nome"] = GRUPOS

@@ -80,7 +80,7 @@ class Favorecidos(unittest.TestCase):
 
     def test_entidades_acima_do_limite_ficam_amarelas(self):
         favs = {"a": {"doc": "a", "nome": "Prefeitura", "natureza": "Município", "grupo": "publico", "municipio": "", "uf": "", "valor": 3_000_000},
-                "b": {"doc": "b", "nome": "Instituto X", "natureza": "Associação Privada", "grupo": "entidade", "municipio": "", "uf": "", "valor": 1_500_000}}
+                "b": {"doc": "b", "nome": "Instituto X", "natureza": "Associação Privada", "grupo": "entidade", "municipio": "", "uf": "", "valor": 10_500_000}}
         self.assertEqual(be.regra_entidades(favs)["status"], "warn")
         favs["b"]["valor"] = 100_000
         self.assertEqual(be.regra_entidades(favs)["status"], "good")
@@ -109,11 +109,14 @@ class Pix(unittest.TestCase):
 
     def test_regra_pix(self):
         e = {"cod": "202412340001", "ano": 2024, "tipo": "pix", "emp": 1_000_000, "pago": 1_000_000, "rp_pago": 0}
-        plano = {**self.plano("2024-06-01"), "valor_custeio_plano_acao": 0, "valor_investimento_plano_acao": 800_000,
+        e = {**e, "emp": 5_000_000, "pago": 5_000_000}
+        plano = {**self.plano("2024-06-01"), "valor_custeio_plano_acao": 0, "valor_investimento_plano_acao": 3_200_000,
                  "nome_beneficiario_plano_acao": "MUNICIPIO X", "codigo_plano_acao": "0903-1"}
         a = be.regra_pix([e], {"202412340001": [plano]})
         self.assertEqual(a["status"], "bad")
-        self.assertEqual(a["registros"][0]["valor"], 800_000)
+        self.assertEqual(a["registros"][0]["valor"], 3_200_000)
+        plano["valor_investimento_plano_acao"] = 900_000
+        self.assertEqual(be.regra_pix([e], {"202412340001": [plano]})["status"], "good")  # 18%, mas menos de R$ 1 milhão
         self.assertEqual(be.regra_pix([e], None)["status"], "nd")
         self.assertEqual(be.regra_pix([{**e, "tipo": "individual"}], {})["status"], "nd")
 
