@@ -79,7 +79,7 @@
     $('av').innerHTML = d.foto ? `<img src="${esc(d.foto)}" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode('${esc(ini(d.nome))}'))">` : esc(ini(d.nome));
     $('nome').textContent = d.nome;
     $('meta').textContent = `Deputado(a) federal · ${d.partido} · ${d.uf}`;
-    $('facts').innerHTML = `<span class="chip">${IDX.periodo.meses[0]} a ${IDX.periodo.meses[11]}</span><a class="chip" href="https://www.camara.leg.br/deputados/${d.id}" target="_blank" rel="noopener">Página oficial na Câmara ↗</a>`;
+    $('facts').innerHTML = `<span class="chip">${IDX.periodo.meses[0]} a ${IDX.periodo.meses[11]}</span><a class="chip" href="emendas-deputado.html?id=${d.id}">Emendas parlamentares</a><a class="chip" href="https://www.camara.leg.br/deputados/${d.id}" target="_blank" rel="noopener">Página oficial na Câmara ↗</a>`;
     $('gauge').innerHTML = gauge(d.nota);
     $('gauge').setAttribute('aria-label', `Índice ${d.nota ?? 'indisponível'} de 100`);
     $('verdict').className = 'verdict v-' + fc; $('verdict').textContent = fl;

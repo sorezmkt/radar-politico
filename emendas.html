@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Emendas · Radar Político</title>
+<meta name="description" content="Para onde vai o dinheiro das emendas parlamentares: quanto cada deputado destinou, quanto já foi pago, quem recebeu e quais pontos merecem conferência. Dados oficiais do Portal da Transparência e do Transferegov.">
+<meta property="og:title" content="Emendas · Radar Político">
+<meta property="og:description" content="Emendas parlamentares: valores reservados e pagos, destinos, favorecidos e alertas, com dados oficiais.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'%3E%3Ccircle cx='17' cy='17' r='15' fill='none' stroke='%230e2e6c' stroke-width='3'/%3E%3Cpath d='M17 17 L28 9' stroke='%230e2e6c' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='17' cy='17' r='3' fill='%230e2e6c'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/partidos.css">
+<link rel="stylesheet" href="assets/emendas.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="emendas.html">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="15" fill="none" stroke="var(--accent)" stroke-width="2.5"/><circle cx="17" cy="17" r="8" fill="none" stroke="var(--accent)" stroke-width="2" opacity=".55"/><path d="M17 17 L28 9" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/><circle cx="17" cy="17" r="2.6" fill="var(--accent)"/></svg>
+      <h1>Radar Político <span class="sub">Emendas</span></h1>
+    </a>
+    <nav class="secoes" aria-label="Seções do site"><a href="./">Deputados</a><a href="partidos.html">Partidos</a><a href="emendas.html" aria-current="page">Emendas</a></nav>
+    <span class="upd" id="upd"></span>
+  </header>
+
+  <section class="hero">
+    <h2>Para onde vão as emendas parlamentares?</h2>
+    <p class="intro">Emendas são a parte do orçamento federal que deputados e senadores indicam para cidades, estados e entidades. Aqui você vê quanto foi reservado, quanto já foi pago, quem recebeu e quais pontos merecem conferência, com dados oficiais do Portal da Transparência e do Transferegov.</p>
+  </section>
+
+  <div class="search">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="q" type="search" placeholder="Pesquise um deputado ou uma cidade" autocomplete="off" aria-label="Buscar deputado ou cidade">
+    <div class="sugg" id="sugg" hidden></div>
+  </div>
+
+  <section class="card" id="cidade" hidden></section>
+
+  <section class="card" id="resumo">
+    <div class="listhead">
+      <div>
+        <h2 class="lt">Emendas de <span id="anoT">–</span></h2>
+        <p class="meta" id="anoSub">Carregando dados…</p>
+      </div>
+      <div class="tabs" id="anos" role="group" aria-label="Ano da emenda"></div>
+    </div>
+    <div class="totais" id="totais"></div>
+    <details class="gloss"><summary>O que significa cada valor</summary>
+      <ul>
+        <li><b>Reservado (empenhado):</b> o governo separou o dinheiro para aquela despesa. Ainda não é dinheiro entregue.</li>
+        <li><b>Pago até agora:</b> o que saiu de fato do caixa federal, no próprio ano ou depois, como restos a pagar.</li>
+        <li><b>Ainda não pago:</b> reservado que não foi pago nem cancelado. Pode ser pago nos próximos anos.</li>
+        <li><b>Cancelado:</b> reserva de anos anteriores que foi desfeita.</li>
+      </ul>
+      <p>Pagamento não prova que a obra ficou pronta ou que o serviço foi feito. A entrega depende da prestação de contas de quem recebeu.</p>
+    </details>
+  </section>
+
+  <section class="card">
+    <div class="label">Por tipo de emenda</div>
+    <div class="vlist" id="tipos"></div>
+  </section>
+
+  <section class="card" id="pixCard" hidden>
+    <div class="label">Emendas Pix: prestação de contas no Transferegov</div>
+    <p class="meta" style="margin:0">Nas emendas Pix (transferências especiais) o dinheiro cai direto na conta da prefeitura ou do estado, sem convênio. Por isso a única prestação de contas é o relatório de gestão que quem recebeu deve publicar no Transferegov. Contagem de todos os planos de ação de emendas Pix já pagas, de 2020 até hoje.</p>
+    <div class="totais" id="pix"></div>
+  </section>
+
+  <div class="grid">
+    <section class="card">
+      <div class="label">Quem recebeu o dinheiro pago</div>
+      <div class="vlist" id="grupos"></div>
+    </section>
+    <section class="card">
+      <div class="label">Entidades e empresas que mais receberam</div>
+      <div class="regs" id="entidades"></div>
+    </section>
+    <section class="card">
+      <div class="label">Áreas</div>
+      <div class="vlist" id="areas"></div>
+    </section>
+    <section class="card">
+      <div class="label">Estados de destino</div>
+      <div class="vlist" id="ufs"></div>
+    </section>
+    <section class="card">
+      <div class="label">Cidades que mais receberam</div>
+      <div class="regs" id="munis"></div>
+    </section>
+    <section class="card">
+      <div class="label">Autores que mais destinaram (emendas individuais)</div>
+      <div class="regs" id="autores"></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="listhead">
+      <div>
+        <h2 class="lt">Os deputados</h2>
+        <p class="meta" id="listSub">Emendas individuais de 2020 até hoje dos deputados em exercício. Toque num nome para ver a ficha.</p>
+      </div>
+      <div class="tabs" id="ordem" role="group" aria-label="Ordenar por">
+        <button type="button" data-o="emp" aria-pressed="true">Mais dinheiro</button>
+        <button type="button" data-o="pontos" aria-pressed="false">Mais sinais</button>
+        <button type="button" data-o="nome" aria-pressed="false">A a Z</button>
+      </div>
+    </div>
+    <div class="phead" aria-hidden="true"><span>Deputado</span><span>Reservado</span><span>Sinais</span></div>
+    <ol class="plist" id="lista"><li class="empty">Carregando dados…</li></ol>
+    <button type="button" class="mais" id="mais" hidden>Mostrar todos</button>
+  </section>
+
+  <section class="card method" id="metodo">
+    <h3>Metodologia aberta</h3>
+    <p><b style="color:var(--ink)">De onde vêm os números.</b> Do arquivo de emendas parlamentares do Portal da Transparência (CGU), que traz cada emenda com autor, tipo, destino e os valores de cada etapa, e da lista de quem recebeu cada pagamento. Para as emendas Pix, o Radar consulta também a API pública do Transferegov, que mostra o plano de trabalho e os relatórios de gestão. O período vai de 2020 até hoje, e o ano em curso ainda está em execução.</p>
+    <p><b style="color:var(--ink)">Quem é o autor.</b> Só as emendas individuais são atribuídas a um deputado. As de bancada, de comissão e de relator têm autoria coletiva e aparecem só nos totais nacionais, sem dividir o valor entre ninguém. As emendas de relator (RP9) existiram de 2020 a 2022 e foram declaradas inconstitucionais pelo STF em dezembro de 2022. O Portal identifica o autor pelo nome, e o Radar liga esse nome ao deputado em exercício só quando ele é único na Câmara. Emendas antigas de quem hoje é deputado aparecem mesmo que tenham sido feitas em outro cargo.</p>
+    <p><b style="color:var(--ink)">Sinais para verificar.</b> Regras fixas, iguais para todos os deputados, sem inteligência artificial:</p>
+    <ol>
+      <li><b>Prestação de contas das emendas Pix.</b> Conta os planos de ação com o prazo de execução vencido há mais de 6 meses e sem relatório final no Transferegov. Vermelho quando o valor deles chega a 40% das emendas Pix já pagas do deputado e soma R$ 5 milhões ou mais. Amarelo a partir de 25% e R$ 2 milhões, ou quando planos de ação com mais de um ano (de 2024 em diante) sem plano de trabalho somam R$ 1 milhão ou mais.</li>
+      <li><b>Repasses a entidades privadas.</b> Amarelo quando associações, fundações e outras entidades sem fins lucrativos recebem 25% ou mais do que foi pago e pelo menos R$ 5 milhões, ou quando uma só recebe R$ 10 milhões ou mais.</li>
+      <li><b>Empresas que receberam direto.</b> Amarelo quando uma empresa recebe R$ 3 milhões ou mais das emendas do deputado, ou quando as empresas ficam com 15% ou mais do que foi pago.</li>
+      <li><b>Dinheiro enviado para fora do estado.</b> Amarelo quando 20% ou mais do valor reservado, e pelo menos R$ 1 milhão, vai para outro estado.</li>
+      <li><b>Valores que não fecham.</b> Amarelo quando o Portal mostra mais dinheiro pago do que reservado numa emenda.</li>
+    </ol>
+    <p>Cada vermelho vale 2 pontos e cada amarelo vale 1: 0 ou 1 ponto é nível baixo, 2 é moderado e 3 ou mais é alto. Os limites foram escolhidos para destacar os casos que fogem do padrão entre os 513 deputados. A pontuação serve para saber por onde começar a olhar. <b style="color:var(--ink)">Um sinal não é prova de irregularidade.</b> A responsabilidade pela execução é de quem recebeu o dinheiro, e a fiscalização cabe à CGU, ao TCU e aos tribunais de contas.</p>
+    <p class="src">Fontes: <a href="https://portaldatransparencia.gov.br/download-de-dados/emendas-parlamentares" target="_blank" rel="noopener">Portal da Transparência: emendas parlamentares</a>, <a href="https://api.transferegov.gestao.gov.br/transferenciasespeciais/" target="_blank" rel="noopener">API das transferências especiais do Transferegov</a> e <a href="https://dadosabertos.camara.leg.br/" target="_blank" rel="noopener">Dados Abertos da Câmara</a>. Atualização diária.</p>
+  </section>
+
+  <footer>Radar Político · projeto independente, sem vínculo com partidos, com o Congresso ou com o governo.</footer>
+</div>
+<script src="assets/emendas.js"></script>
+</body>
+</html>
