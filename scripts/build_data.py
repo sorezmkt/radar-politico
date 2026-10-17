@@ -41,7 +41,7 @@ CNPJ_CACHE = os.path.join(CACHE_DIR, "cnpj.json")
 
 API = "https://dadosabertos.camara.leg.br/api/v2"
 ARQ = "https://dadosabertos.camara.leg.br/arquivos"
-UA = {"User-Agent": "RadarPolitico/1.0 (+https://github.com/sorezmkt/radar-politico)"}
+UA = {"User-Agent": "RadarPolitico/1.0 (+https://github.com/sorezsystem/radar-politico)"}
 
 T0 = time.time()
 LIMITE_CNPJ_NOVOS = int(os.environ.get("LIMITE_CNPJ", "3000"))

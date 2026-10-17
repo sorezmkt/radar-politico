@@ -43,7 +43,7 @@ OUT = os.path.join(ROOT, "data", "partidos")
 CACHE_DIR = os.path.join(ROOT, "cache")
 CNPJ_CACHE = os.path.join(CACHE_DIR, "cnpj.json")
 TSE = os.environ.get("TSE_BASE", "https://cdn.tse.jus.br/estatistica/sead/odsele/prestacao_contas_anual_partidaria/")
-UA = {"User-Agent": "RadarPolitico/1.0 (+https://github.com/sorezmkt/radar-politico)"}
+UA = {"User-Agent": "RadarPolitico/1.0 (+https://github.com/sorezsystem/radar-politico)"}
 
 HOJE = dt.date.today()
 ANO_INICIO = int(os.environ.get("ANO_INICIO", "2022"))
