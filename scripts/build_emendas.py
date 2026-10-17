@@ -41,7 +41,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data")
 OUT = os.path.join(DATA, "emendas")
 CACHE_PIX = os.path.join(ROOT, "cache", "pix.json.gz")
-UA = {"User-Agent": "RadarPolitico/1.0 (+https://github.com/sorezmkt/radar-politico)"}
+UA = {"User-Agent": "RadarPolitico/1.0 (+https://github.com/sorezsystem/radar-politico)"}
 
 URL_EMENDAS = "https://portaldatransparencia.gov.br/download-de-dados/emendas-parlamentares/UNICO"
 URL_TE = "https://api.transferegov.gestao.gov.br/transferenciasespeciais/"
